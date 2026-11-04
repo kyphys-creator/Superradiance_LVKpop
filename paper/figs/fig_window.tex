@@ -1,0 +1,81 @@
+% Paper figure: the (mu, f) window for optimistic and realistic inputs.
+% Data: paper/figs/data/fig_window_{opt,real}.dat from make_fig_window.py (research note E9).
+% Build: cd paper/figs && lualatex fig_window.tex   (two-column width, 17.8 cm; drawn at final size)
+\documentclass[border=2pt]{standalone}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepgfplotslibrary{groupplots}
+
+\definecolor{cGW}{HTML}{2A78D6}
+\definecolor{cBand}{HTML}{EB6834}
+\definecolor{cG1}{HTML}{0E6B4A}
+\definecolor{cG2}{HTML}{1BAF7A}
+\definecolor{cG3}{HTML}{7FD9B5}
+\definecolor{cAx}{HTML}{3A3A38}
+\definecolor{cExcl}{HTML}{E6E5E1}
+
+\pgfplotsset{
+  paper/.style={
+    scale only axis, width=7.0cm, height=5.4cm,
+    xmode=log, ymode=log, xmin=0.4e-12, xmax=1.2e-12, ymin=3e10, ymax=1e13,
+    minor xtick={0.9e-12,1.1e-12},
+    axis line style={cAx, line width=0.5pt}, tick style={cAx, line width=0.4pt},
+    tick label style={font=\footnotesize}, label style={font=\small},
+    title style={font=\small, yshift=-3pt},
+    xlabel={$\mu\ [10^{-12}\,\mathrm{eV}]$},
+    clip=true, axis on top,
+  },
+  ub/.style={line width=1.0pt},
+  ticksA/.style={xtick={0.4e-12,0.5e-12,0.6e-12,0.7e-12,0.8e-12,1e-12,1.2e-12}, xticklabels={0.4,0.5,0.6,0.7,0.8,1.0,}},
+  ticksB/.style={xtick={0.4e-12,0.5e-12,0.6e-12,0.7e-12,0.8e-12,1e-12,1.2e-12}, xticklabels={,0.5,0.6,0.7,0.8,1.0,1.2}},
+  g1/.style={densely dashed, line width=0.9pt},
+}
+\newcommand{\Msun}{\ensuremath{M_\odot}}
+\newcommand{\lab}[4]{\node[font=\scriptsize, color=#1, rotate=-22, anchor=#2, inner sep=1.5pt] at (axis cs:#3,#4)}
+
+\begin{document}
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1, horizontal sep=0.35cm, y descriptions at=edge left}, paper]
+
+% ---------------- (a) optimistic ----------------
+\nextgroupplot[ticksA, ylabel={$f\ [\mathrm{GeV}]$}, title={(a) Optimistic inputs}]
+  \fill[cBand!13] (axis cs:0.60e-12,3e10) rectangle (axis cs:0.89e-12,1e13);
+  \addplot[fill=cExcl, draw=none] table[x=mu, y=upper] {data/fig_window_opt.dat} -- (axis cs:1.2e-12,1e13) -- (axis cs:0.4e-12,1e13) -- cycle;
+  \addplot[cG1, g1] table[x=mu, y=M15_d18] {data/fig_window_opt.dat};
+  \addplot[cG2, g1] table[x=mu, y=M20_d18] {data/fig_window_opt.dat};
+  \addplot[cG3, g1] table[x=mu, y=M25_d18] {data/fig_window_opt.dat};
+  \draw[cBand!70, densely dotted, line width=0.5pt] (axis cs:0.60e-12,3e10) -- (axis cs:0.60e-12,1e13);
+  \draw[cBand!70, densely dotted, line width=0.5pt] (axis cs:0.89e-12,3e10) -- (axis cs:0.89e-12,1e13);
+  \addplot[black, ub] table[x=mu, y=GRS] {data/fig_window_opt.dat};
+  \addplot[cGW, ub] table[x=mu, y=GW241011] {data/fig_window_opt.dat};
+  \lab{cGW}{south}{0.535e-12}{6.0e12} {GW241011};
+  \lab{black}{north}{0.505e-12}{5.0e12} {GRS 1915+105};
+  \node[font=\scriptsize, color=cG3!70!black, anchor=east] at (axis cs:0.722e-12,4.6e10) {$25\,\Msun$};
+  \node[font=\scriptsize, color=cG2!85!black, anchor=east] at (axis cs:0.895e-12,4.6e10) {$20\,\Msun$};
+  \node[font=\scriptsize, color=cG1, anchor=east] at (axis cs:1.155e-12,4.6e10) {$15\,\Msun$};
+  \node[font=\scriptsize, color=cBand!85!black, anchor=north] at (axis cs:0.73e-12,8.5e12) {preferred $\mu$};
+  \node[font=\scriptsize, color=cAx, anchor=north east] at (axis cs:1.18e-12,8.5e12) {excluded};
+
+% ---------------- (b) realistic ----------------
+\nextgroupplot[ticksB, title={(b) Realistic inputs}]
+  \fill[cBand!13] (axis cs:0.60e-12,3e10) rectangle (axis cs:0.89e-12,1e13);
+  \addplot[fill=cExcl, draw=none] table[x=mu, y=upper] {data/fig_window_real.dat} -- (axis cs:1.2e-12,1e13) -- (axis cs:0.4e-12,1e13) -- cycle;
+  \addplot[cG1, g1] table[x=mu, y=M15_d18] {data/fig_window_real.dat};
+  \addplot[cG2, g1] table[x=mu, y=M20_d18] {data/fig_window_real.dat};
+  \addplot[cG3, g1] table[x=mu, y=M25_d18] {data/fig_window_real.dat};
+  \draw[cBand!70, densely dotted, line width=0.5pt] (axis cs:0.60e-12,3e10) -- (axis cs:0.60e-12,1e13);
+  \draw[cBand!70, densely dotted, line width=0.5pt] (axis cs:0.89e-12,3e10) -- (axis cs:0.89e-12,1e13);
+  \addplot[black, ub] table[x=mu, y=GRS] {data/fig_window_real.dat};
+  \addplot[cGW, ub] table[x=mu, y=GW241011] {data/fig_window_real.dat};
+  \lab{cGW}{south}{0.50e-12}{3.0e12} {GW241011};
+  \lab{black}{south}{0.98e-12}{2.75e11} {GRS 1915+105};
+  \node[font=\scriptsize, color=cG3!70!black, anchor=east] at (axis cs:0.722e-12,4.6e10) {$25\,\Msun$};
+  \node[font=\scriptsize, color=cG2!85!black, anchor=east] at (axis cs:0.895e-12,4.6e10) {$20\,\Msun$};
+  \node[font=\scriptsize, color=cG1, anchor=east] at (axis cs:1.155e-12,4.6e10) {$15\,\Msun$};
+  \node[font=\scriptsize, color=cBand!85!black, anchor=north] at (axis cs:0.73e-12,8.5e12) {preferred $\mu$};
+  \node[font=\scriptsize, color=cAx, anchor=north east] at (axis cs:1.18e-12,8.5e12) {excluded};
+\end{groupplot}
+\end{tikzpicture}
+\end{document}

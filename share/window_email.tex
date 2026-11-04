@@ -1,0 +1,68 @@
+% メールに添付する図(研究ノート E9 の窓の図を単体にしたもの)
+% ビルド: cd share && lualatex window_email.tex
+% データ: ../research/figs/data/e09_window_{opt,real}.dat(calc/e09_review.py が生成)
+\documentclass[border=8pt]{standalone}
+\usepackage{luatexja}
+\usepackage{amsmath}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepgfplotslibrary{groupplots}
+\usetikzlibrary{calc}
+\usepackage{varwidth}
+
+\definecolor{cA}{HTML}{2A78D6}
+\definecolor{cB}{HTML}{EB6834}
+\definecolor{cC}{HTML}{1BAF7A}
+\definecolor{ink}{HTML}{0B0B0B}
+\definecolor{ink2}{HTML}{52514E}
+\definecolor{gridc}{HTML}{E4E3DF}
+\pgfplotsset{note/.style={
+  axis line style={ink2}, tick style={ink2}, tick label style={font=\scriptsize, color=ink2},
+  label style={font=\small, color=ink}, major grid style={gridc}, grid=major, clip=true}}
+\newcommand{\Msun}{\ensuremath{\,M_\odot}}
+\newcommand{\D}{../research/figs/data}
+
+\begin{document}
+\begin{varwidth}{16.5cm}
+\centering
+{\large 自己相互作用のある ALP で三つの観測が両立する窓}\par\medskip
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1, horizontal sep=14mm},
+  width=8.2cm, height=7.4cm, note, xmode=log, ymode=log,
+  xmin=0.4e-12, xmax=1.2e-12, ymin=3e10, ymax=1e13,
+  xtick={0.4e-12,0.6e-12,0.8e-12,1e-12}, xticklabels={0.4,0.6,0.8,1.0},
+  xlabel={ALP の質量 $\mu\ [10^{-12}\,\mathrm{eV}]$}]
+\nextgroupplot[ylabel={崩壊定数 $f\ [\mathrm{GeV}]$}, title={\small (a) 楽観的な仮定},
+  legend to name=wleg, legend columns=2, legend style={font=\scriptsize, draw=none, column sep=14pt}, legend cell align=left]
+  \fill[cB!12] (axis cs:0.60e-12,3e10) rectangle (axis cs:0.89e-12,1e13);
+  \addplot[ink, line width=1.1pt] table[x=mu, y=GRS] {\D/e09_window_opt.dat}; \addlegendentry{GRS 1915+105 が回転を保つ上限}
+  \addplot[cA, line width=1.1pt] table[x=mu, y=GW241011] {\D/e09_window_opt.dat}; \addlegendentry{GW241011 が回転を保つ上限}
+  \addplot[cC!60!black, dashed, line width=1pt] table[x=mu, y=M15_d18] {\D/e09_window_opt.dat}; \addlegendentry{1 世代目が回転を失う下限: $15\Msun$}
+  \addplot[cC, dashed, line width=1pt] table[x=mu, y=M20_d18] {\D/e09_window_opt.dat}; \addlegendentry{1 世代目が回転を失う下限: $20\Msun$}
+  \addplot[cC!45, dashed, line width=1pt] table[x=mu, y=M25_d18] {\D/e09_window_opt.dat}; \addlegendentry{1 世代目が回転を失う下限: $25\Msun$}
+  \node[font=\scriptsize, color=cB!80!black, anchor=north] at (axis cs:0.73e-12,9e12) {Kou+ の質量};
+\nextgroupplot[title={\small (b) 現実的な仮定}]
+  \fill[cB!12] (axis cs:0.60e-12,3e10) rectangle (axis cs:0.89e-12,1e13);
+  \addplot[ink, line width=1.1pt] table[x=mu, y=GRS] {\D/e09_window_real.dat};
+  \addplot[cA, line width=1.1pt] table[x=mu, y=GW241011] {\D/e09_window_real.dat};
+  \addplot[cC!60!black, dashed, line width=1pt] table[x=mu, y=M15_d18] {\D/e09_window_real.dat};
+  \addplot[cC, dashed, line width=1pt] table[x=mu, y=M20_d18] {\D/e09_window_real.dat};
+  \addplot[cC!45, dashed, line width=1pt] table[x=mu, y=M25_d18] {\D/e09_window_real.dat};
+  \node[font=\scriptsize, color=cB!80!black, anchor=north] at (axis cs:0.73e-12,9e12) {Kou+ の質量};
+\end{groupplot}
+\node[anchor=north] at ($(group c1r1.south)!0.5!(group c2r1.south)+(0,-1.0cm)$) {\pgfplotslegendfromname{wleg}};
+\end{tikzpicture}
+
+\medskip
+\begin{minipage}{16cm}
+\footnotesize\raggedright
+実線より下で GW241011 の主星と GRS 1915+105 が観測されたスピンを保ち、破線より上で 1 世代目の BH(生まれたときのスピン 0.7)が 6 Gyr のうちに 211 の臨界スピン $+0.18$ まで回転を失う。両立する窓は、両方の実線の下で、かつ破線の上にある。橙の帯は Kou+ (arXiv:2609.02678) の質量(90\%)。
+
+(a) GRS 1915+105 は $4.5\times10^7$ yr のあいだスピン 0.95 を保ち、GW241011 の主星は 0.78 で生まれて $3\times10^7$ yr のあいだ 0.69 を保つ。\quad
+(b) GRS 1915+105 は BH の年齢 3 Gyr のあいだ 0.87 を保ち(系統誤差込みの下限 0.92 から、軽い伴星からの降着で戻せる 0.05 を差し引く)、GW241011 の主星は 0.72 で生まれて $5\times10^7$ yr のあいだ 0.69 を保つ。
+
+二準位の準平衡、相対論的な超放射の率、自己相互作用の率は主要項(相対論的な補正を入れると、上限・下限とも 1.2--2 倍上がる)。未発表。
+\end{minipage}
+\end{varwidth}
+\end{document}
