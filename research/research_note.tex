@@ -1,0 +1,74 @@
+% 研究ノート: 自己相互作用のある超軽量スカラーの超放射を GWTC-5 の BH スピンで検定する
+% ビルド: latexmk -lualatex research_note.tex
+% 数値: calc/e0N_*.py をエントリ順に実行(research/ で。共通部品は calc/sr.py ほか)
+\documentclass[a4paper,10pt]{ltjsarticle}
+\usepackage[margin=22mm,top=22mm,bottom=24mm]{geometry}
+\usepackage{amsmath,amssymb,bm}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{booktabs,tabularx,array,float,xltabular}
+\usepackage{enumitem}
+\usepackage[most]{tcolorbox}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,fit,shapes.geometric}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepgfplotslibrary{fillbetween,groupplots}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage[colorlinks=true,breaklinks=true,allcolors=MidnightBlue]{hyperref}
+
+% ---------- 記号 ----------
+\newcommand{\Msun}{\ensuremath{\,M_\odot}}
+\newcommand{\eV}{\ensuremath{\,\mathrm{eV}}}
+\newcommand{\GeV}{\ensuremath{\,\mathrm{GeV}}}
+\newcommand{\yr}{\ensuremath{\,\mathrm{yr}}}
+\newcommand{\Hz}{\ensuremath{\,\mathrm{Hz}}}
+\newcommand{\Mpl}{\ensuremath{M_\mathrm{Pl}}}
+\newcommand{\arxiv}[1]{\href{https://arxiv.org/abs/#1}{arXiv:#1}}
+\newcommand{\review}{LVK 文献レビュー}  % ~/Documents/Claude/LVKtest/Refs/lvk_physics_review/
+
+% ---------- 配色 ----------
+\definecolor{cA}{HTML}{2A78D6}
+\definecolor{cB}{HTML}{EB6834}
+\definecolor{cC}{HTML}{1BAF7A}
+\definecolor{cD}{HTML}{8E5BC9}
+\definecolor{cM}{HTML}{8A8984}
+\definecolor{ink}{HTML}{0B0B0B}
+\definecolor{ink2}{HTML}{52514E}
+\definecolor{gridc}{HTML}{E4E3DF}
+\pgfplotsset{note/.style={
+  axis line style={ink2}, tick style={ink2}, tick label style={font=\scriptsize, color=ink2},
+  label style={font=\small, color=ink}, major grid style={gridc}, grid=major, clip=true}}
+
+% ---------- 囲み ----------
+\newtcolorbox{result}[1][]{colback=cA!5, colframe=cA!60, boxrule=0.5pt, arc=2pt, left=5pt, right=5pt, top=3pt, bottom=3pt, fonttitle=\small\bfseries, coltitle=ink, colbacktitle=cA!14, title={結果}, #1}
+\newtcolorbox{caveat}[1][]{colback=cB!5, colframe=cB!70, boxrule=0.5pt, arc=2pt, left=5pt, right=5pt, top=3pt, bottom=3pt, fonttitle=\small\bfseries, coltitle=ink, colbacktitle=cB!15, title={仮定と限界}, #1}
+
+\setlist{itemsep=2pt, topsep=4pt, parsep=0pt}
+\numberwithin{equation}{section}
+
+\title{研究ノート\\自己相互作用のある超軽量スカラーの超放射を GWTC-5 の BH スピンで検定する}
+\author{}
+\date{2026年11月3日開始}
+
+\begin{document}
+\maketitle
+\vspace{-2.5em}
+
+\begin{tcolorbox}[colback=white, colframe=ink2, boxrule=0.4pt, arc=2pt, left=6pt, right=6pt]
+\small
+\textbf{このノートの約束}
+\begin{itemize}
+\item 日付つきのエントリを順に追加する。過去のエントリは書き換えず、訂正は新しいエントリで行う。
+\item 数値はすべて \texttt{calc/} のスクリプトから出す(エントリ $n$ は \texttt{calc/e0$n$\_*.py}、出力は \texttt{calc/out/} と \texttt{figs/data/})。
+\item 文献の式・数値は arXiv の本文で照合し、式番号を書く。抜き書きは \texttt{Refs/notes/} にある。\review\ にある値は finding の ID(例: T06-06)を示す。
+\item 先行研究との比較は、このノートの模型で計算した量で行う。
+\end{itemize}
+\end{tcolorbox}
+
+\tableofcontents
+
+\input{entries/e01_design}
+\input{entries/e02_freefield}
+\input{entries/e03_quasieq}
+
+\end{document}

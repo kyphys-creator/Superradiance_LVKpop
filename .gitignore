@@ -1,0 +1,31 @@
+# macOS
+.DS_Store
+
+# LaTeX の中間ファイル(PDF は残す)
+*.aux
+*.log
+*.fls
+*.fdb_latexmk
+*.out
+*.toc
+*.bbl
+*.blg
+*.xdv
+*.synctex.gz
+build.log
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# 公開データの本体(大きいので git に入れない。出どころと取得手順は data/README.md)
+data/*/
+!data/README.md
+
+# 計算の作業ファイル
+research/calc/out/work/
+research/figs/png/
+
+# ダウンロードした論文(arXiv のソース・PDF。抜き書きは Refs/notes/ に残す)
+Refs/arxiv/

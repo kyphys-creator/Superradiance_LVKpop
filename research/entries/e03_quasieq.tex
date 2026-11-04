@@ -1,0 +1,81 @@
+% エントリ 3(2026-11-03): 自己相互作用の準平衡による窓の見積もり
+\section{[E3, 2026-11-03] 自己相互作用の準平衡: 窓はありうるか(見積もり)}\label{sec:e03}
+
+E1 の仮説を最初に確かめる。問いは、ある $f$ で GW241011 の主星は回転を保ち、1 世代目は回転を失うことがありうるか、である。計算は \texttt{calc/si.py}(共通部品)と \texttt{calc/e03\_quasieq.py}、出力は \texttt{calc/out/e03.json}。式の典拠は \arxiv{2011.11646}(以下 BGLS)で、抜き書きは \texttt{Refs/notes/theory\_rates.md} \S4 にある。
+
+\subsection{式}
+
+占有数を $\varepsilon\equiv N/(GM^2)$ で書き、$\Mpl\equiv1/\sqrt G=1.22\times10^{19}\GeV$、$\lambda=\mu^2/f^2$ とする。二準位($211$、$322$)の主な過程は二つある。
+\begin{itemize}
+\item $211\times211\to322\times\mathrm{BH}$: $\gamma_\mathrm{BH}=4.3\times10^{-7}\alpha^{11}(\Mpl/f)^4\tilde r_+\mu$(BGLS の式 21、Table V)。
+\item $322\times322\to211\times\infty$: $\gamma_\infty=1.1\times10^{-8}\alpha^8(\Mpl/f)^4\mu$(式 18、Table VI)。
+\end{itemize}
+BGLS の式 34--35 で $\dot\varepsilon_{211}=\dot\varepsilon_{322}=0$ とすると準平衡になる(式 55a,b)。
+\begin{equation}
+\varepsilon_{211}^\mathrm{eq}=\frac{2}{\sqrt3}\frac{\sqrt{\gamma_\mathrm{SR}\gamma_\infty}}{\gamma_\mathrm{BH}},\qquad
+\varepsilon_{322}^\mathrm{eq}=\frac{\gamma_\mathrm{BH}}{2\gamma_\infty}\varepsilon_{211}^\mathrm{eq},\qquad
+\dot\chi=-\gamma_\mathrm{SR}\,\varepsilon_{211}^\mathrm{eq}=-\frac{2}{\sqrt3}\frac{\gamma_\mathrm{SR}^{3/2}\gamma_\infty^{1/2}}{\gamma_\mathrm{BH}}\propto f^2.
+\label{eq:e03_qe}
+\end{equation}
+スピンの式は BGLS の式 36 である。$\gamma_\mathrm{SR}$ には、BGLS の主要項の代わりに E2 の率(\arxiv{1908.10370} の式 2.32 の 2 倍)を使う。$322$ の超放射の寄与は $10^{-8}$ 程度なので落とした。
+
+\paragraph{照合}
+主要項の率($\kappa_\mathrm{SR}=0.04$)で、BGLS の数値と比べた($\alpha=0.01$、$\chi=0.9$、$f=10^{15}\GeV$)。
+\begin{itemize}
+\item $\varepsilon_{211}^\mathrm{eq}=0.246$、$\varepsilon_{322}^\mathrm{eq}=6.89\times10^{-6}$ は、式 55a,b の 0.25、$6.9\times10^{-6}$ と合う。
+\item 回転を失う時間 $1/|\dot\chi|$ は、$\mu=10^{-12}\eV$ で $2.44\times10^7\yr$ になった。BGLS の式 60 に印刷された $10^7\yr$ は、同論文自身の定数から組んだ値より 2.4 倍小さい。抜き書きの指摘と同じなので、定数から組んだ式を使う。
+\end{itemize}
+
+\subsection{比べ方: 年齢の比}
+
+式 \eqref{eq:e03_qe} では回転を失う速さが $f^2$ に比例する。そのため、二つの BH が同じ $f$ で回転を失う時間の比は $f$ によらない。そこで次の二つの時間を比べる($M$ は固定)。
+\begin{itemize}
+\item $t_\mathrm{2G}$: GW241011 の主星($19.6\Msun$)が $\chi=0.78$ から、90\% 区間の下端 0.69 まで落ちる時間。
+\item $t_\mathrm{1G}$: 質量 $M_1$ の 1 世代目が、自然スピン $\chi_0$ から、$211$ の臨界スピン $+\,\delta$ まで落ちる時間。$\delta=0.18$ は \arxiv{2609.02678} の幅 $\sigma_\mathrm{SR}$ にあたる。
+\end{itemize}
+窓があるには、1 世代目の年齢 $T_1$ と 2 世代目の年齢 $T_2$ が $T_1/T_2\ge R\equiv t_\mathrm{1G}/t_\mathrm{2G}$ を満たさなければならない。
+
+\subsection{結果}
+
+\begin{figure}[H]
+\centering
+\input{figs/e03_ratio}
+\caption{$\mu=0.71\times10^{-12}\eV$ で、窓に要る年齢の比 $R$。灰色は $\alpha>0.15$ で、二準位の近似が外れる範囲(\arxiv{2412.03655})。}
+\label{fig:e03}
+\end{figure}
+
+\begin{result}
+\begin{itemize}
+\item \textbf{GW241011 が許す $f$}($\mu=0.71\times10^{-12}\eV$): 年齢 $T_2$ のあいだ 0.69 を保つ $f$ の上限は、$T_2=10^6,10^7,10^8,10^9\yr$ でそれぞれ $1.4\times10^{13}$、$4.5\times10^{12}$、$1.4\times10^{12}$、$4.5\times10^{11}\GeV$。QCD アクシオンの線($f\approx8\times10^{18}\GeV$)より 6 桁小さい。
+\item \textbf{年齢の比}($\mu=0.71\times10^{-12}\eV$、図~\ref{fig:e03}):
+  \begin{itemize}
+  \item $M_1=15$--$20\Msun$ の 1 世代目は、GW241011 の主星より $R\approx1$--$40$ 倍年をとっていれば回転を失う。窓は閉じていない。
+  \item $M_1=8$--$10\Msun$ では $R\approx50$--$900$ が要る。回転を失う速さがおよそ $\alpha^5$ に比例し(式 \eqref{eq:e03_qe} の $\gamma_\mathrm{SR}^{3/2}\gamma_\infty^{1/2}/\gamma_\mathrm{BH}$)、軽い BH ほど遅いからである。
+  \item 窓の中では、軽い 1 世代目は回転を保つ。したがって \arxiv{2609.02678} が示した質量とスピンの相関のうち、低質量の側は自由場と違う形になる。
+  \end{itemize}
+\item \textbf{質量の 90\% 区間の端}: $\mu=0.60$、$0.89\times10^{-12}\eV$ でも同じ傾向になる。$M_1=10\Msun$ での $R$ は、それぞれ $76$--$390$、$18$--$170$ である(\texttt{e03.json})。
+\item \textbf{近似の確かめ}(GW241011、$f=4.5\times10^{12}\GeV$):
+  \begin{itemize}
+  \item $\varepsilon_{211}^\mathrm{eq}$ は自由場で飽和する量の $5.6\times10^{-9}$ 倍で、自己相互作用が成長を止めている。
+  \item bosenova の閾値(BGLS の式 88)の 5\% で、届かない。
+  \item 準平衡に達するまで約 30 年で、$T_2$ よりずっと短い。
+  \end{itemize}
+\end{itemize}
+\end{result}
+
+\paragraph{意味}
+自己相互作用は、自由場では両立しない二つの事実を両立させうる。条件は $f\sim10^{12}$--$10^{13}\GeV$ と、2 世代目が 1 世代目より十分に若いことである。
+\begin{itemize}
+\item 窓が開くかどうかは、$f$ と、1 世代目・2 世代目の年齢の分布の組で決まる。これは集団解析で決める問いで、E1 の設計がそのまま要る。
+\item 年齢の分布の仮定が結論を決めかねないので、遅れの分布を星団模型で周辺化することが論文の中心になる。
+\item この窓では、回転を失う途中の BH が年齢に応じて散らばる。\arxiv{2609.02678} が手で入れた幅 $\sigma_\mathrm{SR}$ にあたるものが、物理として出てくる。
+\end{itemize}
+
+\begin{caveat}
+\begin{itemize}
+\item 二準位・主要項の率である。$\gamma_\mathrm{BH}$ は $\alpha\sim0.2$ で「数倍」大きくなる(BGLS 図 21)。相対論的な補正(\arxiv{2412.03655})と $n\le5$ の準位は入れていない。比 $R$ は $\gamma_\mathrm{BH}$ の質量依存性に直接効く。
+\item 質量は固定し、BH の質量の変化は無視した(雲は自由場の飽和量の $10^{-8}$ 倍なので小さい)。
+\item 1 世代目の判定($\chi_0$、$\delta$)は説明のための選び方で、集団解析ではない。
+\item $f\sim10^{12}\GeV$ の ALP が、ほかの観測(連続波・スカラー波の放出、ほかの BH)と矛盾しないかは確かめていない。
+\end{itemize}
+\end{caveat}

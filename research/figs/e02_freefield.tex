@@ -1,0 +1,40 @@
+% E2: 自由場で 2 世代目の BH(chi0 = 0.69)が回転を失う範囲。データは calc/e02_freefield.py
+\pgfplotsset{colormap={spinmap}{color(0)=(cA!85!black) color(0.35)=(cA) color(0.6)=(cA!35) color(0.69)=(white)}}
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1, horizontal sep=22mm},
+  width=0.45\linewidth, height=0.42\linewidth, note]
+% (a) t = 1e8 yr での chi_f の地図
+\nextgroupplot[xmode=log, ymode=log, xmin=3, xmax=150, ymin=1e-14, ymax=1e-11,
+  xlabel={$M\ [M_\odot]$}, ylabel={$\mu\ [\mathrm{eV}]$}, grid=none, axis on top,
+  title={\small (a) $t=10^8\yr$ 後の $\chi_f$},
+  colorbar, colormap name=spinmap, point meta min=0, point meta max=0.69,
+  colorbar style={width=2.5mm, ytick={0,0.2,0.4,0.6}, yticklabel style={font=\scriptsize}, ylabel={$\chi_f$}, ylabel style={font=\scriptsize}}]
+  \addplot[matrix plot*, mesh/cols=121, mesh/ordering=x varies, point meta=\thisrow{chif}]
+    table[x expr={10^\thisrow{lgM}}, y expr={10^\thisrow{lgmu}}] {figs/data/e02_chif_t8.dat};
+  \draw[ink2, line width=0.5pt] (axis cs:10,1e-14) -- (axis cs:10,1e-11);
+  \draw[ink2, line width=0.5pt] (axis cs:20,1e-14) -- (axis cs:20,1e-11);
+  \draw[ink2, line width=0.5pt, dashed] (axis cs:45,1e-14) -- (axis cs:45,1e-11);
+  \addplot[cB, line width=0.8pt, densely dashed, domain=3:150, samples=2] {7.1e-13};
+  \node[font=\scriptsize, color=cB, fill=white, fill opacity=0.8, text opacity=1, inner sep=1pt, anchor=south west] at (axis cs:3.3,8e-13) {$7.1\times10^{-13}$\,eV};
+% (b) mu = 7.1e-13 eV での最終スピンと GW241011
+\nextgroupplot[xmode=log, xmin=3, xmax=150, ymin=0, ymax=0.9,
+  xlabel={$M\ [M_\odot]$}, ylabel={$\chi_f$},
+  title={\small (b) $\mu=7.1\times10^{-13}$\,eV},
+  legend style={font=\scriptsize, at={(0.98,0.02)}, anchor=south east, fill=white, fill opacity=0.85, text opacity=1, draw=none}, legend cell align=left]
+  \fill[cM!18] (axis cs:10,0) rectangle (axis cs:20,0.9);
+  \fill[cM!18] (axis cs:45,0) rectangle (axis cs:100,0.9);
+  \addplot[cA!45, line width=0.9pt] table[x=M, y=chif_t6] {figs/data/e02_regge_mu7.1e-13.dat};
+  \addlegendentry{$t=10^6\yr$}
+  \addplot[cA, line width=0.9pt] table[x=M, y=chif_t8] {figs/data/e02_regge_mu7.1e-13.dat};
+  \addlegendentry{$10^8\yr$}
+  \addplot[cA!60!black, line width=0.9pt, dashed] table[x=M, y=chif_t10] {figs/data/e02_regge_mu7.1e-13.dat};
+  \addlegendentry{$10^{10}\yr$}
+  \addplot[ink2, line width=0.5pt, densely dotted, domain=3:150, samples=2, forget plot] {0.69};
+  % GW241011 の主星(LVK 文献レビュー T04-28: m1 = 19.6 +3.6/-2.5, chi1 = 0.78 +/- 0.09、90%)
+  \addplot[cB, only marks, mark=*, mark size=1.8pt, error bars/.cd, x dir=both, x explicit, y dir=both, y explicit]
+    coordinates {(19.6,0.78) +- (0,0)};
+  \addlegendentry{GW241011 主星}
+  \draw[cB, line width=0.7pt] (axis cs:17.1,0.78) -- (axis cs:23.2,0.78);
+  \draw[cB, line width=0.7pt] (axis cs:19.6,0.69) -- (axis cs:19.6,0.87);
+\end{groupplot}
+\end{tikzpicture}

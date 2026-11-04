@@ -1,0 +1,107 @@
+% エントリ 2(2026-11-03): 自由場の超放射と 2 世代目の BH
+\section{[E2, 2026-11-03] 自由場の超放射: 2 世代目の BH はどこで回転を失うか}\label{sec:e02}
+
+自己相互作用を入れる前の基準として、自由場のスカラーで、生まれたときのスピンが $\chi_0=0.69$ の BH(2 世代目)がいつ、どこまで回転を失うかを計算した。計算は \texttt{calc/sr.py}(共通部品)と \texttt{calc/e02\_freefield.py}、出力は \texttt{calc/out/e02.json}。
+
+\subsection{式}
+
+$\alpha\equiv GM\mu/\hbar c$ とし、$G=c=\hbar=1$ で書く。準位 $|n\ell m\rangle$ の振動数を $\omega_{n\ell m}=E_{n\ell m}+i\Gamma_{n\ell m}$ と書く(\arxiv{1908.10370} の式 2.27)。
+
+\paragraph{エネルギー}
+\arxiv{1908.10370} の式 2.28--2.29 を使う。
+\begin{equation}
+\frac{E_{n\ell m}}{\mu}=1-\frac{\alpha^2}{2n^2}-\frac{\alpha^4}{8n^4}+\frac{f_{n\ell}}{n^3}\alpha^4+\frac{h_\ell}{n^3}\chi m\alpha^5,
+\qquad f_{n\ell}=-\frac{6}{2\ell+1}+\frac{2}{n},\quad h_\ell=\frac{16}{2\ell(2\ell+1)(2\ell+2)}.
+\end{equation}
+
+\paragraph{成長率}
+\arxiv{1908.10370} の式 2.32--2.34 を使う。
+\begin{equation}
+\Gamma_{n\ell m}=2\tilde r_+C_{n\ell}\,g_{\ell m}\,(m\Omega_H-E_{n\ell m})\,\alpha^{4\ell+5},
+\qquad
+C_{n\ell}=\frac{2^{4\ell+1}(n+\ell)!}{n^{2\ell+4}(n-\ell-1)!}\Bigl[\frac{\ell!}{(2\ell)!(2\ell+1)!}\Bigr]^2,
+\label{eq:e02_rate}
+\end{equation}
+記号は次のとおり($M=1$ の単位)。
+\begin{itemize}
+\item $g_{\ell m}=\prod_{k=1}^{\ell}\bigl[k^2(1-\chi^2)+(\chi m-2r_+E)^2\bigr]$。
+\item $\tilde r_+=1+\sqrt{1-\chi^2}$、$\Omega_H=\chi/(2r_+)$。
+\end{itemize}
+
+\paragraph{規約の注意}
+$\Gamma$ は場の振幅の成長率である。占有数 $N$ は $\mathrm{d}N/\mathrm{d}t=2\Gamma N$ で育つ。
+\begin{itemize}
+\item 小さい $\alpha$ では、式 \eqref{eq:e02_rate} は $\Gamma_{211}\to\mu\alpha^8(\chi-2\alpha\tilde r_+)/48$ になる。占有数の率はその 2 倍で、分母は 24 になる。
+\item 本文で照合した \arxiv{1908.10370} は、式 2.32 を $\alpha\lesssim0.2$ で数値解とよく合うとしている。これより大きい $\alpha$ では相対論的な率に替える(E3 以降)。
+\end{itemize}
+
+\paragraph{BH の変化}
+雲の量子 1 個が BH から $m\hbar$ の角運動量と $\hbar E$ のエネルギーを持ち去る。準位 $|n\ell m\rangle$ は $m\Omega_H(\chi)=E_{n\ell m}$ となる臨界スピンで成長を止める。
+
+\subsection{解き方: 飽和で区切る半解析}
+
+複数の準位を ODE で同時に解くと、飽和したあとの平衡が非常に硬く、発散した(\texttt{DESIGN.md} D3)。そこで次の半解析を使う。
+\begin{itemize}
+\item 各準位は 1 個の量子から育つ。$e$ 倍の回数 $A_\ell=\int2\Gamma_\ell\,\mathrm{d}t$ が $\ln N_\mathrm{sat}$ に届いたとき飽和する。
+\item 飽和すると、BH は臨界スピンまで回転を失う。$N_\mathrm{sat}$ は、臨界スピンまでに渡す角運動量を $m\hbar$ で割った数である。
+\item 飽和にかかる最後の数 $e$-fold は無視する($\ln N_\mathrm{sat}\approx180$ に対して数個)。
+\item 準位は $211$、$322$、$433$ を入れた。
+\end{itemize}
+$211$ だけの場合に ODE と比べた(表~\ref{tab:e02_check})。最終スピンの差は最大 $1.4\times10^{-4}$($\alpha=0.15$)である。スピンが中点まで落ちる時刻は、時間の格子の刻み(0.7\%)以内で一致した。
+
+\begin{table}[H]
+\centering\small
+\caption{半解析と ODE の照合($211$ だけ、$\chi_0=0.69$)。$t_\mathrm{mid}$ はスピンが初期値と最終値の中点まで落ちる時刻。}
+\label{tab:e02_check}
+\begin{tabular}{@{}rrrcccc@{}}
+\toprule
+$M\ [M_\odot]$ & $\mu\ [\mathrm{eV}]$ & $\alpha$ & $\chi_f$(ODE) & $\chi_f$(半解析) & $t_\mathrm{mid}$(ODE) & $t_\mathrm{mid}$(半解析) \\
+\midrule
+15 & $7\times10^{-13}$ & 0.079 & 0.29705 & 0.29705 & 301 yr & 301 yr \\
+5 & $1\times10^{-12}$ & 0.037 & 0.14578 & 0.14578 & $4.93\times10^4$ yr & $4.93\times10^4$ yr \\
+30 & $3\times10^{-13}$ & 0.067 & 0.25674 & 0.25674 & 2128 yr & 2128 yr \\
+60 & $1\times10^{-13}$ & 0.045 & 0.17399 & 0.17399 & $1.28\times10^5$ yr & $1.28\times10^5$ yr \\
+10 & $2\times10^{-12}$ & 0.150 & 0.53555 & 0.53569 & 1.83 yr & 1.82 yr \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{結果}
+
+\begin{figure}[H]
+\centering
+\input{figs/e02_freefield}
+\caption{自由場で、$\chi_0=0.69$ の BH が回転を失う範囲。灰色の帯は、GWTC-5 で速く回る部分集団が見つかった質量 $10$--$20\Msun$ と $45\Msun$ 以上(\arxiv{2605.27226})。
+(a) $t=10^8\yr$ 後のスピン $\chi_f$(白は回転を失わない)。縦線は質量 10・20・$45\Msun$、橙の破線は \arxiv{2609.02678} の質量。準位 211・322・433 が飽和する範囲が斜めの帯になる($\alpha\propto M\mu$)。
+(b) $\mu=7.1\times10^{-13}\eV$ での最終スピン。点は GW241011 の主星(90\%、\review\ T04-28)。}
+\label{fig:e02}
+\end{figure}
+
+\begin{result}
+\begin{itemize}
+\item \textbf{$15\Msun$、$\mu=7\times10^{-13}\eV$}: $\alpha=0.079$、占有数の $e$-fold は $1.7\yr$、$\ln N_\mathrm{sat}=179$ である。スピンは約 300 年で中点まで落ち、$0.297$ に止まる。テーマ選定のときの見積もり(e-fold 約 1 年、育ちきるまで $\sim10^2$ 年)は桁で合っていた。
+\item \textbf{GW241011 の主星}(\review\ T04-28 の $m_1=19.6\Msun$、$\chi_1=0.78$): $\mu=7.1\times10^{-13}\eV$ の雲があると、スピンは約 35 年で 90\% 区間の下端 0.69 を下回る。$10^{10}\yr$ 後は $322$ も飽和して 0.195 になる。
+\item \textbf{帯の中のすべての質量で $\chi_f<0.5$ になる $\mu$}(図~\ref{fig:e02}(a)):
+  \begin{center}
+  \begin{tabular}{@{}lcc@{}}
+  \toprule
+  $t$ & $10$--$20\Msun$ & $45$--$100\Msun$ \\
+  \midrule
+  $10^6\yr$ & $(4.0\text{--}8.9)\times10^{-13}\eV$ & $(1.0\text{--}1.9)\times10^{-13}\eV$ \\
+  $10^8\yr$ & $2.4\times10^{-13}$--$1.8\times10^{-12}\eV$ & $(0.60\text{--}3.8)\times10^{-13}\eV$ \\
+  $10^{10}\yr$ & $1.4\times10^{-13}$--$2.7\times10^{-12}\eV$ & $(0.35\text{--}5.6)\times10^{-13}\eV$ \\
+  \bottomrule
+  \end{tabular}
+  \end{center}
+\item \textbf{2 世代目の較正}: $\mu\approx7\times10^{-13}\eV$ は、$10$--$20\Msun$ の 2 世代目を、遅れが $10^6\yr$ でもすべて回転を失わせる。自由場で \arxiv{2609.02678} の質量を救う道はない。これは同論文が GW241011 について自分で示したこと(E1)と一致する。
+\end{itemize}
+\end{result}
+
+\begin{caveat}
+\begin{itemize}
+\item 成長率は解析式で、$\alpha\lesssim0.2$ でしか正確でない。図の上端(大きい $\mu$)の境界は、相対論的な率に替えると動く。
+\item 「帯の中のすべての質量」という基準は説明のためのもので、集団解析ではない。
+\item 雲の重力波による減衰、伴星による準位の混合、降着は入れていない。どれもスピンを戻さないか(D2)、戻す量が小さい。
+\item 2 世代目の自然スピンは 0.69 に固定した。実際は親の質量比とスピンで $0.6$--$0.8$ に広がる。
+\end{itemize}
+\end{caveat}

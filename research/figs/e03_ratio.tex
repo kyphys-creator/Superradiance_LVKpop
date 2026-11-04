@@ -1,0 +1,19 @@
+% E3: 窓に要る年齢の比 R = t_1G / t_2G(mu = 0.71e-12 eV)。データは calc/e03_quasieq.py
+\begin{tikzpicture}
+\begin{axis}[note, width=0.62\linewidth, height=0.42\linewidth, ymode=log, xmin=6, xmax=40, ymin=0.1, ymax=3e3,
+  xlabel={1 世代目の質量 $M_1\ [M_\odot]$}, ylabel={$R=t_\mathrm{1G}/t_\mathrm{2G}$},
+  legend style={font=\scriptsize, at={(0.98,0.98)}, anchor=north east, fill=white, fill opacity=0.85, text opacity=1, draw=none}, legend cell align=left,
+  unbounded coords=jump]
+  \fill[cM!18] (axis cs:28,0.1) rectangle (axis cs:40,3e3);
+  \node[font=\scriptsize, color=ink2, anchor=north] at (axis cs:34,2e3) {$\alpha>0.15$};
+  \addplot[cA, line width=0.9pt] table[x=M1, y=R_c07_d05] {figs/data/e03_ratio_mu0.71.dat};
+  \addlegendentry{$\chi_0=0.7$, $\delta=0.05$}
+  \addplot[cA, line width=0.9pt, dashed] table[x=M1, y=R_c07_d18] {figs/data/e03_ratio_mu0.71.dat};
+  \addlegendentry{$\chi_0=0.7$, $\delta=0.18$}
+  \addplot[cC, line width=0.9pt] table[x=M1, y=R_c05_d05] {figs/data/e03_ratio_mu0.71.dat};
+  \addlegendentry{$\chi_0=0.5$, $\delta=0.05$}
+  \addplot[cC, line width=0.9pt, dashed] table[x=M1, y=R_c05_d18] {figs/data/e03_ratio_mu0.71.dat};
+  \addlegendentry{$\chi_0=0.5$, $\delta=0.18$}
+  \addplot[ink2, line width=0.5pt, densely dotted, domain=6:40, samples=2, forget plot] {1};
+\end{axis}
+\end{tikzpicture}
