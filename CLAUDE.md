@@ -24,13 +24,14 @@ research/entries/            エントリ(過去のエントリは書き換え�
 research/calc/               計算。エントリ N は calc/e0N_*.py、共通部品は calc/*.py、出力は calc/out/
 research/figs/               pgfplots の図(データは figs/data/、calc が生成)
 data/                        公開データ(本体は git に入れない。出どころ・取得手順・サイズは data/README.md)
-Refs/notes/                  論文の本文からの抜き書き(式番号つき)
+Refs/notes/                  論文の本文からの抜き書き(式番号つき): population_papers、theory_rates、astro_inputs、window_consistency
 Refs/arxiv/                  ダウンロードした論文のソース・PDF(git に入れない)
 DESIGN.md                    決めた設計とその理由
+paper/outline.md             論文の構成案と、データ解析の前に残る理論の作業
 ```
 
 ## 実行環境
-- 推論用の Python 環境は未作成(2026-11-03)。作るときはユーザーに確認する(候補: jax、numpyro、h5py、fsspec、superrad)。PBH_LVKpop と共用にするかもそのとき決める。
+- 推論用の Python 環境は未作成(2026-11-03)。作るときはユーザーに確認する(候補: jax、numpyro、h5py、fsspec)。相対論的な超放射の率は自前の連分数法で計算するので SuperRad は要らない(DESIGN.md D5)。PBH_LVKpop と共用にするかもそのとき決める。
 - 雲の運動論など numpy・scipy だけで済む計算は `~/miniforge3/bin/python3`(numpy 2.2、scipy 1.16)。
 - ノート: `cd research && latexmk -lualatex research_note.tex`
 - 計算機は Mac Studio(14 コア、36 GB)。重い並列計算の前に、1 本だけ走らせてメモリ(RSS)を測る。

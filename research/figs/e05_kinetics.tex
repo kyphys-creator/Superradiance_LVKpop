@@ -1,0 +1,25 @@
+% E5: 二準位の運動論(GW241011 の主星、mu = 0.71e-12 eV)。データは calc/e05_kinetics.py
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1, horizontal sep=18mm},
+  width=0.47\linewidth, height=0.42\linewidth, note]
+% (a) f = 4e12 GeV の時間発展
+\nextgroupplot[xmode=log, ymode=log, xmin=0.1, xmax=1e8, ymin=1e-80, ymax=1,
+  xlabel={$t\ [\mathrm{yr}]$}, ylabel={$\varepsilon=N/GM^2$},
+  title={\small (a) $f=4\times10^{12}\GeV$},
+  legend style={font=\scriptsize, at={(0.98,0.03)}, anchor=south east, fill=white, fill opacity=0.85, text opacity=1, draw=none}, legend cell align=left]
+  \addplot[cA, line width=0.9pt] table[x=t_yr, y=e211] {figs/data/e05_evol_f4e12.dat}; \addlegendentry{$\varepsilon_{211}$}
+  \addplot[cB, line width=0.9pt] table[x=t_yr, y=e322] {figs/data/e05_evol_f4e12.dat}; \addlegendentry{$\varepsilon_{322}$}
+  \addplot[cA, densely dashed, line width=0.6pt] table[x=t_yr, y=e211_eq] {figs/data/e05_evol_f4e12.dat}; \addlegendentry{準平衡(式 55a,b)}
+  \addplot[cB, densely dashed, line width=0.6pt, forget plot] table[x=t_yr, y=e322_eq] {figs/data/e05_evol_f4e12.dat};
+% (b) 年齢 T でのスピン vs f
+\nextgroupplot[xmode=log, xmin=1e11, xmax=1e15, ymin=0.3, ymax=0.82,
+  xlabel={$f\ [\mathrm{GeV}]$}, ylabel={$\chi(T)$},
+  title={\small (b) 年齢 $T$ でのスピン},
+  legend style={font=\scriptsize, at={(0.98,0.98)}, anchor=north east, fill=white, fill opacity=0.85, text opacity=1, draw=none}, legend cell align=left]
+  \addplot[cA!45, line width=0.9pt] table[x=f, y=chi_t6] {figs/data/e05_chi_vs_f.dat}; \addlegendentry{$T=10^6\yr$}
+  \addplot[cA, line width=0.9pt] table[x=f, y=chi_t7] {figs/data/e05_chi_vs_f.dat}; \addlegendentry{$10^7\yr$}
+  \addplot[cA!60!black, line width=0.9pt, dashed] table[x=f, y=chi_t8] {figs/data/e05_chi_vs_f.dat}; \addlegendentry{$10^8\yr$}
+  \addplot[cB, densely dotted, line width=0.7pt, domain=1e11:1e15, samples=2] {0.69}; \addlegendentry{GW241011 の 90\% 下端}
+  \addplot[ink2, densely dashdotted, line width=0.6pt, domain=1e11:1e15, samples=2] {0.3987}; \addlegendentry{211 の臨界スピン}
+\end{groupplot}
+\end{tikzpicture}

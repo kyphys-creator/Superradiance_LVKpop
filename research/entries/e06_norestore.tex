@@ -1,0 +1,38 @@
+% エントリ 6(2026-11-03): 雲の吸収で BH の回転は戻らない
+\section{[E6, 2026-11-03] 雲が BH に吸収されても回転は戻らない}\label{sec:e06}
+
+2 世代目の較正(DESIGN.md D2)は、「一度失った回転は、伴星や雲の壊れ方によらず戻らない」ことを前提にしている。ここで式で確かめる。
+
+\subsection{吸収されるモードとスピンの変化}
+
+周波数 $\omega$、方位量子数 $m$ のモードの量子が $\delta N$ 個 BH に吸収されると、BH の質量と角運動量は $\delta M=\hbar\omega\,\delta N$、$\delta J=m\hbar\,\delta N$ だけ変わる。$\chi=J/GM^2$ なので($G=c=\hbar=1$)、
+\begin{equation}
+\delta\chi=\frac{\delta J}{M^2}-2\chi\frac{\delta M}{M}=\frac{\delta N}{M^2}\bigl(m-2\chi M\omega\bigr).
+\label{eq:e06_dchi}
+\end{equation}
+モードが BH に吸収されるのは、超放射の条件を満たさないとき、すなわち $\omega>m\Omega_H$ のときである。
+\begin{itemize}
+\item \textbf{$m\le0$ のモード}: 式 \eqref{eq:e06_dchi} の括弧は $m-2\chi M\omega\le-2\chi M\omega<0$ になり、吸収はスピンを必ず下げる。
+\item \textbf{$m\ge1$ のモード}: BH が $m=1$ の超放射の領域にいる($\chi\ge\chi_c^{(211)}$)あいだは、$m\ge1$ のモードは超放射するか臨界にあり、吸収されない。$\omega\simeq\mu$ なので、$m\Omega_H>\omega$ は $m$ が大きいほど満たしやすい。
+\end{itemize}
+したがって、$\chi\ge\chi_c^{(211)}$ の BH が吸収するのは $m\le0$ のモードだけで、どのような過程を経ても吸収によってスピンは上がらない。対象になる過程は次のとおり。
+\begin{itemize}
+\item 自己相互作用の $211\times211\to322\times\mathrm{BH}$。吸収されるのは $m=0$ のモードで、$\delta J=0$、$\delta M>0$ なので $\chi$ は少し下がる。E5 では質量を固定したので、この寄与を落としている。雲が小さいので小さい。
+\item 伴星の潮汐による準位の混合で、減衰するモード($21{-}1$、$200$ など)に移った雲。
+\item 雲が壊れて吸収される場合。
+\end{itemize}
+
+\paragraph{例外: 臨界より下に押し下げられた BH}
+BH のスピンが何らかの理由で $\chi_c^{(211)}$ より下がると、$211$ の雲は非超放射になり BH に吸収される。$m=1$、$M\omega\simeq\alpha$ なので括弧は $1-2\chi\alpha>0$ になり、スピンは上がる。ただしこれは、$211$ の雲がスピンを臨界値に保つ復元力として働くことを意味するだけである。雲の角運動量はもともと BH から来たので、BH が雲の全部を吸収しても、生まれたときの値を超えない。
+
+\subsection{雲の外からの回転}
+
+スピンを生まれたときの値より上げうるのは、ガスの降着だけである。Eddington 限界の降着でスピンが $O(1)$ 変わる時間は、Salpeter 時間 $\sim4.5\times10^7\yr$(\arxiv{2412.03655} の $\tau_\mathrm{Sal}$)の程度である。
+\begin{itemize}
+\item 球状星団・核星団の BBH は、ガスが少ないので無視できる。
+\item AGN 円盤の中の階層合体では、降着で 2 世代目が回り続けうる。この経路の割合と降着率は、集団解析の頑健さの検定に入れる(E7 の天体物理の入力)。
+\end{itemize}
+
+\begin{result}
+BH が $m=1$ の超放射の領域にいる限り、雲や伴星を通じた吸収はスピンを上げない(式 \eqref{eq:e06_dchi})。2 世代目の BH が観測時に速く回っていることは、それが生まれてから回転を奪われなかったこと、あるいはガスの降着で回し直されたことを意味する。後者は AGN 円盤の経路でだけ効く。
+\end{result}

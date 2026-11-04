@@ -1,0 +1,11 @@
+% E7: gamma_BH の相対論的な補正を入れたときの年齢の比(mu = 0.71e-12 eV)。データは calc/e07_cbh.py
+\begin{tikzpicture}
+\begin{axis}[note, width=0.62\linewidth, height=0.42\linewidth, ymode=log, xmin=6, xmax=28, ymin=1, ymax=2e3,
+  xlabel={1 世代目の質量 $M_1\ [M_\odot]$}, ylabel={$R=t_\mathrm{1G}/t_\mathrm{2G}$},
+  legend style={font=\scriptsize, at={(0.98,0.98)}, anchor=north east, fill=white, fill opacity=0.85, text opacity=1, draw=none}, legend cell align=left]
+  \addplot[cA, line width=0.9pt] table[x=M1, y=R_d05] {figs/data/e07_R_mu0.71.dat}; \addlegendentry{主要項、$\delta=0.05$}
+  \addplot[cA, line width=0.9pt, dashed] table[x=M1, y=R_d18] {figs/data/e07_R_mu0.71.dat}; \addlegendentry{主要項、$\delta=0.18$}
+  \addplot[cB, line width=0.9pt] table[x=M1, y=Rc_d05] {figs/data/e07_R_mu0.71.dat}; \addlegendentry{相対論的な $\gamma_\mathrm{BH}$、$\delta=0.05$}
+  \addplot[cB, line width=0.9pt, dashed] table[x=M1, y=Rc_d18] {figs/data/e07_R_mu0.71.dat}; \addlegendentry{相対論的な $\gamma_\mathrm{BH}$、$\delta=0.18$}
+\end{axis}
+\end{tikzpicture}

@@ -1,0 +1,19 @@
+% E4: 相対論的な率 / 解析式(1908.10370 の式 2.32)。データは calc/e04_rates.py
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1, horizontal sep=16mm},
+  width=0.47\linewidth, height=0.40\linewidth, note, xmode=log, ymode=log, ymin=0.5, ymax=30, log ticks with fixed point, xtick={0.03,0.05,0.1,0.2,0.3,0.5}, ytick={0.5,1,2,5,10,20}]
+\nextgroupplot[xmin=0.03, xmax=0.55, xlabel={$\alpha$}, ylabel={$\mathrm{Im}\,\omega_\mathrm{CF}/\mathrm{Im}\,\omega_\mathrm{analytic}$},
+  title={\small (a) $211$},
+  legend style={font=\scriptsize, at={(0.02,0.98)}, anchor=north west, fill=white, fill opacity=0.85, text opacity=1, draw=none}, legend cell align=left]
+  \addplot[cC, line width=0.9pt] table[x=alpha, y=r05] {figs/data/e04_ratio_211.dat}; \addlegendentry{$\chi=0.5$}
+  \addplot[cA, line width=0.9pt] table[x=alpha, y=r07] {figs/data/e04_ratio_211.dat}; \addlegendentry{$0.7$}
+  \addplot[cB, line width=0.9pt] table[x=alpha, y=r09] {figs/data/e04_ratio_211.dat}; \addlegendentry{$0.9$}
+  \addplot[cD, line width=0.9pt] table[x=alpha, y=r099] {figs/data/e04_ratio_211.dat}; \addlegendentry{$0.99$}
+  \addplot[ink2, densely dotted, domain=0.03:0.55, samples=2, forget plot] {1};
+\nextgroupplot[xmin=0.1, xmax=0.52, xlabel={$\alpha$}, title={\small (b) $322$}]
+  \addplot[cA, line width=0.9pt] table[x=alpha, y=r07] {figs/data/e04_ratio_322.dat};
+  \addplot[cB, line width=0.9pt] table[x=alpha, y=r09] {figs/data/e04_ratio_322.dat};
+  \addplot[cD, line width=0.9pt] table[x=alpha, y=r099] {figs/data/e04_ratio_322.dat};
+  \addplot[ink2, densely dotted, domain=0.1:0.52, samples=2, forget plot] {1};
+\end{groupplot}
+\end{tikzpicture}

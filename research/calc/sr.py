@@ -142,7 +142,7 @@ def chi_threshold(M, chi, mu_eV, n, l, m):
     return Mf, chif
 
 
-def chi_final_seq(M0, chi0, mu_eV, t_yr, levels, norm=NORM_N):
+def chi_final_seq(M0, chi0, mu_eV, t_yr, levels, norm=NORM_N, rel=False):
     """自由場で、時刻 t_yr(年、昇順の配列)での BH のスピン。
 
     各準位は 1 個の量子から e 倍の回数 A_l = int Gamma_l dt を積み、
@@ -158,7 +158,8 @@ def chi_final_seq(M0, chi0, mu_eV, t_yr, levels, norm=NORM_N):
     k = 0
     while True:
         a = alpha_of(M, mu_eV)
-        rates = np.array([gamma_over_mu(a, chi, n, l, m, norm) * mu_s * YR if not d else 0.0
+        gfun = gamma_rel_over_mu if rel else gamma_over_mu
+        rates = np.array([gfun(a, chi, n, l, m, norm) * mu_s * YR if not d else 0.0
                           for (n, l, m), d in zip(levels, done)])
         # 次に飽和する準位
         t_next, i_next, state_next = np.inf, -1, None
@@ -183,3 +184,36 @@ def chi_final_seq(M0, chi0, mu_eV, t_yr, levels, norm=NORM_N):
         t = t_next
         M, chi = state_next
         done[i_next] = True
+
+
+# ---------- 相対論的な率(E4 の連分数法の表) ----------
+# 有効な範囲(E4 で確かめた): 211 は alpha >= 0.03、322 は 0.1 <= alpha <= 0.52、433 は 0.27 <= alpha <= 0.42。
+# 範囲の外と、表の欠けた点では解析式(1908.10370 の式 2.32)に戻す。
+_REL_RANGE = {(2, 1, 1): (0.03, 0.55), (3, 2, 2): (0.1, 0.52), (4, 3, 3): (0.27, 0.42)}
+_REL = {}
+
+
+def _rel_table(n, l, m):
+    import os
+    from scipy.interpolate import RegularGridInterpolator
+    key = (n, l, m)
+    if key not in _REL:
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", f"rates_{n}{l}{m}.npz")
+        z = np.load(path)
+        al, ch, im = z["alpha"], z["chi"], z["im"].copy()
+        F = im / al[:, None] ** (4 * l + 5)
+        for i, a in enumerate(al):                 # 欠けた点は解析式で埋める
+            for j, c in enumerate(ch):
+                if not np.isfinite(F[i, j]):
+                    F[i, j] = gamma_over_mu(a, c, n, l, m) * a / a ** (4 * l + 5)
+        _REL[key] = RegularGridInterpolator((np.log(al), ch), F, method="cubic", bounds_error=False, fill_value=None)
+    return _REL[key]
+
+
+def gamma_rel_over_mu(alpha, chi, n, l, m, norm=1.0):
+    """相対論的な Gamma / mu(norm=1 で振幅の率、2 で占有数の率)。表の範囲外は解析式。"""
+    lo, hi = _REL_RANGE.get((n, l, m), (np.inf, -np.inf))
+    if not (lo <= alpha <= hi):
+        return gamma_over_mu(alpha, chi, n, l, m, norm)
+    F = _rel_table(n, l, m)((np.log(alpha), chi))
+    return norm * float(F) * alpha ** (4 * l + 5) / alpha

@@ -1,0 +1,62 @@
+% エントリ 4(2026-11-03): 相対論的な超放射の率
+\section{[E4, 2026-11-03] 相対論的な超放射の率(連分数法)}\label{sec:e04}
+
+E2・E3 の超放射の率は解析式(\arxiv{1908.10370} の式 2.32)で、同論文は $\alpha\lesssim0.2$ でしか正確でないとしている。そこで、Kerr 時空の質量のあるスカラーの準束縛状態を Leaver の連分数法で解き、率を表にした。外部のコードは使わない。計算は \texttt{calc/leaver.py}(解法)、\texttt{calc/e04\_rates.py}(表と照合)、\texttt{calc/e04\_impact.py}(E2・E3 への影響)。
+
+\subsection{方法}
+
+式は \arxiv{0705.2880}(Dolan 2007)の \S III による。
+\begin{itemize}
+\item 動径の解を次の形に置き、係数 $a_n$ の三項漸化式 $\alpha_na_{n+1}+\beta_na_n+\gamma_na_{n-1}=0$ を作る(同論文の式 \texttt{Rsubs}、係数 $c_0$--$c_4$)。
+\begin{equation}
+R(r)=(r-r_+)^{-i\sigma}(r-r_-)^{i\sigma+\chi-1}e^{qr}\sum_na_n\Bigl(\frac{r-r_+}{r-r_-}\Bigr)^n,\qquad q=-\sqrt{\mu^2-\omega^2}.
+\end{equation}
+\item $\mathrm{Re}\,q<0$ を選ぶと、無限遠で減衰する束縛状態になる。
+\item 連分数の条件 $\beta_0-\alpha_0\gamma_1/(\beta_1-\alpha_1\gamma_2/(\beta_2-\cdots))=0$ を、複素数の割線法で解く。
+\item 角度の固有値は $\Lambda=\ell(\ell+1)-c^2\langle\cos^2\theta\rangle_{\ell m}$($c^2=a^2(\omega^2-\mu^2)$)とした。束縛状態では $|c^2|\sim a^2\alpha^4/n^2$ なので、$c^4$ の項は $\alpha\le0.5$ で $10^{-5}$ 以下である。
+\item 連分数は 4000 項で打ち切った。
+\end{itemize}
+
+\subsection{照合}
+
+\begin{itemize}
+\item \textbf{Dolan の Table I}(211 の最大成長率、6 点): すべて 3 桁で一致した。例: $a=0.99$、$M\mu=0.421$ で $M\,\mathrm{Im}\,\omega=1.504\times10^{-7}$(原文 $1.50\times10^{-7}$)、$a=0.7$、$M\mu=0.187$ で $3.335\times10^{-10}$(原文 $3.33\times10^{-10}$)。
+\item \textbf{多倍長}(mpmath、40 桁)との比較: $\mathrm{Im}\,\omega$ の相対差は、211 で $6\times10^{-8}$($\alpha=0.05$)と $5\times10^{-11}$($\alpha=0.293$)、322 で $1.7\times10^{-4}$($\alpha=0.15$)、433 で $2.9\times10^{-4}$($\alpha=0.4$)。
+\item \textbf{打ち切り}: $\alpha\ge0.03$ では、4000 項と 16000 項で虚部が 5 桁以上一致した。$\alpha\le0.02$ では $\mathrm{Im}\,\omega/\mathrm{Re}\,\omega\lesssim10^{-18}$ になり、倍精度で解けない。
+\item \textbf{小さい $\alpha$}: 実部は $\alpha=0.05$ で \arxiv{1908.10370} の式 2.28 と $5\times10^{-9}$ の精度で一致した。
+\end{itemize}
+
+\paragraph{使える範囲}
+表は $\alpha$ 64 点 $\times$ $\chi$ 110 点。使える範囲は次のとおり。範囲の外では解析式に戻す(\texttt{sr.gamma\_rel\_over\_mu})。
+\begin{itemize}
+\item 211: $\alpha\ge0.03$。欠けはない。
+\item 322: $0.1\le\alpha\le0.52$。$\alpha>0.52$ では、超放射する点の一部で根が見つからなかった。
+\item 433: $0.27\le\alpha\le0.42$。$\alpha<0.27$ では倍精度が足りない。
+\end{itemize}
+
+\subsection{結果}
+
+\begin{figure}[H]
+\centering
+\input{figs/e04_rates}
+\caption{連分数法の率と解析式(\arxiv{1908.10370} の式 2.32)の比。(b) の色は (a) と同じ $\chi$(322 は $\chi=0.5$ ではほとんど超放射しない)。点線は 1。}
+\label{fig:e04}
+\end{figure}
+
+\begin{result}
+\begin{itemize}
+\item \textbf{解析式の精度}(211、図~\ref{fig:e04}): $\alpha\lesssim0.08$ では $\chi=0.5$--$0.9$ で 10\% 以内。$\alpha=0.2$、$\chi=0.9$ で解析式は 1.5 倍小さく、$\alpha=0.29$ では 3.5 倍小さい。
+\item \textbf{E2 への影響}(自由場、相対論的な率に替えた場合):
+  \begin{itemize}
+  \item $15\Msun$、$7\times10^{-13}\eV$ でスピンが中点まで落ちる時間: 302 年から 290 年。
+  \item GW241011 の主星が 0.69 を下回る時間: 35 年から 33 年。
+  \item 帯の中のすべての質量で $\chi_f<0.5$ になる $\mu$ の範囲: 格子の刻みの範囲で変わらない。範囲の上端は、211 が超放射しなくなる質量で決まり、率にはよらない。
+  \end{itemize}
+\item \textbf{E3 への影響}($\gamma_\mathrm{SR}$ だけ替えた場合):
+  \begin{itemize}
+  \item GW241011 が $10^7\yr$ のあいだ 0.69 を保つ $f$ の上限: $4.5\times10^{12}$ から $4.1\times10^{12}\GeV$。
+  \item 年齢の比 $R$($\chi_0=0.7$、$\delta=0.05/0.18$): $M_1=10\Msun$ で 286/91 から 309/102、$15\Msun$ で 38/11 から 37/11、$20\Msun$ で 8.8/1.9 から 7.6/1.7。
+  \end{itemize}
+\item 窓に効く範囲($\alpha\lesssim0.15$)では、超放射の率の相対論的な補正は結論を変えない。残る大きな不定性は、自己相互作用の率 $\gamma_\mathrm{BH}$ の相対論的な補正である(BGLS は $\alpha\sim0.2$ で「数倍」とする)。
+\end{itemize}
+\end{result}

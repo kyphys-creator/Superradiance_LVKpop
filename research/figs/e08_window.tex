@@ -1,0 +1,35 @@
+% E8: (mu, f) 面の窓。データは calc/e08_window.py(gamma_BH は主要項)
+\begin{tikzpicture}
+\begin{axis}[note, width=0.56\linewidth, height=0.5\linewidth, xmode=log, ymode=log,
+  xmin=0.4e-12, xmax=1.2e-12, ymin=1e11, ymax=2e13,
+  xtick={0.4e-12,0.5e-12,0.6e-12,0.7e-12,0.8e-12,1e-12,1.2e-12},
+  xticklabels={0.4,0.5,0.6,0.7,0.8,1.0,1.2},
+  xlabel={$\mu\ [10^{-12}\,\mathrm{eV}]$}, ylabel={$f\ [\mathrm{GeV}]$},
+  legend style={font=\scriptsize, at={(1.02,1.0)}, anchor=north west, fill=white, draw=none}, legend cell align=left]
+  % 2609.02678 の質量(90%)
+  \fill[cB!10] (axis cs:0.60e-12,1e11) rectangle (axis cs:0.89e-12,2e13);
+  % GRS 1915+105 の排除(上側)
+  \addplot[name path=grs, ink, line width=1.0pt] table[x=mu, y=GRS] {figs/data/e08_window_lo.dat};
+  \addlegendentry{GRS 1915+105(上を排除)}
+  \addplot[name path=top, draw=none, forget plot] coordinates {(0.4e-12,2e13) (1.2e-12,2e13)};
+  \addplot[cM!30, forget plot] fill between[of=grs and top];
+  \addplot[ink, line width=0.8pt, dashed] table[x=mu, y=CygCons] {figs/data/e08_window_lo.dat};
+  \addlegendentry{Cyg X-1、$\tilde a=0.92$(上を排除)}
+  \addplot[ink, line width=0.8pt, densely dotted] table[x=mu, y=CygFid] {figs/data/e08_window_lo.dat};
+  \addlegendentry{Cyg X-1、$\tilde a>0.9985$(上を排除)}
+  % GW241011 が回転を保つ上限
+  \addplot[cA!45, line width=0.9pt] table[x=mu, y=GW241011_T1e7] {figs/data/e08_window_lo.dat};
+  \addlegendentry{GW241011 が保つ: $T_2=10^7\yr$}
+  \addplot[cA, line width=0.9pt] table[x=mu, y=GW241011_T3e7] {figs/data/e08_window_lo.dat};
+  \addlegendentry{\hphantom{GW241011 が保つ: }$3\times10^7\yr$}
+  \addplot[cA!60!black, line width=0.9pt] table[x=mu, y=GW241011_T1e8] {figs/data/e08_window_lo.dat};
+  \addlegendentry{\hphantom{GW241011 が保つ: }$10^8\yr$}
+  % 1 世代目が 6 Gyr で回転を失う下限(chi0 = 0.7、delta = 0.18)
+  \addplot[cC!60!black, line width=0.9pt, dashed] table[x=mu, y=M10_d18] {figs/data/e08_window_lo.dat};
+  \addlegendentry{1 世代目が失う: $10\Msun$}
+  \addplot[cC, line width=0.9pt, dashed] table[x=mu, y=M15_d18] {figs/data/e08_window_lo.dat};
+  \addlegendentry{\hphantom{1 世代目が失う: }$15\Msun$}
+  \addplot[cC!45, line width=0.9pt, dashed] table[x=mu, y=M20_d18] {figs/data/e08_window_lo.dat};
+  \addlegendentry{\hphantom{1 世代目が失う: }$20\Msun$}
+\end{axis}
+\end{tikzpicture}

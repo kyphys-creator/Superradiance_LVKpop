@@ -1,0 +1,54 @@
+% エントリ 5(2026-11-03): 二準位の運動論の ODE
+\section{[E5, 2026-11-03] 二準位の運動論: 準平衡の近似を確かめる}\label{sec:e05}
+
+E3 は準平衡の式 \eqref{eq:e03_qe} だけで窓を見積もった。ここでは、BGLS の連立方程式を 1 個の量子から時間発展させ、次の三点を確かめる。
+\begin{itemize}
+\item 雲が準平衡に達するか、どれだけ早く達するか。
+\item 準平衡で回転を失う速さが正しいか。
+\item $f$ を変えたとき、自由場の領域とどうつながるか。
+\end{itemize}
+計算は \texttt{calc/e05\_kinetics.py}、出力は \texttt{calc/out/e05.json}。
+
+\subsection{式と解き方}
+
+BGLS の式 34--36 の主な項を使う。BH の質量は固定する。
+\begin{align}
+\dot\varepsilon_{211}&=\gamma^\mathrm{SR}_{211}\varepsilon_{211}-2\gamma_\mathrm{BH}\varepsilon_{211}^2\varepsilon_{322}+\gamma_\infty\varepsilon_{322}^2\varepsilon_{211}-2\gamma_\mathrm{GW}\varepsilon_{211}^2+\gamma_\mathrm{tr}\varepsilon_{211}\varepsilon_{322},\\
+\dot\varepsilon_{322}&=\gamma^\mathrm{SR}_{322}\varepsilon_{322}+\gamma_\mathrm{BH}\varepsilon_{211}^2\varepsilon_{322}-2\gamma_\infty\varepsilon_{322}^2\varepsilon_{211}-\gamma_\mathrm{tr}\varepsilon_{211}\varepsilon_{322},\\
+\dot\chi&=-\gamma^\mathrm{SR}_{211}\varepsilon_{211}-2\gamma^\mathrm{SR}_{322}\varepsilon_{322}.
+\end{align}
+各項は次のとおり。
+\begin{itemize}
+\item $\gamma^\mathrm{SR}$: E4 の相対論的な率(占有数の率)。
+\item $\gamma_\mathrm{BH}$、$\gamma_\infty$: E3 と同じ。
+\item $\gamma_\mathrm{GW}=10^{-2}\alpha^{14}\mu$: 211 の消滅(BGLS Table I)。
+\item $\gamma_\mathrm{tr}=5\times10^{-6}\alpha^{10}\mu$: 322 から 211 への重力波の遷移(BGLS の式 101、Table IV)。
+\end{itemize}
+変数は $\ln\varepsilon_{211}$、$\ln\varepsilon_{322}$、$\chi$ で、陰的な Runge--Kutta(Radau)で解いた。初期値は各準位 1 個の量子($\varepsilon=1/GM^2$)である。対象は GW241011 の主星($19.6\Msun$、$\chi_0=0.78$)、$\mu=0.71\times10^{-12}\eV$。
+
+\subsection{結果}
+
+\begin{figure}[H]
+\centering
+\input{figs/e05_kinetics}
+\caption{GW241011 の主星の雲の運動論($\mu=0.71\times10^{-12}\eV$)。(a) $f=4\times10^{12}\GeV$ の占有数。破線は、そのときのスピンでの準平衡(BGLS の式 55a,b)。(b) 年齢 $T$ でのスピン。橙の点線は GW241011 の主星のスピンの 90\% 下端、一点鎖線は 211 の臨界スピン(質量固定)。}
+\label{fig:e05}
+\end{figure}
+
+\begin{result}
+\begin{itemize}
+\item \textbf{準平衡に達するまで}($f=4\times10^{12}\GeV$): 雲は約 30 年で準平衡の 1\% 以内に達する($\varepsilon_{211}=1.8\times10^{-9}$、$\varepsilon_{322}=6.4\times10^{-11}$)。$10^3\yr$ 以降の準平衡からのずれは、$\varepsilon_{211}$ で $1.6\times10^{-8}$、$\varepsilon_{322}$ で $4.2\times10^{-8}$ である。
+\item \textbf{回転を失う速さ}: $10^7\yr$ 後のスピンは ODE で 0.6951、準平衡の式で 0.6945。$10^8\yr$ 後は 0.4489 と 0.4435 である。後者の差は、準平衡の式を粗い時間格子で積分したことによる。
+\item \textbf{GW241011 が許す $f$}: $10^7\yr$ のあいだ 0.69 を保つ $f$ の上限は、ODE の格子($\log_{10}f$ の刻み 0.125)では $3.2\times10^{12}$ から $4.2\times10^{12}\GeV$ のあいだにある。準平衡の値 $4.1\times10^{12}\GeV$(E4)と合う。
+\item \textbf{$f$ と年齢の縮退}: 図~\ref{fig:e05}(b) の曲線は、$f$ を $\sqrt{10}$ 倍すると年齢 10 倍ずれた曲線に重なる。準平衡の回転を失う速さが $f^2$ に比例するためで、E3 の年齢の比が $f$ によらないことの裏づけになる。
+\item \textbf{自由場とのつながり}: $f\gtrsim3\times10^{14}\GeV$ では、$10^6\yr$ 以内に 211 の臨界スピン(質量固定で 0.3987)まで落ちる。自由場と同じである。
+\end{itemize}
+\end{result}
+
+\begin{caveat}
+\begin{itemize}
+\item $f\gtrsim10^{16}\GeV$(BGLS の領域 B)では、211 が飽和したあと 322 が 1 個の量子から急に増える。この段階で、解法と時間の単位の選び方によって結果が変わった($f=10^{16}\GeV$ の $10^8\yr$ 後で 0.39 と 0.21)。$f\gtrsim10^{17}\GeV$ では解法が止まる。どの場合も 211 は約 34 年で自由に飽和して $\chi\le0.40$ になるので、GW241011 の判定には効かない。この領域の時間発展は、使う前に別の方法で確かめる。
+\item 二準位・主要項の自己相互作用の率である。$\gamma_\mathrm{BH}$ の相対論的な補正と、$n\le5$ の準位は入れていない。
+\item 重力波の率は平坦な時空の近似で、BGLS の係数どうしに 2 倍程度の食い違いがある(\texttt{Refs/notes/theory\_rates.md} \S8)。窓の領域では雲が小さく、重力波の項は効かない。
+\end{itemize}
+\end{caveat}

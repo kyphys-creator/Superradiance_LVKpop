@@ -1,0 +1,103 @@
+% エントリ 8(2026-11-03): 天体物理の入力、X 線連星、(mu, f) 面の窓
+\section{[E8, 2026-11-03] 窓を $(\mu,f)$ 面に描く: X 線連星と年齢の入力}\label{sec:e08}
+
+E3--E7 で、窓は $f\sim10^{12}$--$10^{13}\GeV$ にありうるとわかった。ここでは、二つの外部の入力を重ねて窓を $(\mu,f)$ 面に描く。
+\begin{itemize}
+\item \textbf{X 線連星のスピン}: 同じ $(\mu,f)$ を独立に制限する。
+\item \textbf{世代ごとの年齢}: 窓が開くかを決める。
+\end{itemize}
+抜き書きは \texttt{Refs/notes/window\_consistency.md}(ほかの観測との整合)と \texttt{Refs/notes/astro\_inputs.md}(年齢と 2 世代目のスピン)にある。計算は \texttt{calc/e08\_window.py}、出力は \texttt{calc/out/e08.json}。
+
+\subsection{天体物理の入力(本文で照合)}
+
+\paragraph{2 世代目の自然スピン}
+\begin{itemize}
+\item 終スピンの当てはめは \arxiv{1605.01938} の一般スピン版(式 12--17、Table 1)を使う。等質量・無スピンで 0.68646。誤差は整列スピンで rms 0.002、一般スピンで 0.006。
+\item 終質量は \arxiv{1206.3803} の式 18 を使う。
+\item 球状星団の模擬計算(\arxiv{1906.10260} の Fig.~8)では、1 世代目が回らないとき 2 世代目の 90\% が 0.67--0.69 に入る。1 世代目のスピンが 0.5 のときは中央値 0.62、90\% が 0.53--0.72 である。
+\end{itemize}
+
+\paragraph{世代ごとの年齢}
+2 世代目の年齢(親の合体から自分の合体まで)の分布を直接示した論文はない。近い量は次のとおり(図からの読み取りを含む)。
+
+\begin{table}[H]
+\centering\small
+\caption{世代ごとの年齢の目安(\texttt{Refs/notes/astro\_inputs.md})。}
+\label{tab:e08_age}
+\begin{tabularx}{\linewidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+環境 & 2 世代目の年齢 & 1 世代目の年齢 \\
+\midrule
+球状星団 & 典型 10--100 Myr、下限 $\sim1$ Myr(\arxiv{2103.05016} Fig.~2 から読み取り、\arxiv{1811.03640} の沈降時間) & 低赤方偏移の合体で $\gtrsim6$ Gyr(\arxiv{1911.00018} Fig.~15) \\
+核星団 & 典型 10--100 Myr、Gyr まで裾(\arxiv{2103.05016}、Fragione \& Silk 2020) & 記載なし \\
+AGN 円盤 & $\lesssim0.01$--$0.1$ Myr(円盤の寿命 0.1--10 Myr のうち) & 記載なし \\
+孤立連星 & -- & $p(\tau)\propto1/\tau$、GWTC-2 で中央値 2.8 Gyr \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+GW241011 について LVK(\arxiv{2510.26931})は、星団(球状・核・若い大質量)での 2 世代目の合体と解釈している。主星の年齢は推定していない。
+
+\subsection{X 線連星の制限をこのノートの模型で計算する}
+
+\arxiv{2412.03655} の Table III の値を使い、準平衡(E3)、相対論的な超放射の率(E4)、主要項の $\gamma_\mathrm{BH}$ で、次の条件を課した。最初のスピンは、測られた下限から最も遠い値に置いた(控えめな選び方)。
+\begin{itemize}
+\item \textbf{GRS 1915+105}: $12.4\Msun$、$\tilde a>0.95$、年齢 $\tau_\mathrm{Sal}\approx4.5\times10^7\yr$。スピンが 0.995 から 0.95 まで落ちない。
+\item \textbf{Cyg X-1}(控えめなスピン): $21.2\Msun$、$\tilde a=0.92^{+0.05}_{-0.07}$、$4.8\times10^6\yr$。0.995 から 0.85 まで落ちない。
+\item \textbf{Cyg X-1}(fiducial のスピン): $\tilde a>0.9985$。0.9995 から 0.9985 まで落ちない。$\chi>0.995$ は E4 の表の外なので、解析式の率を使った。
+\end{itemize}
+
+\paragraph{照合}
+$\mu=0.69\times10^{-12}\eV$ での上限は次のとおり。図から読んだ \arxiv{2412.03655} の値と比べた(\texttt{window\_consistency.md})。
+\begin{itemize}
+\item GRS 1915+105: このノートで $f\le2.5\times10^{12}\GeV$、同論文の Fig.~1 は $2.3\times10^{12}\GeV$。同論文はベイズの 2$\sigma$ で、$n\le5$ の準位と相対論的な $\gamma_\mathrm{BH}$ を使っている。
+\item Cyg X-1(控えめ): このノートで $5.3\times10^{12}$、同論文の $n\le3$ で $8.3\times10^{12}\GeV$。
+\item Cyg X-1(fiducial): このノートで $2.9\times10^{11}$、同論文で $(0.75$--$0.78)\times10^{12}\GeV$。このノートは最初のスピンを 0.9995 に固定したので強めに出る。
+\end{itemize}
+GRS 1915+105 の値は 10\% で合う。
+
+\subsection{結果}
+
+\begin{figure}[H]
+\centering
+\input{figs/e08_window}
+\caption{$(\mu,f)$ 面の窓($\gamma_\mathrm{BH}$ は主要項)。橙の帯は \arxiv{2609.02678} の質量(90\%)。灰色は GRS 1915+105 で排除。青の実線より下では GW241011 の主星が年齢 $T_2$ のあいだ 0.69 を保つ。緑の破線より上では、1 世代目($\chi_0=0.7$)が 6 Gyr のうちに 211 の臨界 $+0.18$ まで回転を失う。窓は、灰色と青の線の下で、かつ緑の線の上にある。}
+\label{fig:e08}
+\end{figure}
+
+\begin{result}
+$\mu=0.69\times10^{-12}\eV$ では次のようになる(主要項の $\gamma_\mathrm{BH}$。括弧は E7 の補正を入れた値)。
+\begin{itemize}
+\item \textbf{上限}: GRS 1915+105 で $f\le2.5\times10^{12}\GeV$($3.1\times10^{12}$)。GW241011 の主星は $T_2=10^7,3\times10^7,10^8\yr$ で $f\le4.4,2.5,1.4\times10^{12}\GeV$($7.0,4.0,2.2\times10^{12}$)。
+\item \textbf{下限}: 1 世代目が 6 Gyr で回転を失うのに要る $f$ は、$\delta=0.18/0.05$ で次のとおり。
+  \begin{itemize}
+  \item $M_1=10\Msun$: $1.8/3.2\times10^{12}\GeV$
+  \item $15\Msun$: $0.61/1.1\times10^{12}\GeV$
+  \item $20\Msun$: $0.25/0.50\times10^{12}\GeV$
+  \end{itemize}
+\item \textbf{窓}: $f\approx(1$--$2.5)\times10^{12}\GeV$ の細い帯として残る。条件は三つある。
+  \begin{enumerate}
+  \item 2 世代目の年齢が $\lesssim3\times10^7\yr$ であること。球状星団の典型的な値(10--100 Myr)の下側にあたる。
+  \item 積み上がりがおもに $M_1\gtrsim10$--$15\Msun$ に限られること。$10\Msun$ の 1 世代目は、$T_2\le3\times10^7\yr$ かつ $\delta=0.18$ のときだけ窓に入る。$\delta=0.05$ や $T_2=10^8\yr$ では窓の外になる。
+  \item Cyg X-1 の fiducial のスピン($>0.9985$)が正しくないこと。正しければ $f\le2.9\times10^{11}\GeV$ になり、窓は閉じる。
+  \end{enumerate}
+\item \textbf{ほかの観測}(\texttt{window\_consistency.md}): GW231123、連続波・背景重力波の探索、銀河核での合体率は、この $f$ の範囲に届かない。超放射によらない制限は、標準模型との結合を仮定しない限りない。この $(\mu,f)$ の ALP は、ずれ機構では暗黒物質のすべてにはならない($f\gtrsim2\times10^{13}\GeV$ が要る)。
+\end{itemize}
+\end{result}
+
+\paragraph{意味}
+問いは三つの観測の重なりに絞られた。三つとも $f\approx2\times10^{12}\GeV$ の近くで効いている。
+\begin{itemize}
+\item 1 世代目の積み上がり(GWTC-5)。
+\item 若い 2 世代目の速い回転(GW241011)。
+\item 長く生きた X 線連星の速い回転(GRS 1915+105)。
+\end{itemize}
+集団解析では、2 世代目の年齢の分布と積み上がりの質量の範囲を同時に推定する。その結果が、窓を閉じるか、$f$ を特定するかを決める。Cyg X-1 のスピンの系統誤差は、外部の入力として明示する。
+
+\begin{caveat}
+\begin{itemize}
+\item X 線連星の条件は決定論的な簡略版で、\arxiv{2412.03655} のベイズの扱い(最初のスピンと質量・年齢の周辺化)ではない。GRS の値が 10\% で合ったのは、手法の違いが小さいからとは限らない。
+\item 2 世代目の年齢は、分布ではなく目安(図の読み取りを含む)である。
+\item 1 世代目の判定($\chi_0=0.7$、$\delta$、$T_1=6$ Gyr)は説明のための選び方である。孤立連星の年齢(中央値 2.8 Gyr)を使うと、下限の $f$ は $\sqrt{6/2.8}\approx1.5$ 倍上がる。
+\end{itemize}
+\end{caveat}

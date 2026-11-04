@@ -18,17 +18,22 @@ KAPPA_INF = 1.1e-8
 
 
 def g_bh(alpha, chi, mu_s, f_gev):
-    return KAPPA_BH * alpha ** 11 * (MPL_GEV / f_gev) ** 4 * sr.rplus(chi) * mu_s
+    return KAPPA_BH * alpha ** 11 * (MPL_GEV / f_gev) ** 4 * sr.rplus(chi) * mu_s * cbh(alpha)
 
 
 def g_inf(alpha, mu_s, f_gev):
     return KAPPA_INF * alpha ** 8 * (MPL_GEV / f_gev) ** 4 * mu_s
 
 
+REL = False   # True で E4 の相対論的な超放射の率を使う
+
+
 def g_sr(alpha, chi, mu_s, leading=False):
     """211 の超放射(占有数の率、1/s)。leading=True で BGLS の主要項(kappa_SR = 0.04)。"""
     if leading:
         return 0.04 * alpha ** 8 * (chi - 2 * alpha * sr.rplus(chi)) * mu_s
+    if REL:
+        return sr.gamma_rel_over_mu(alpha, chi, 2, 1, 1, sr.NORM_N) * mu_s
     return sr.gamma_over_mu(alpha, chi, 2, 1, 1, sr.NORM_N) * mu_s
 
 
@@ -76,3 +81,17 @@ def chi_threshold_211(M, mu_eV):
         else:
             lo = mid
     return 0.5 * (lo + hi)
+
+
+# ---------- gamma_BH の相対論的な補正(感度の検定用、E7) ----------
+# 2412.03655 の Fig. 3 右(Rates_BH_n4.pdf、a~ = 0.95)の gamma^{322xBH}_{211x211} の gamma_R/gamma_NR を
+# 図から目で読んだ値(読み取りの誤差は 20% 程度)。BH のスピン依存性は不明なので、感度を見るためだけに使う。
+CBH_ALPHA = np.array([0.03, 0.05, 0.075, 0.10, 0.125, 0.15, 0.175, 0.20, 0.25, 0.30, 0.35])
+CBH_VALUE = np.array([1.0, 1.3, 1.7, 2.5, 3.5, 4.4, 5.2, 5.2, 3.5, 2.2, 1.4])
+CBH_ON = False
+
+
+def cbh(alpha):
+    if not CBH_ON:
+        return 1.0
+    return float(np.interp(alpha, CBH_ALPHA, CBH_VALUE))
