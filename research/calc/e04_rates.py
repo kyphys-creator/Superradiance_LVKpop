@@ -26,6 +26,12 @@ OUT = os.path.join(HERE, "out")
 FIG = os.path.join(HERE, "..", "figs", "data")
 NCF = 4000
 
+
+def ncf(alpha):
+    """連分数の項数。小さい alpha・高いスピンでは 4000 項で足りない(E9: alpha=0.031、chi=0.995 で 4.7%)ので、
+    1/alpha に比例して増やす。alpha=0.03 で 16700 項、alpha >= 0.125 で 4000 項。"""
+    return max(NCF, int(500.0 / alpha))
+
 LEVELS = {"211": (2, 1, 1, 0.03, 0.55), "322": (3, 2, 2, 0.08, 1.0), "433": (4, 3, 3, 0.15, 1.5)}
 CHIS = np.concatenate([np.linspace(0.0, 0.9, 91), np.linspace(0.905, 0.995, 19)])
 
@@ -33,7 +39,7 @@ CHIS = np.concatenate([np.linspace(0.0, 0.9, 91), np.linspace(0.905, 0.995, 19)]
 def solve_point(args):
     alpha, chi, n, l, m = args
     try:
-        w = leaver.bound_state(alpha, chi, n, l, m, N=NCF)
+        w = leaver.bound_state(alpha, chi, n, l, m, N=ncf(alpha))
     except Exception:
         return np.nan, np.nan
     # 別の節の根に飛んでいないか(実部が水素原子の値から 5% 以上ずれたら捨てる)
@@ -49,16 +55,23 @@ def main():
     dolan = [(0.7, 0.187, 3.33e-10), (0.8, 0.231, 2.16e-9), (0.9, 0.293, 1.55e-8),
              (0.95, 0.343, 4.88e-8), (0.98, 0.393, 1.11e-7), (0.99, 0.421, 1.50e-7)]
     res["dolan_tableI"] = [{"a": a, "Mmu": al, "Im_ref": ref,
-                            "Im_this": leaver.bound_state(al, a, 2, 1, 1, N=NCF).imag}
+                            "Im_this": leaver.bound_state(al, a, 2, 1, 1, N=ncf(al)).imag}
                            for a, al, ref in dolan]
     # ---------- 2. 多倍長との比較 ----------
     mpc = []
     for (n, l, m, al, chi) in [(2, 1, 1, 0.05, 0.9), (2, 1, 1, 0.293, 0.9), (3, 2, 2, 0.15, 0.9), (4, 3, 3, 0.4, 0.95)]:
-        wd = leaver.bound_state(al, chi, n, l, m, N=NCF)
-        wm = leaver.bound_state_mp(al, chi, n, l, m, N=NCF, dps=40)
+        wd = leaver.bound_state(al, chi, n, l, m, N=ncf(al))
+        wm = leaver.bound_state_mp(al, chi, n, l, m, N=ncf(al), dps=40)
         mpc.append({"level": f"{n}{l}{m}", "alpha": al, "chi": chi,
                     "Im_double": wd.imag, "Im_mp": float(wm.imag), "rel_diff": abs(wd.imag / float(wm.imag) - 1)})
     res["double_vs_mp"] = mpc
+    # 打ち切りの収束: N(alpha) と 2 N(alpha) の比較(低い alpha・高いスピン)
+    conv = []
+    for (al, chi) in [(0.03, 0.9), (0.0313, 0.995), (0.05, 0.995), (0.1, 0.99), (0.2, 0.995)]:
+        w1 = leaver.bound_state(al, chi, 2, 1, 1, N=ncf(al)).imag
+        w2 = leaver.bound_state(al, chi, 2, 1, 1, N=2 * ncf(al)).imag
+        conv.append({"alpha": al, "chi": chi, "N": ncf(al), "rel_diff_N_vs_2N": abs(w1 / w2 - 1)})
+    res["truncation"] = conv
 
     # ---------- 3. 格子 ----------
     for name, (n, l, m, amin, amax) in LEVELS.items():

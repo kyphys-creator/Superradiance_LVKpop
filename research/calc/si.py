@@ -46,13 +46,22 @@ def eps_eq(alpha, chi, mu_s, f_gev, leading=False):
     return e211, gb * e211 / (2.0 * gi)
 
 
+MASS_CORR = False   # True で BH の質量の変化を入れる(E9)
+
+
 def chidot(alpha, chi, mu_s, f_gev, leading=False):
-    """準平衡でのスピンの変化率 da*/dt [1/s](負)。"""
+    """準平衡でのスピンの変化率 da*/dt [1/s](負)。
+
+    MASS_CORR: 準平衡では、超放射で取り出したエネルギーの 2/3 を BH が 211x211 -> 322xBH で吸い戻すので、
+    BH の質量は取り出した量の 1/3 だけ減る(dM = -mu dN/3、dJ = -dN)。chi = J/M^2 の変化は
+    chi_dot = J_dot/M^2 - 2 chi M_dot/M = (J_dot/M^2)(1 - 2 chi alpha/3)。
+    """
     gs = g_sr(alpha, chi, mu_s, leading)
     if gs <= 0:
         return 0.0
     e211, _ = eps_eq(alpha, chi, mu_s, f_gev, leading)
-    return -gs * e211
+    corr = (1.0 - 2.0 * chi * alpha / 3.0) if MASS_CORR else 1.0
+    return -gs * e211 * corr
 
 
 def t_spindown(M, chi_i, chi_f, mu_eV, f_gev):

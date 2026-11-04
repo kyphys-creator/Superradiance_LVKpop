@@ -1,0 +1,24 @@
+% E9: 楽観的な仮定と現実的な仮定での窓(gamma_BH は主要項)。データは calc/e09_review.py
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1, horizontal sep=14mm},
+  width=0.48\linewidth, height=0.46\linewidth, note, xmode=log, ymode=log,
+  xmin=0.4e-12, xmax=1.2e-12, ymin=3e10, ymax=1e13,
+  xtick={0.4e-12,0.6e-12,0.8e-12,1e-12}, xticklabels={0.4,0.6,0.8,1.0},
+  xlabel={$\mu\ [10^{-12}\,\mathrm{eV}]$}]
+\nextgroupplot[ylabel={$f\ [\mathrm{GeV}]$}, title={\small (a) 楽観的な仮定(E8)},
+  legend style={font=\scriptsize, at={(0.02,0.02)}, anchor=south west, fill=white, fill opacity=0.85, text opacity=1, draw=none}, legend cell align=left]
+  \fill[cB!10] (axis cs:0.60e-12,3e10) rectangle (axis cs:0.89e-12,1e13);
+  \addplot[ink, line width=1.0pt] table[x=mu, y=GRS] {figs/data/e09_window_opt.dat}; \addlegendentry{GRS 1915+105(上を排除)}
+  \addplot[cA, line width=1.0pt] table[x=mu, y=GW241011] {figs/data/e09_window_opt.dat}; \addlegendentry{GW241011(上を排除)}
+  \addplot[cC!60!black, dashed, line width=0.9pt] table[x=mu, y=M15_d18] {figs/data/e09_window_opt.dat}; \addlegendentry{1 世代目が失う(下を排除): $15\Msun$}
+  \addplot[cC, dashed, line width=0.9pt] table[x=mu, y=M20_d18] {figs/data/e09_window_opt.dat}; \addlegendentry{\hphantom{1 世代目が失う(下を排除): }$20\Msun$}
+  \addplot[cC!45, dashed, line width=0.9pt] table[x=mu, y=M25_d18] {figs/data/e09_window_opt.dat}; \addlegendentry{\hphantom{1 世代目が失う(下を排除): }$25\Msun$}
+\nextgroupplot[title={\small (b) 現実的な仮定}]
+  \fill[cB!10] (axis cs:0.60e-12,3e10) rectangle (axis cs:0.89e-12,1e13);
+  \addplot[ink, line width=1.0pt] table[x=mu, y=GRS] {figs/data/e09_window_real.dat};
+  \addplot[cA, line width=1.0pt] table[x=mu, y=GW241011] {figs/data/e09_window_real.dat};
+  \addplot[cC!60!black, dashed, line width=0.9pt] table[x=mu, y=M15_d18] {figs/data/e09_window_real.dat};
+  \addplot[cC, dashed, line width=0.9pt] table[x=mu, y=M20_d18] {figs/data/e09_window_real.dat};
+  \addplot[cC!45, dashed, line width=0.9pt] table[x=mu, y=M25_d18] {figs/data/e09_window_real.dat};
+\end{groupplot}
+\end{tikzpicture}

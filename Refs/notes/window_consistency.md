@@ -1,3 +1,5 @@
+> **訂正(2026-11-03、研究ノート E9)**: 要約表の「DM-by-misalignment needs f ≳ 2×10¹³ GeV」は θ_init = π − 10⁻⁶ の極端な値。θ_init ~ 1 では f ≈ (3–7)×10¹⁴ GeV(本文 §6 の BGLS Fig. 10 の読み取り (1.5–4)×10¹⁴ と同じ桁)。GRS 1915+105 のスピンの下限は、元の測定(Reid+ 2014)の系統誤差込みの 3σ で 0.92(WM は 0.95)。
+
 # Is the window μ ≈ (0.6–0.9)×10⁻¹² eV, f ≈ 10¹²–10¹³ GeV already excluded? (full-text check, 2026-11-03)
 
 Question: a first estimate found a window where an attractive quartic self-interaction (λ = μ²/f², axion-like)
