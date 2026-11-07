@@ -1,0 +1,29 @@
+% E10: (a) GW241011 だけで決めた窓で回転を失える 1 世代目の最小質量、(b) 2 世代目の生まれたときのスピン。データは calc/e10_gwonly.py
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1, horizontal sep=18mm}, width=0.46\linewidth, height=0.42\linewidth, note]
+\nextgroupplot[xmode=log, xmin=0.45e-12, xmax=1.1e-12, ymin=6, ymax=23,
+  xtick={0.5e-12,0.6e-12,0.7e-12,0.8e-12,1e-12}, xticklabels={0.5,0.6,0.7,0.8,1.0},
+  xlabel={$\mu\ [10^{-12}\,\mathrm{eV}]$}, ylabel={$M_\mathrm{min}\ [M_\odot]$},
+  title={\small (a) 回転を失える 1 世代目の最小質量},
+  legend style={font=\scriptsize, at={(0.98,0.98)}, anchor=north east, fill=white, fill opacity=0.85, text opacity=1, draw=none}, legend cell align=left]
+  \fill[cB!10] (axis cs:0.60e-12,6) rectangle (axis cs:0.89e-12,23);
+  \addplot[cA!50, line width=0.9pt] table[x=mu, y=opt_d18] {figs/data/e10_mmin.dat}; \addlegendentry{楽観的、$\delta=0.18$}
+  \addplot[cA!50, line width=0.9pt, dashed] table[x=mu, y=opt_d05] {figs/data/e10_mmin.dat}; \addlegendentry{楽観的、$\delta=0.05$}
+  \addplot[cA, line width=0.9pt] table[x=mu, y=real_d18] {figs/data/e10_mmin.dat}; \addlegendentry{現実的、$\delta=0.18$}
+  \addplot[cA, line width=0.9pt, dashed] table[x=mu, y=real_d05] {figs/data/e10_mmin.dat}; \addlegendentry{現実的、$\delta=0.05$}
+  \addplot[ink, line width=0.8pt, densely dotted] table[x=mu, y=realGRS_d18] {figs/data/e10_mmin.dat}; \addlegendentry{現実的 + GRS、$\delta=0.18$}
+\nextgroupplot[xmin=0.3, xmax=0.95, ymin=0, ymax=22,
+  xlabel={生まれたときのスピン $\chi$}, ylabel={確率密度},
+  title={\small (b) 2 世代目の生まれたときのスピン},
+  legend style={font=\scriptsize, at={(0.02,0.98)}, anchor=north west, fill=white, fill opacity=0.85, text opacity=1, draw=none}, legend cell align=left]
+  \addplot[cM, line width=0.9pt, const plot mark mid] table[x=chi, y=p0] {figs/data/e10_natal.dat}; \addlegendentry{親が回らない}
+  \addplot[cC, line width=0.9pt, const plot mark mid] table[x=chi, y=p1] {figs/data/e10_natal.dat}; \addlegendentry{$\mathcal U(0,0.5)$}
+  \addplot[cD, line width=0.9pt, const plot mark mid] table[x=chi, y=p2] {figs/data/e10_natal.dat}; \addlegendentry{$\mathrm{Beta}(2,5)$}
+  \addplot[cD!50, line width=0.9pt, dashed, const plot mark mid] table[x=chi, y=p3] {figs/data/e10_natal.dat}; \addlegendentry{$\mathrm{Beta}(2,5)$、$q\ge0.25$}
+  \draw[ink2, densely dotted] (axis cs:0.69,0) -- (axis cs:0.69,22);
+  \draw[cA, densely dotted] (axis cs:0.72,0) -- (axis cs:0.72,22);
+  \draw[cB, densely dotted] (axis cs:0.78,0) -- (axis cs:0.78,22);
+  \node[font=\scriptsize, color=cB, anchor=south west, rotate=90] at (axis cs:0.785,8) {0.78(観測値)};
+  \node[font=\scriptsize, color=cA, anchor=south west, rotate=90] at (axis cs:0.725,8) {0.72};
+\end{groupplot}
+\end{tikzpicture}
