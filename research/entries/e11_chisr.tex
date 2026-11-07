@@ -1,0 +1,62 @@
+% エントリ 11(2026-11-07): 集団解析に渡す chi_SR
+\section{[E11, 2026-11-07] 集団解析に渡す $\chi_\mathrm{SR}$: 準平衡と自由場をつなぐ}\label{sec:e11}
+
+E10 の準平衡の表(\texttt{chisr.py})に自由場の側をつなぎ、集団解析でそのまま呼べる関数 $\chi_\mathrm{SR}(M,\chi_0,T;\mu,f)$ にした。計算は \texttt{calc/chisr.py} の \texttt{chi\_sr}、照合は \texttt{calc/e11\_chisr.py}、出力は \texttt{calc/out/e11.json}。共同研究者に渡す単体版は \texttt{share/chi\_sr/}(\texttt{calc/export\_chisr.py} が表を作り、プロジェクト版と一致することを確かめる)。
+
+\subsection{つなぎ方}
+
+\paragraph{領域の判定}
+BGLS の B と C の境界(式 53、56)にならう。次の二つが、どちらも自由場で飽和する量 $\varepsilon_\mathrm{max}=\chi_0-\chi_c^{(211)}$ より小さければ準平衡、そうでなければ自由場とする。
+\begin{itemize}
+\item 準平衡の占有数 $\varepsilon_\mathrm{eq}$(E3)
+\item 行き過ぎの占有数 $\varepsilon_\mathrm{th}=\sqrt{2\gamma_\mathrm{SR}\ln(GM^2)/\gamma_\mathrm{BH}}$(BGLS の式 58)
+\end{itemize}
+
+\paragraph{準平衡の側}
+二つの補正を入れて、E10 の表を引く。
+\begin{itemize}
+\item 1 個の量子から $\varepsilon_\mathrm{eq}$ まで育つ時間 $t_\mathrm{grow}=\ln(\varepsilon_\mathrm{eq}GM^2)/\gamma_\mathrm{SR}$ を、年齢から引く。
+\item 行き過ぎで失う $\varepsilon_\mathrm{th}$ を、初期スピンから引く。
+\end{itemize}
+境界に近づくと $\varepsilon_\mathrm{th}\to\varepsilon_\mathrm{max}$ で、自由場の飽和に連続につながる。
+
+\paragraph{自由場の側}
+E2 の半解析と同じ数え方にした。
+\begin{itemize}
+\item 211 は 1 個の量子から $\ln N_\mathrm{sat}$ 回の $e$-fold で飽和し、臨界スピンまで落ちる。BH の質量の減少を入れる($\alpha\gtrsim0.2$ で臨界スピンが 0.05 ほど下がる)。
+\item 322 は $t=0$ から $e$-fold を積む。
+\end{itemize}
+
+\paragraph{印}
+戻り値に、0(超放射しない)、1(準平衡)、2(自由場)、3(この模型の外)の印をつける。3 は次の二つで、$\chi_0$ をそのまま返す。
+\begin{itemize}
+\item 準平衡で $\alpha>0.30$。
+\item 211 が超放射せず、322 から育つ BH で、$f<10^{16}\GeV$。
+\end{itemize}
+
+\subsection{結果}
+
+\begin{figure}[H]
+\centering
+\input{figs/e11_scan}
+\caption{つないだ $\chi_\mathrm{SR}$ の $f$ 依存($\mu=0.71\times10^{-12}\eV$)。丸は E5 の ODE。灰色は準平衡と自由場の境目(BGLS の領域 B)で、自由場の側の 322 の段階が入るかどうかでスピンが飛ぶ。}
+\label{fig:e11}
+\end{figure}
+
+\begin{result}
+\begin{itemize}
+\item \textbf{ODE との一致}(GW241011 の主星、$f=10^{11}$--$10^{15}\GeV$、$T=10^6$、$10^7$、$10^8\yr$): 差は最大 $1.6\times10^{-4}$。$15$、$19.6$、$25\Msun$ と $f=10^{12}$、$4\times10^{12}$、$10^{13}\GeV$ では、$10^{10}\yr$ まで小数 3 桁で一致した。
+\item \textbf{準平衡の側で 322 の段階は起きない}: ODE は 322 の超放射も含むが、上の例では BH は $10^{10}\yr$ まで 211 の臨界にとどまり、322 の臨界まで落ちない。準平衡では 322 が最初から占有されているので速く育つとも考えられたが、そうはならない。
+\item \textbf{自由場の半解析との一致}($f=10^{19}\GeV$、無作為な 400 点): 差の中央値 $3\times10^{-7}$、93.5\% が 0.01 以内、最大 0.034。残りの差は、臨界スピンを解くときのエネルギーの近似(水素原子の主要項か $\alpha^5$ までか)の違いによる。BH の質量の減少を入れる前は最大 0.28 だった。
+\item \textbf{境目}: $f\approx10^{16}\GeV$ 付近で、GW241011 の主星の $T=10^9\yr$ のスピンが 0.2 ほど飛ぶ。自由場の側では 322 が飽和するが、準平衡の側では 322 の段階が起きないからである。この領域の運動論は E5 でも解法によって結果が変わったので、確かでない。窓($f\sim10^{12}\GeV$)には効かない。
+\item \textbf{速さ}: $10^6$ 個の標本で 0.37 秒。単体版はプロジェクト版と 20 万個の標本で完全に一致した。
+\end{itemize}
+\end{result}
+
+\begin{caveat}
+\begin{itemize}
+\item \textbf{重い BH}: 211 が超放射せず 322 から育つ BH の自己相互作用は、模型に入っていない(印 3)。$\mu=0.71\times10^{-12}\eV$ では $\gtrsim35\Msun$ にあたり、GWTC-5 の $45\Msun$ 以上の速く回る群が含まれる。322 と 544 の二準位(\arxiv{2412.03655} の $n\le5$)で同じことをする必要がある。
+\item \textbf{自己相互作用の率}: 主要項で、相対論的な補正(E7)は入れていない。
+\item \textbf{生まれたときのスピンと年齢}: 分布は集団解析の側の入力である。
+\end{itemize}
+\end{caveat}
