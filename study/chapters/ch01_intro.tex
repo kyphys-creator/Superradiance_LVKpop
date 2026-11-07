@@ -1,0 +1,108 @@
+% 1. はじめに: 問い、単位、重力の微細構造定数
+\section{はじめに: 何を調べるのか}\label{sec:intro}
+
+\subsection{研究の問い}
+
+質量 $\mu\sim10^{-12}\eV$ の非常に軽いスカラー粒子(ALP、axion-like particle)があると、回転するブラックホール(BH)のまわりに、その粒子が非常に多く集まった「雲」ができる。雲は BH の回転のエネルギーと角運動量を吸い取って育つ。そのため、この粒子があれば、ある範囲の質量の BH は速く回っていられない。
+
+重力波の観測(LIGO--Virgo--KAGRA、カタログ GWTC-5)では、合体する BH の質量とスピンが測られている。そこから、この粒子について逆の結論が出ている。
+\begin{itemize}
+\item 速く回る BH がいるので、この質量の粒子は排除される。
+\item BH のスピンが質量ごとにある値に集まっているように見えるので、この質量の粒子がいる証拠がある。
+\end{itemize}
+研究の問いは、粒子どうしの相互作用(自己相互作用)を入れるとこの二つが両立するか、である。自己相互作用があると、雲が大きく育つ前に飽和し、BH が回転を失う速さが遅くなる。若い BH は回転を保ち、年をとった BH だけが回転を失う、ということが起こりうる。
+
+このノートでは、この問いに答えるのに要る物理を順に導く。
+\begin{enumerate}
+\item 回転する BH の性質(\S\ref{sec:kerr})
+\item BH から回転を取り出す「超放射」の条件(\S\ref{sec:superradiance})
+\item BH のまわりの粒子の束縛状態「重力原子」と、その成長率(\S\ref{sec:atom})
+\item 雲の成長と BH の回転の減少(\S\ref{sec:cloud})
+\item 自己相互作用と、それが起こす準位間の遷移(\S\ref{sec:selfint})
+\item 準平衡と、回転を失う速さ(\S\ref{sec:equilibrium})
+\item 吸収で回転が戻らないこと(\S\ref{sec:norestore})
+\item 合体で生まれる 2 世代目の BH のスピン(\S\ref{sec:secondgen})
+\item これらを組み合わせた「窓」(\S\ref{sec:window})
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\input{figs/fig_bh_cloud}
+\caption{BH と雲の大きさの関係(模式図)。雲の大きさ $r_c\simeq r_g/\alpha^2$ は、$\alpha\sim0.1$ では BH の大きさ $r_g$ の 100 倍ほどになる。雲のごく一部が地平線にかかり、そこで BH と角運動量をやりとりする。}
+\label{fig:bhcloud}
+\end{figure}
+
+\subsection{単位と記号}
+
+\paragraph{自然単位}
+このノートでは、ことわりがない限り $\hbar=c=1$ とする。このとき質量・エネルギー・振動数・長さの逆数はすべて同じ次元をもつ。数値を出すときは次の換算を使う。
+\begin{equation}
+\hbar=6.582\times10^{-16}\eV\,\mathrm{s},\qquad
+\frac{\mu c^2}{\hbar}=1.519\times10^{3}\,\mathrm{s}^{-1}\times\frac{\mu}{10^{-12}\eV}.
+\label{eq:hbar}
+\end{equation}
+
+\paragraph{BH の尺度}
+質量 $M$ の BH は、長さ $r_g$ と時間 $t_g$ の尺度をもつ。
+\begin{equation}
+r_g\equiv\frac{GM}{c^2}=1.477\,\mathrm{km}\times\frac{M}{M_\odot},\qquad
+t_g\equiv\frac{GM}{c^3}=4.925\,\mu\mathrm{s}\times\frac{M}{M_\odot}.
+\label{eq:rg}
+\end{equation}
+$r_g$ を「重力半径」と呼ぶ(Schwarzschild 半径 $2r_g$ の半分)。BH の章(\S\ref{sec:kerr})では、さらに $G=1$ とおき、$M=1$ を長さの単位にすることがある。
+
+\subsection{重力の微細構造定数 $\alpha$}\label{sec:alpha}
+
+この研究のすべての式に現れる無次元量が
+\begin{equation}
+\alpha\equiv\frac{GM\mu}{\hbar c}
+\label{eq:alpha}
+\end{equation}
+である。意味は三通りに読める。
+
+\paragraph{読み方 1: 二つの長さの比}
+粒子の換算 Compton 波長は $\lambda_c=\hbar/(\mu c)$ である。これと重力半径の比をとると
+\begin{equation}
+\frac{r_g}{\lambda_c}=\frac{GM/c^2}{\hbar/(\mu c)}=\frac{GM\mu}{\hbar c}=\alpha.
+\end{equation}
+$\alpha\ll1$ なら、粒子の波は BH よりずっと大きい。
+
+\paragraph{読み方 2: 時間の比}
+式 \eqref{eq:alpha} は、粒子の振動数 $\mu c^2/\hbar$ と BH の時間 $t_g$ の積でもある。
+\begin{equation}
+\alpha=\frac{\mu c^2}{\hbar}\times\frac{GM}{c^3}=\frac{\mu c^2}{\hbar}\,t_g.
+\label{eq:alpha_time}
+\end{equation}
+数値は式 \eqref{eq:hbar}、\eqref{eq:rg} から
+\begin{equation}
+\alpha=1.519\times10^{3}\,\mathrm{s}^{-1}\times4.925\times10^{-6}\,\mathrm{s}\times\frac{M}{M_\odot}\frac{\mu}{10^{-12}\eV}
+=0.0748\times\frac{M}{10\,M_\odot}\frac{\mu}{10^{-12}\eV}.
+\label{eq:alpha_num}
+\end{equation}
+
+\paragraph{読み方 3: 水素原子の $\alpha_\mathrm{em}$ の重力版}
+水素原子では、電子(質量 $m_e$)が Coulomb ポテンシャル $V=-e^2/(4\pi\varepsilon_0r)\equiv-\alpha_\mathrm{em}\hbar c/r$ に束縛される。BH のまわりの粒子(質量 $\mu$)は、遠方では Newton のポテンシャル
+\begin{equation}
+V(r)=-\frac{GM\mu}{r}=-\alpha\frac{\hbar c}{r}
+\label{eq:Vgrav}
+\end{equation}
+に束縛される。$\alpha_\mathrm{em}$ のところに $\alpha$ が入るだけなので、\S\ref{sec:atom} で水素原子の結果をそのまま使える。
+
+\begin{numcheck}
+GW241011 の主星($M=19.6\Msun$)と $\mu=0.71\times10^{-12}\eV$ では、式 \eqref{eq:alpha_num} から
+\[
+\alpha=0.0748\times1.96\times0.71=0.104.
+\]
+研究ノートの値(E2、E3)と一致する。
+\end{numcheck}
+
+\begin{tocode}
+コード: \texttt{research/calc/sr.py} の \texttt{alpha\_of(M, mu\_eV)} が式 \eqref{eq:alpha_time} を計算する。定数は \texttt{TSUN} $=GM_\odot/c^3$、\texttt{HBAR\_EVS} $=\hbar$ [eV s]。
+\end{tocode}
+
+\begin{summary}
+\begin{itemize}
+\item 長さの尺度は $r_g=GM/c^2$、時間の尺度は $t_g=GM/c^3$。
+\item $\alpha=GM\mu/(\hbar c)=0.0748\,(M/10M_\odot)(\mu/10^{-12}\eV)$ は、BH の大きさと粒子の波長の比であり、重力原子の微細構造定数である。
+\end{itemize}
+\end{summary}

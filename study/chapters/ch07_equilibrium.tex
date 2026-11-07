@@ -1,0 +1,191 @@
+% 7. 準平衡と、回転を失う速さ
+\section{準平衡と、回転を失う速さ}\label{sec:equilibrium}
+
+\S\ref{sec:selfint} の率の方程式を解く。自己相互作用が強い($f$ が小さい)と、雲は大きく育つ前に「準平衡」に落ち着き、BH はゆっくりとしか回転を失わない。
+
+\subsection{準平衡の占有数}
+
+$\varepsilon$ の単位の率の方程式(\S\ref{sec:selfint})で、$|322\rangle$ の超放射 $\gamma_{322}$ は非常に小さいので落とす(研究ノート E3 で $10^{-8}$ 程度と確認)。
+\begin{align}
+\dot\varepsilon_{211}&=\gamma_\mathrm{SR}\varepsilon_{211}-2\gamma_\mathrm{BH}\varepsilon_{211}^2\varepsilon_{322}+\gamma_\infty\varepsilon_{211}\varepsilon_{322}^2,\\
+\dot\varepsilon_{322}&=\gamma_\mathrm{BH}\varepsilon_{211}^2\varepsilon_{322}-2\gamma_\infty\varepsilon_{211}\varepsilon_{322}^2.
+\end{align}
+($\gamma_\mathrm{SR}\equiv\gamma_{211}$ と書いた。)両方を 0 とおく。
+
+\paragraph{手順 1: $|322\rangle$ の式}
+$\varepsilon_{211}\varepsilon_{322}\ne0$ で割ると
+\begin{equation}
+\gamma_\mathrm{BH}\varepsilon_{211}-2\gamma_\infty\varepsilon_{322}=0
+\quad\Longrightarrow\quad
+\varepsilon_{322}=\frac{\gamma_\mathrm{BH}}{2\gamma_\infty}\,\varepsilon_{211}.
+\label{eq:eq322}
+\end{equation}
+
+\paragraph{手順 2: $|211\rangle$ の式}
+$\varepsilon_{211}$ で割り、式 \eqref{eq:eq322} を代入する。
+\begin{align}
+0&=\gamma_\mathrm{SR}-2\gamma_\mathrm{BH}\varepsilon_{211}\varepsilon_{322}+\gamma_\infty\varepsilon_{322}^2\notag\\
+&=\gamma_\mathrm{SR}-2\gamma_\mathrm{BH}\varepsilon_{211}\cdot\frac{\gamma_\mathrm{BH}\varepsilon_{211}}{2\gamma_\infty}+\gamma_\infty\Bigl(\frac{\gamma_\mathrm{BH}\varepsilon_{211}}{2\gamma_\infty}\Bigr)^2\notag\\
+&=\gamma_\mathrm{SR}-\frac{\gamma_\mathrm{BH}^2\varepsilon_{211}^2}{\gamma_\infty}+\frac{\gamma_\mathrm{BH}^2\varepsilon_{211}^2}{4\gamma_\infty}
+=\gamma_\mathrm{SR}-\frac34\,\frac{\gamma_\mathrm{BH}^2}{\gamma_\infty}\,\varepsilon_{211}^2.
+\end{align}
+したがって
+\begin{equation}
+\boxed{\;\varepsilon_{211}^\mathrm{eq}=\frac{2}{\sqrt3}\,\frac{\sqrt{\gamma_\mathrm{SR}\gamma_\infty}}{\gamma_\mathrm{BH}},\qquad
+\varepsilon_{322}^\mathrm{eq}=\frac{1}{\sqrt3}\sqrt{\frac{\gamma_\mathrm{SR}}{\gamma_\infty}}\;}
+\label{eq:eq_occ}
+\end{equation}
+(後者は式 \eqref{eq:eq322} に前者を入れた。)BGLS の式 55a,b と同じである。
+
+\paragraph{$f$ への依存}
+$\gamma_\mathrm{SR}$ は $f$ によらず、$\gamma_\infty$、$\gamma_\mathrm{BH}$ はどちらも $(\Mpl/f)^4$ に比例する(式 \ref{eq:gamma_SI})。よって
+\begin{equation}
+\varepsilon_{211}^\mathrm{eq}\propto\frac{(\Mpl/f)^2}{(\Mpl/f)^4}=\Bigl(\frac{f}{\Mpl}\Bigr)^2,\qquad
+\varepsilon_{322}^\mathrm{eq}\propto\Bigl(\frac{f}{\Mpl}\Bigr)^2.
+\end{equation}
+自己相互作用が強い(小さい $f$)ほど、雲は小さいところで止まる。
+
+\begin{numcheck}
+BGLS の例($\alpha=0.01$、$\chi=0.9$、$f=10^{15}\GeV$、主要項の $\gamma_\mathrm{SR}=0.04\,\alpha^8(\chi-2\alpha\rp)\mu$)で確かめる。$\rp=1+\sqrt{0.19}=1.436$、$\chi-2\alpha\rp=0.871$、$(\Mpl/f)^4=(1.221\times10^4)^4=2.22\times10^{16}$。
+\begin{align*}
+\gamma_\mathrm{SR}/\mu&=0.04\times10^{-16}\times0.871=3.48\times10^{-18},\\
+\gamma_\infty/\mu&=1.1\times10^{-8}\times10^{-16}\times2.22\times10^{16}=2.44\times10^{-8},\\
+\gamma_\mathrm{BH}/\mu&=4.3\times10^{-7}\times10^{-22}\times2.22\times10^{16}\times1.436=1.37\times10^{-12}.
+\end{align*}
+式 \eqref{eq:eq_occ} から $\varepsilon_{211}^\mathrm{eq}=1.155\times\sqrt{3.48\times10^{-18}\times2.44\times10^{-8}}/1.37\times10^{-12}=0.246$。BGLS の 0.25 と一致する(研究ノート E3)。
+\end{numcheck}
+
+\subsection{準平衡での角運動量とエネルギーの流れ}
+
+単位時間あたり、超放射で $|211\rangle$ に $S=\gamma_\mathrm{SR}\varepsilon_{211}$ の粒子が生まれ、過程 (a)、(b) がそれぞれ $R_\mathrm{BH}$、$R_\infty$ 回起こるとする。準平衡では
+\begin{equation}
+|211\rangle:\ S-2R_\mathrm{BH}+R_\infty=0,\qquad |322\rangle:\ R_\mathrm{BH}-2R_\infty=0
+\quad\Longrightarrow\quad
+R_\mathrm{BH}=2R_\infty,\quad S=3R_\infty.
+\end{equation}
+\begin{itemize}
+\item \textbf{角運動量}: BH は単位時間に $S\hbar=3R_\infty\hbar$ を失う。(b) は 1 回で $3\hbar$ を無限遠に運ぶので、運び出す量は $3R_\infty\hbar$。BH から取り出した角運動量は、すべて $m=3$ の波で無限遠に出ていく。雲にはたまらない。
+\item \textbf{エネルギー}($E_n\simeq\mu$ の近似): BH は超放射で $S\mu=3R_\infty\mu$ を失い、(a) で $R_\mathrm{BH}(2E_{211}-E_{322})\simeq2R_\infty\mu$ を吸い戻す。差し引き、取り出したエネルギーの 1/3 だけを失う。残りの $R_\infty\mu$ は (b) で無限遠に出ていく。
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\input{figs/fig_flow}
+\caption{準平衡での角運動量とエネルギーの流れ。BH から $|211\rangle$ に入った角運動量は、$|322\rangle$ を経て $m=3$ の波で外へ出る。エネルギーは 2/3 が BH に戻る。}
+\label{fig:flow}
+\end{figure}
+
+\subsection{回転を失う速さ}
+
+BH の角運動量を変えるのは超放射だけなので
+\begin{equation}
+\dot\chi=-\gamma_\mathrm{SR}\,\varepsilon_{211}^\mathrm{eq}=-\frac{2}{\sqrt3}\,\frac{\gamma_\mathrm{SR}^{3/2}\gamma_\infty^{1/2}}{\gamma_\mathrm{BH}}.
+\label{eq:chidot}
+\end{equation}
+$\gamma_\mathrm{SR}\equiv g\,\mu$($g$ は \S\ref{sec:atom} の粒子数の率を $\mu$ で割ったもの)と式 \eqref{eq:gamma_SI} を代入する。
+\begin{align}
+\gamma_\mathrm{SR}^{3/2}&=g^{3/2}\mu^{3/2},\qquad
+\gamma_\infty^{1/2}=\kappa_\infty^{1/2}\alpha^4\Bigl(\frac{\Mpl}{f}\Bigr)^2\mu^{1/2},\notag\\
+\frac{\gamma_\mathrm{SR}^{3/2}\gamma_\infty^{1/2}}{\gamma_\mathrm{BH}}
+&=\frac{g^{3/2}\mu^{3/2}\cdot\kappa_\infty^{1/2}\alpha^4(\Mpl/f)^2\mu^{1/2}}{\kappa_\mathrm{BH}\alpha^{11}(\Mpl/f)^4\rp\,\mu}
+=\mu\Bigl(\frac{f}{\Mpl}\Bigr)^2\frac{g^{3/2}\kappa_\infty^{1/2}}{\kappa_\mathrm{BH}\,\alpha^7\rp}.
+\end{align}
+まとめると
+\begin{equation}
+\boxed{\;\dot\chi=\mu\Bigl(\frac{f}{\Mpl}\Bigr)^2H(\alpha,\chi),\qquad
+H(\alpha,\chi)=-\frac{2}{\sqrt3}\,\frac{g(\alpha,\chi)^{3/2}\,\kappa_\infty^{1/2}}{\kappa_\mathrm{BH}\,\alpha^7\,\rp}\;}
+\label{eq:chidot_H}
+\end{equation}
+回転を失う速さは $f^2$ に比例する。$f$ が 10 倍小さいと、100 倍遅い。
+
+\begin{numcheck}
+上の BGLS の例で $\mu=10^{-12}\eV$($1.519\times10^3\,\mathrm{s}^{-1}$)とすると、$\gamma_\mathrm{SR}=3.48\times10^{-18}\times1519=5.29\times10^{-15}\,\mathrm{s}^{-1}$、$|\dot\chi|=\gamma_\mathrm{SR}\varepsilon_{211}^\mathrm{eq}=1.30\times10^{-15}\,\mathrm{s}^{-1}$。回転を失う時間の目安は $1/|\dot\chi|=7.7\times10^{14}\,\mathrm{s}=2.4\times10^7$ 年。BGLS の式 60 に印刷された $10^7$ 年は、同論文自身の定数から組んだこの値より 2.4 倍小さい(研究ノート E3)。
+\end{numcheck}
+
+\subsection{閉じた解}
+
+主要項 $g=\kappa_\mathrm{SR}\,\alpha^8x$($\kappa_\mathrm{SR}\simeq1/24$、$x\equiv\chi-2\alpha\rp$)を使い、$\rp$ と $\alpha$ を一定とみなすと、式 \eqref{eq:chidot_H} は $x$ だけの式になる。$\dd\chi=\dd x$ なので
+\begin{equation}
+\dot x=-K\,x^{3/2},\qquad
+K=\frac{2}{\sqrt3}\,\frac{\kappa_\mathrm{SR}^{3/2}\kappa_\infty^{1/2}}{\kappa_\mathrm{BH}\,\rp}\,\alpha^5\,\mu\Bigl(\frac{f}{\Mpl}\Bigr)^2
+\label{eq:xdot}
+\end{equation}
+($g^{3/2}/\alpha^7=\kappa_\mathrm{SR}^{3/2}\alpha^{12}x^{3/2}/\alpha^7=\kappa_\mathrm{SR}^{3/2}\alpha^5x^{3/2}$)。変数を分けて積分する。
+\begin{equation}
+\int_{x_0}^{x}x'^{-3/2}\,\dd x'=-K\int_0^t\dd t'
+\quad\Longrightarrow\quad
+\Bigl[-2x'^{-1/2}\Bigr]_{x_0}^{x}=-Kt
+\quad\Longrightarrow\quad
+x^{-1/2}=x_0^{-1/2}+\frac{K}{2}t.
+\end{equation}
+よって
+\begin{equation}
+\boxed{\;x(t)=\Bigl(x_0^{-1/2}+\frac{K}{2}t\Bigr)^{-2},\qquad
+t(x_i\to x_f)=\frac{2}{K}\Bigl(x_f^{-1/2}-x_i^{-1/2}\Bigr)\;}
+\label{eq:closedform}
+\end{equation}
+\begin{itemize}
+\item 長い時間では $x\simeq4/(Kt)^2$ で、スピンは臨界値に $t^{-2}$ でしか近づかない。自由場のように臨界値で止まるのではなく、年齢に応じて臨界値の少し上に散らばる。
+\item $K\propto\alpha^5$ なので、重い BH ほど速く回転を失う。
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\input{figs/fig_spindown}
+\caption{閉じた解 \eqref{eq:closedform} によるスピンの時間変化(説明用。$x$ の基準 $2\alpha\rp=0.338$ を一定とした)。GW241011 の主星に近い設定で、$f=4\times10^{12}\GeV$ が $10^7$ 年で 0.69 付近に来るように $K$ を選んだ。$f$ を $\sqrt{10}$ 倍すると曲線は時間方向に 10 倍ずれる。}
+\label{fig:spindown}
+\end{figure}
+
+\subsection{窓の判定に使う性質}
+
+\paragraph{1. 年齢の比は $f$ によらない}
+式 \eqref{eq:chidot_H} では $f$ が前の因子にしかないので、二つの BH が同じ $f$ で回転を失う時間の比
+\begin{equation}
+R\equiv\frac{t_\mathrm{1G}}{t_\mathrm{2G}}=\frac{\int\dd\chi/|H(\alpha_\mathrm{1G},\chi)|}{\int\dd\chi/|H(\alpha_\mathrm{2G},\chi)|}
+\end{equation}
+は $f$ によらない。窓があるには、1 世代目と 2 世代目の年齢の比が $R$ 以上でなければならない(研究ノート E3)。
+
+\paragraph{2. $f$ の上限}
+ある BH が年齢 $T$ のあいだに許される減少より多く回転を失わないためには、$t(f)\ge T$。$t\propto f^{-2}$ なので、基準の $f_\mathrm{ref}$ での時間 $t_\mathrm{ref}$ から
+\begin{equation}
+f_\mathrm{max}=f_\mathrm{ref}\sqrt{\frac{t_\mathrm{ref}}{T}}.
+\label{eq:fmax}
+\end{equation}
+GW241011 の主星($0.78\to0.69$、$\mu=0.71\times10^{-12}\eV$)では $f_\mathrm{ref}=10^{13}\GeV$ で $t_\mathrm{ref}=2.0\times10^6$ 年なので、$T=10^7$ 年なら $f_\mathrm{max}=10^{13}\times\sqrt{0.2}=4.5\times10^{12}\GeV$(研究ノート E3)。
+
+\paragraph{3. スピンは三つの量だけで決まる}
+$I(\alpha,\chi)\equiv\int_\chi^{\chi_\mathrm{top}}\dd\chi'/|H(\alpha,\chi')|$ とおくと、式 \eqref{eq:chidot_H} を積分して
+\begin{equation}
+I(\alpha,\chi_T)=I(\alpha,\chi_0)+\tau,\qquad \tau\equiv\mu\Bigl(\frac{f}{\Mpl}\Bigr)^2T.
+\end{equation}
+年齢 $T$ のあとのスピン $\chi_T$ は $(\alpha,\chi_0,\tau)$ だけで決まる。$I$ を一度表にすれば、集団解析で何百万回でも速く計算できる(研究ノート E10、\texttt{chisr.py})。
+
+\subsection{BH の質量の変化}
+
+準平衡では、BH は取り出した角運動量 $\dd J=-\hbar\,\dd N$ に対し、エネルギーを $\dd M\simeq-\tfrac13\mu\,\dd N$ しか失わない(上の流れ)。$\chi=J/M^2$ の変化は($G=\hbar=1$)
+\begin{equation}
+\dd\chi=\frac{\dd J}{M^2}-\frac{2J}{M^3}\dd M=-\frac{\dd N}{M^2}+\frac{2\chi}{M}\cdot\frac{\mu\,\dd N}{3}
+=-\frac{\dd N}{M^2}\Bigl(1-\frac{2\chi M\mu}{3}\Bigr)=-\frac{\dd N}{M^2}\Bigl(1-\frac{2\chi\alpha}{3}\Bigr).
+\end{equation}
+質量を固定した式より $(1-2\chi\alpha/3)$ 倍遅い。雲の大きさによらない補正で、GW241011 の主星では 5.4\%(研究ノート E9)。
+
+\subsection{いつ準平衡が成り立つか}
+
+\begin{itemize}
+\item \textbf{準平衡に早く着くこと}: 雲は 1 個の量子から自由に育ち、$|322\rangle$ が増えると止まる。止まる時点の $\varepsilon_{211}$ は自由場の飽和量よりずっと小さく、それまでに失う回転は無視できる。GW241011 の主星($f=4\times10^{12}\GeV$)では約 30 年で準平衡の 1\% 以内に入る(研究ノート E5 の ODE)。
+\item \textbf{二準位で足りること}: $\alpha\gtrsim0.15$ では $|433\rangle$ なども育ち、二準位の近似が崩れる(\arxiv{2412.03655})。
+\item \textbf{bosenova に届かないこと}: 引力が強すぎると雲がつぶれる(bosenova)。準平衡の雲はその閾値の 5\% ほどで届かない(研究ノート E3)。
+\end{itemize}
+
+\begin{summary}
+\begin{itemize}
+\item 準平衡の占有数 $\varepsilon_{211}^\mathrm{eq}=(2/\sqrt3)\sqrt{\gamma_\mathrm{SR}\gamma_\infty}/\gamma_\mathrm{BH}\propto f^2$。
+\item 取り出した角運動量はすべて $m=3$ の波で外へ出る。エネルギーは 2/3 が BH に戻る。
+\item 回転を失う速さ $\dot\chi=\mu(f/\Mpl)^2H(\alpha,\chi)\propto f^2$。主要項では $x(t)=(x_0^{-1/2}+Kt/2)^{-2}$。
+\item 年齢の比は $f$ によらず、$f$ の上限は $f_\mathrm{max}=f_\mathrm{ref}\sqrt{t_\mathrm{ref}/T}$、スピンは $(\alpha,\chi_0,\tau)$ で決まる。
+\end{itemize}
+\end{summary}
+
+\begin{tocode}
+コード: \texttt{si.eps\_eq} が式 \eqref{eq:eq_occ}、\texttt{si.chidot} が式 \eqref{eq:chidot}(\texttt{MASS\_CORR} で質量の補正)、\texttt{si.t\_spindown} が時間の積分、\texttt{chisr.H}・\texttt{chisr.chi\_after} が式 \eqref{eq:chidot_H} と $I$ の表。
+\end{tocode}

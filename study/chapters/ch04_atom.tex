@@ -1,0 +1,182 @@
+% 4. 重力原子
+\section{重力原子: BH のまわりの束縛状態}\label{sec:atom}
+
+\subsection{Klein--Gordon 方程式から Schr\"odinger 方程式へ}
+
+質量 $\mu$ の実スカラー場 $\varphi$ は、平坦な時空では Klein--Gordon 方程式
+\begin{equation}
+\partial_t^2\varphi-\nabla^2\varphi+\mu^2\varphi=0
+\label{eq:KG}
+\end{equation}
+に従う($\hbar=c=1$)。平面波 $e^{-i\omega t+i\bm k\cdot\bm x}$ を入れると $\omega^2=k^2+\mu^2$ で、特殊相対論のエネルギーと運動量の関係そのものである。
+
+\paragraph{弱い重力場}
+BH から遠いところ($r\gg M$)では、重力は Newton のポテンシャル $\Phi=-M/r$($G=1$)で表せ、計量は
+\begin{equation}
+\dd s^2\simeq(1+2\Phi)\,\dd t^2-(1-2\Phi)\,\dd\bm x^2
+\end{equation}
+である。このとき Klein--Gordon 方程式は、$|\Phi|\ll1$ の 1 次までで
+\begin{equation}
+(1-2\Phi)\,\partial_t^2\varphi-(1+2\Phi)\nabla^2\varphi+\mu^2\varphi=0
+\label{eq:KG_weak}
+\end{equation}
+になる(計量の逆数 $g^{tt}\simeq1-2\Phi$、$g^{ij}\simeq-(1+2\Phi)\delta^{ij}$ を使った)。
+
+\paragraph{速い振動を分ける}
+束縛された粒子は非相対論的で、エネルギーはほぼ静止質量 $\mu$ である。そこで、場を速い振動 $e^{-i\mu t}$ とゆっくり変わる複素関数 $\psi(t,\bm x)$ に分ける。
+\begin{equation}
+\varphi=\frac{1}{\sqrt{2\mu}}\Bigl(\psi\,e^{-i\mu t}+\psi^*e^{i\mu t}\Bigr).
+\label{eq:nr_ansatz}
+\end{equation}
+時間微分は
+\begin{equation}
+\partial_t^2\bigl(\psi e^{-i\mu t}\bigr)=\bigl(\ddot\psi-2i\mu\dot\psi-\mu^2\psi\bigr)e^{-i\mu t}.
+\end{equation}
+式 \eqref{eq:KG_weak} に入れて $e^{-i\mu t}$ の係数を集めると($e^{+i\mu t}$ の項は複素共役で同じ式を与える)
+\begin{equation}
+(1-2\Phi)\bigl(\ddot\psi-2i\mu\dot\psi-\mu^2\psi\bigr)-(1+2\Phi)\nabla^2\psi+\mu^2\psi=0.
+\end{equation}
+$\mu^2\psi$ の項は、$-(1-2\Phi)\mu^2\psi+\mu^2\psi=2\Phi\mu^2\psi$ にまとまる。残りの項の大きさを比べる。$\psi$ は $E-\mu\sim\mu v^2$ の速さで変わり、$|\Phi|\sim v^2$ なので、
+\begin{itemize}
+\item $\ddot\psi\sim\mu^2v^4\psi$ は $\mu\dot\psi\sim\mu^2v^2\psi$ より $v^2$ 倍小さい。
+\item $\Phi\mu\dot\psi$、$\Phi\nabla^2\psi$ は $\mu^2v^4\psi$ の大きさで、やはり $v^2$ 倍小さい。
+\end{itemize}
+これらを落とすと
+\begin{equation}
+-2i\mu\dot\psi+2\Phi\mu^2\psi-\nabla^2\psi=0
+\quad\Longrightarrow\quad
+i\dot\psi=-\frac{\nabla^2}{2\mu}\psi+\mu\Phi\,\psi.
+\end{equation}
+$\mu\Phi=-M\mu/r=-\alpha/r$ なので
+\begin{equation}
+\boxed{\;i\frac{\partial\psi}{\partial t}=\Bigl(-\frac{\nabla^2}{2\mu}-\frac{\alpha}{r}\Bigr)\psi\;}
+\label{eq:schrodinger}
+\end{equation}
+となる。これは水素原子の Schr\"odinger 方程式で、電子の質量 $m_e$ を $\mu$ に、$\alpha_\mathrm{em}$ を $\alpha$ に置き換えたものである。
+
+\paragraph{規格化: $|\psi|^2$ は粒子の数密度}
+式 \eqref{eq:nr_ansatz} の係数 $1/\sqrt{2\mu}$ は、$\int|\psi|^2\dd^3x$ が粒子の数 $N$ になるように選んである。実際、$\psi=|\psi|e^{i\theta}$ と書くと $\varphi=\sqrt{2/\mu}\,|\psi|\cos(\mu t-\theta)$ で、時間平均は $\langle\varphi^2\rangle=|\psi|^2/\mu$。速く振動する場のエネルギー密度は $\rho=\tfrac12\langle\dot\varphi^2\rangle+\tfrac12\mu^2\langle\varphi^2\rangle\simeq\mu^2\langle\varphi^2\rangle=\mu|\psi|^2$ なので、数密度は $\rho/\mu=|\psi|^2$ である。
+
+\subsection{水素原子の結果}
+
+式 \eqref{eq:schrodinger} の束縛状態は、水素原子とまったく同じである。
+\begin{itemize}
+\item \textbf{Bohr 半径}: $r_B=\dfrac{1}{\mu\alpha}$。$\alpha=M\mu$ を使うと $r_B=\dfrac{M}{\alpha^2}$、すなわち $r_B=r_g/\alpha^2$(\S\ref{sec:intro} の図~\ref{fig:bhcloud})。
+\item \textbf{エネルギー}(静止質量を含める): $E_n=\mu-\dfrac{\mu\alpha^2}{2n^2}=\mu\Bigl(1-\dfrac{\alpha^2}{2n^2}\Bigr)$。
+\item \textbf{量子数}: 主量子数 $n\ge1$、軌道角運動量 $\ell\le n-1$、方位量子数 $|m|\le\ell$。状態を $|n\ell m\rangle$ と書く。
+\item \textbf{原点の近く}: 動径関数は $R_{n\ell}(r)\propto r^\ell$($r\ll r_B$)。$\ell$ が大きいほど、波は原点(BH)の近くに来ない。
+\end{itemize}
+超放射の条件 $\omega<m\Omega_H$ には $m\ge1$ が要る。$m\ge1$ には $\ell\ge1$、$\ell\ge1$ には $n\ge2$ が要るので、最も育ちやすいのは $|211\rangle$ である($\ell$ が最小で BH に最も近づく)。次が $|322\rangle$、その次が $|433\rangle$ である。
+
+\begin{figure}[H]
+\centering
+\input{figs/fig_levels}
+\caption{重力原子の準位(模式図、間隔は誇張)。エネルギーは静止質量 $\mu$ のすぐ下に並ぶ。超放射で育つのは $m\ge1$ の準位で、最も速いのが $|211\rangle$。$E>\mu$ は無限遠に逃げられる連続状態。}
+\label{fig:levels}
+\end{figure}
+
+\paragraph{微細構造}
+相対論の補正と BH の回転は、水素原子と同じように準位を少しずらす。$\alpha^5$ までの結果は(\arxiv{1908.10370} の式 2.28--2.29)
+\begin{equation}
+\frac{E_{n\ell m}}{\mu}=1-\frac{\alpha^2}{2n^2}-\frac{\alpha^4}{8n^4}+\frac{f_{n\ell}}{n^3}\alpha^4+\frac{h_\ell}{n^3}\chi m\alpha^5,
+\quad f_{n\ell}=-\frac{6}{2\ell+1}+\frac{2}{n},\quad h_\ell=\frac{16}{2\ell(2\ell+1)(2\ell+2)}.
+\label{eq:fine}
+\end{equation}
+$\alpha^4$ の項が相対論の補正(水素原子の微細構造にあたる)、$\chi m\alpha^5$ の項が回転による分裂(超微細構造にあたる)である。このノートの議論では、ほとんど第 2 項までで足りる。
+
+\subsection{なぜ束縛状態が育つのか: 地平線での境界条件}
+
+水素原子では原点で波が正則であることを課す。BH では代わりに、地平線で波が「入っていくだけ」であることを課す(地平線の内側からは何も出てこない)。この境界条件のもとでは、固有振動数が複素数になる。
+\begin{equation}
+\omega=E+i\Gamma,\qquad \psi\propto e^{-i\omega t}=e^{-iEt}\,e^{\Gamma t}.
+\label{eq:complexomega}
+\end{equation}
+$\Gamma>0$ なら振幅が育ち、$\Gamma<0$ なら減衰する。\S\ref{sec:superradiance} の議論から、$\Gamma$ の符号は $m\Omega_H-E$ の符号と同じである。
+
+\subsection{成長率の大きさ: 見積もり}
+
+$\Gamma$ の大きさを、「地平線を通る粒子の流れ $\div$ 雲の粒子の数」として見積もる。
+\begin{enumerate}
+\item \textbf{地平線での密度}: 原点の近くで $R_{n\ell}\propto r^\ell$ なので、規格化された波の地平線での密度は
+\[
+\frac{|\psi(r_+)|^2}{N}\sim\frac{1}{r_B^3}\Bigl(\frac{r_+}{r_B}\Bigr)^{2\ell}.
+\]
+\item \textbf{流れ}: 地平線と一緒に回る系では波の振動数は $\omega-m\Omega_H$ で、粒子の流れはこれに比例する。流れの大きさは、面積 $\sim r_+^2$、振動数 $(\omega-m\Omega_H)$、場の振幅の 2 乗 $|\varphi|^2\sim|\psi|^2/\mu$ の積の程度である。符号まで含めて
+\[
+\frac{\dd N}{\dd t}\sim r_+^2\,(m\Omega_H-\omega)\,\frac{|\psi(r_+)|^2}{\mu}.
+\]
+\item \textbf{率}: $N$ で割り、$r_B=1/(\mu\alpha)$、$r_+\sim M$ を代入する。
+\begin{align}
+\Gamma\sim\frac{1}{N}\frac{\dd N}{\dd t}
+&\sim(m\Omega_H-\omega)\,\frac{r_+^{2\ell+2}}{\mu\,r_B^{2\ell+3}}
+=(m\Omega_H-\omega)\,\frac{M^{2\ell+2}(\mu\alpha)^{2\ell+3}}{\mu}\notag\\
+&=(m\Omega_H-\omega)\,(M\mu)^{2\ell+2}\alpha^{2\ell+3}
+=(m\Omega_H-\omega)\,\alpha^{4\ell+5}.
+\label{eq:gamma_estimate}
+\end{align}
+\end{enumerate}
+成長率は $\alpha^{4\ell+5}$ に比例する。$\ell$ が 1 増えるごとに $\alpha^4$ 倍遅くなる。$\alpha=0.1$ では、$|322\rangle$ は $|211\rangle$ より $10^{-4}$ 倍ほど遅い。
+
+\subsection{正確な式と、振幅の率と粒子数の率}
+
+漸近展開の接続による正確な結果は(\arxiv{1908.10370} の式 2.32--2.34、$G=c=\hbar=1$)
+\begin{gather}
+\Gamma_{n\ell m}=2\rp\,C_{n\ell}\,g_{\ell m}\,(m\Omega_H-E_{n\ell m})\,\alpha^{4\ell+5},
+\label{eq:bcst}\\
+C_{n\ell}=\frac{2^{4\ell+1}(n+\ell)!}{n^{2\ell+4}(n-\ell-1)!}\Bigl[\frac{\ell!}{(2\ell)!\,(2\ell+1)!}\Bigr]^2,\qquad
+g_{\ell m}=\prod_{k=1}^{\ell}\Bigl[k^2(1-\chi^2)+(\chi m-2r_+E_{n\ell m})^2\Bigr]
+\notag
+\end{gather}
+で、見積もり \eqref{eq:gamma_estimate} と同じ形をしている。
+
+\paragraph{$|211\rangle$ の小さい $\alpha$ の極限}
+$n=2$、$\ell=m=1$ を代入する。
+\begin{equation}
+C_{21}=\frac{2^5\cdot3!}{2^6\cdot0!}\Bigl[\frac{1!}{2!\cdot3!}\Bigr]^2=\frac{32\cdot6}{64}\cdot\frac{1}{144}=\frac{3}{144}=\frac{1}{48}.
+\end{equation}
+$\alpha\to0$ では $r_+E\simeq\rp\alpha\to0$ なので、$g_{11}\to(1-\chi^2)+\chi^2=1$。また $\Omega_H=\chi/(2\rp M)$、$E\simeq\mu=\alpha/M$ から
+\begin{equation}
+2\rp(\Omega_H-E)\simeq2\rp\Bigl(\frac{\chi}{2\rp M}-\frac{\alpha}{M}\Bigr)=\frac{\chi-2\alpha\rp}{M}.
+\end{equation}
+これらを式 \eqref{eq:bcst} に入れ、$\alpha^9/M=\alpha^8\mu$ を使うと
+\begin{equation}
+\Gamma_{211}\simeq\frac{1}{48}\,\frac{\chi-2\alpha\rp}{M}\,\alpha^9=\frac{\mu\,\alpha^8}{48}\bigl(\chi-2\alpha\rp\bigr).
+\label{eq:gamma211}
+\end{equation}
+$\chi-2\alpha\rp=0$ は $\Omega_HM=\alpha$、すなわち $m=1$ の超放射の条件の境目である(\S\ref{sec:chic})。
+
+\paragraph{振幅の率と粒子数の率}
+式 \eqref{eq:complexomega} のとおり、$\Gamma$ は場の振幅の成長率である。粒子の数は $N\propto|\psi|^2\propto e^{2\Gamma t}$ で育つので、粒子数の成長率は
+\begin{equation}
+\Gamma_N\equiv\frac{1}{N}\frac{\dd N}{\dd t}=2\Gamma\simeq\frac{\mu\,\alpha^8}{24}\bigl(\chi-2\alpha\rp\bigr)
+\label{eq:gammaN}
+\end{equation}
+である。
+
+\begin{caution}
+文献によって $\Gamma$ が振幅の率か粒子数の率かが違い、2 倍の食い違いが生じやすい。最初の解析(Detweiler 1980)は振幅の率を $1/24$ としたが、これは 2 倍大きすぎ、のちに $1/48$ に訂正された。研究ではすべて粒子数の率 $\Gamma_N=2\Gamma$ を使う(\texttt{sr.NORM\_N = 2})。
+\end{caution}
+
+\begin{numcheck}
+$M=15\Msun$、$\mu=7\times10^{-13}\eV$、$\chi=0.69$ では、$\alpha=0.0786$、$\rp=1.724$、$\chi-2\alpha\rp=0.419$。
+\begin{itemize}
+\item 小さい $\alpha$ の式 \eqref{eq:gammaN}: $\Gamma_N/\mu=\alpha^8\times0.419/24$。$\alpha^8=(0.0786)^8=1.46\times10^{-9}$ なので $2.54\times10^{-11}$。
+\item $g_{11}$ を入れると: $g_{11}=(1-0.476)+(0.69-2\times1.724\times0.0786)^2=0.524+0.176=0.700$ なので、$\Gamma_N/\mu=1.78\times10^{-11}$。研究の値(E2: $1.776\times10^{-11}$)と一致する。
+\item $\mu=7\times10^{-13}\eV$ は $1.06\times10^3\,\mathrm{s}^{-1}$ なので、$\Gamma_N=1.89\times10^{-8}\,\mathrm{s}^{-1}$。粒子数が $e$ 倍になる時間は $1/\Gamma_N=5.3\times10^7\,\mathrm{s}=1.7$ 年。
+\end{itemize}
+\end{numcheck}
+
+\paragraph{相対論的な補正}
+式 \eqref{eq:bcst} は $\alpha$ の小さい極限の式である。研究では、Kerr 時空の Klein--Gordon 方程式を Leaver の連分数法で数値的に解いて比べた(E4、付録~\ref{app:leaver})。$\alpha\lesssim0.08$ では 10\% 以内で合い、$\alpha=0.2$($\chi=0.9$)では解析式が 1.5 倍小さい。窓に効く $\alpha\lesssim0.15$ では、補正は結論を変えない。
+
+\begin{summary}
+\begin{itemize}
+\item 弱い重力場の Klein--Gordon 方程式は、$\varphi=(2\mu)^{-1/2}(\psi e^{-i\mu t}+\mathrm{c.c.})$ とおくと水素原子の Schr\"odinger 方程式($\alpha_\mathrm{em}\to\alpha$)になる。$|\psi|^2$ は粒子の数密度。
+\item 準位 $E_n=\mu(1-\alpha^2/2n^2)$、Bohr 半径 $r_B=r_g/\alpha^2$。最も速く育つのは $|211\rangle$。
+\item 地平線の境界条件で振動数が複素数になり、成長率は $\Gamma\propto(m\Omega_H-E)\alpha^{4\ell+5}$。$|211\rangle$ の粒子数の率は $\Gamma_N\simeq\mu\alpha^8(\chi-2\alpha\rp)/24$。
+\end{itemize}
+\end{summary}
+
+\begin{tocode}
+コード: \texttt{sr.omega\_over\_mu} が式 \eqref{eq:fine}、\texttt{sr.gamma\_over\_mu} が式 \eqref{eq:bcst}(振幅の率、\texttt{norm=2} で粒子数の率)、\texttt{sr.gamma\_rel\_over\_mu} が連分数法の表から引いた相対論的な率。
+\end{tocode}

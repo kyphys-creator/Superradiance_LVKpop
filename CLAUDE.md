@@ -28,6 +28,7 @@ Refs/notes/                  論文の本文からの抜き書き(式番号つ�
 Refs/arxiv/                  ダウンロードした論文のソース・PDF(git に入れない)
 DESIGN.md                    決めた設計とその理由
 paper/outline.md             論文の構成案と、データ解析の前に残る理論の作業
+study/study_note.tex         勉強ノート(学部の物理から、この研究の物理を省略せずに導出。chapters/、figs/。ビルド: cd study && latexmk -lualatex study_note.tex)
 ```
 
 ## 実行環境

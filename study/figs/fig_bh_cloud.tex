@@ -1,0 +1,17 @@
+% BH と雲の大きさ(模式図)
+\begin{tikzpicture}[scale=1.0]
+  % 雲(同心円のぼかし)
+  \foreach \r/\o in {3.0/0.05, 2.6/0.08, 2.2/0.11, 1.8/0.14, 1.4/0.12, 1.0/0.08}{
+    \fill[cA, opacity=\o] (0,0) ellipse ({\r} and {0.55*\r});
+  }
+  % BH
+  \fill[ink] (0,0) circle (0.12);
+  \draw[ink2, thin] (0,0) circle (0.17);
+  % 回転の矢印
+  \draw[-{Stealth[length=2mm]}, ink2] (0.32,0.1) arc (10:300:0.32 and 0.18);
+  % 寸法
+  \draw[{Stealth[length=2mm]}-{Stealth[length=2mm]}, ink2] (0,-0.25) -- (2.2,-1.21) node[midway, below right, font=\small, color=ink] {$r_c\simeq r_g/\alpha^2$};
+  \node[font=\small, anchor=west] at (0.25,0.45) {BH($r_g$)};
+  \node[font=\small, color=cA!80!black] at (2.9,1.45) {粒子の雲};
+  \node[font=\scriptsize, color=ink2, align=left, anchor=west] at (3.4,0.2) {$\alpha=0.1$ なら\\$r_c\approx100\,r_g$};
+\end{tikzpicture}

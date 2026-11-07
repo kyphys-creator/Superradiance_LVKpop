@@ -1,0 +1,79 @@
+% 10. 窓: すべてを組み合わせる
+\section{窓: すべてを組み合わせる}\label{sec:window}
+
+ここまでの結果を組み合わせて、研究の問い(\S\ref{sec:intro})に答える形を作る。
+
+\subsection{二つの条件}
+
+$\mu$ と $f$ を決めると、どの BH がどれだけ回転を失うかが決まる。窓は次の二つを同時に満たす $(\mu,f)$ である。
+
+\paragraph{条件 1: 2 世代目は回転を保つ(上限)}
+GW241011 の主星は、生まれたときのスピン $\chi_0$ から、年齢 $T_2$ のあいだに観測の下限 0.69 を下回ってはならない。回転を失う速さは $f^2$ に比例するので(式 \ref{eq:chidot_H})、これは $f$ の上限になる(式 \ref{eq:fmax})。
+\begin{equation}
+t_\mathrm{2G}(f)\ge T_2\quad\Longleftrightarrow\quad f\le f_\mathrm{max}.
+\end{equation}
+
+\paragraph{条件 2: 1 世代目は回転を失う(下限)}
+質量とスピンの相関を超放射で説明するには、1 世代目の BH が、年齢 $T_1$ のうちに臨界スピンの近く(臨界 $+\delta$)まで回転を失わなければならない。これは $f$ の下限になる。
+\begin{equation}
+t_\mathrm{1G}(f)\le T_1\quad\Longleftrightarrow\quad f\ge f_\mathrm{min}(M_1).
+\end{equation}
+$\delta=0.18$ は、証拠を主張する解析が積み上がりに持たせた幅である。
+
+\paragraph{両立の条件}
+$f_\mathrm{min}\le f\le f_\mathrm{max}$ が空でないこと。$t\propto f^{-2}$ なので、これは年齢の比の条件と同じである。
+\begin{equation}
+\frac{T_1}{T_2}\ge R=\frac{t_\mathrm{1G}}{t_\mathrm{2G}}\qquad(\text{$f$ によらない、\S\ref{sec:equilibrium}}).
+\end{equation}
+$t\propto1/K\propto\alpha^{-5}$ なので、軽い 1 世代目ほど回転を失うのが遅く、$R$ が大きい。窓は「重い 1 世代目だけが回転を失う」形になりやすい。
+
+\subsection{仮定の組と結果}
+
+\begin{table}[H]
+\centering\small
+\caption{窓の判定に使う仮定と、$\mu=0.71\times10^{-12}\eV$ での結果(主要項の $\gamma_\mathrm{BH}$。研究ノート E9、E10)。$M_\mathrm{min}$ は 6 Gyr のうちに臨界 $+\delta$ まで回転を失える 1 世代目の最小質量($\delta=0.18/0.05$)。}
+\label{tab:window}
+\begin{tabularx}{\linewidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+ & 楽観的な仮定 & 現実的な仮定 \\
+\midrule
+GW241011 の主星 & 0.78 で生まれ、年齢 $3\times10^7$ 年 & 0.72 で生まれ、年齢 $5\times10^7$ 年 \\
+$f$ の上限(GW241011) & $2.4\times10^{12}\GeV$ & $1.1\times10^{12}\GeV$ \\
+$M_\mathrm{min}$(GW だけ) & $8.8/10.9\Msun$ & $11.7/14.5\Msun$ \\
+GRS 1915+105(付録) & 年齢 $4.5\times10^7$ 年、0.95 を保つ & 年齢 3 Gyr、0.87 を保つ \\
+$M_\mathrm{min}$(GRS も入れる) & --- & $15.5/19.3\Msun$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\input{figs/fig_window_study}
+\caption{$(\mu,f)$ 面の窓。青の実線より下で GW241011 の主星が回転を保つ(条件 1)。緑の破線より上で、その質量の 1 世代目が 6 Gyr のうちに回転を失う(条件 2、$\delta=0.18$)。灰色の点線は付録で扱う GRS 1915+105 の上限。橙の帯は証拠を主張する解析の質量(90\%)。データは論文の図(研究ノート E9)と同じ。}
+\label{fig:window_study}
+\end{figure}
+
+\subsection{読み方}
+
+\begin{itemize}
+\item 楽観的な仮定では、$f\sim10^{12}\GeV$ で 10 $\Msun$ 程度より重い 1 世代目が回転を失い、GW241011 は回転を保てる。
+\item 現実的な仮定では、上限が 2 倍ほど下がり、回転を失えるのは 12--15 $\Msun$ 以上の 1 世代目になる。X 線連星 GRS 1915+105 も入れると 15--19 $\Msun$ 以上。
+\item 2 世代目の生まれたときのスピンは $\approx0.68$ に集中する(\S\ref{sec:secondgen})。0.78 で生まれる確率は 2\% 以下で、楽観的な仮定はその意味でかなり楽観的である。
+\end{itemize}
+したがって、最後に決めるのは集団解析である。問いは「GWTC-5 の質量とスピンの相関が、重い 1 世代目だけが回転を失う形を許すか」になる。
+
+\subsection{集団解析に渡すもの}
+
+集団解析では、BH ごとに(質量、生まれたときのスピン、年齢)をモンテカルロで振り、$(\mu,f)$ を推定する。そのとき要る関数は、年齢 $T$ のあとのスピン
+\begin{equation}
+\chi_\mathrm{SR}(M,\chi_0,T;\mu,f)=\chi_T\Bigl(\alpha=GM\mu,\ \chi_0,\ \tau=\mu(f/\Mpl)^2T\Bigr)
+\end{equation}
+である(\S\ref{sec:equilibrium})。準平衡では三つの量だけの関数なので、表から $10^6$ 回を 0.2 秒で引ける(研究ノート E10)。自由場の側($f$ が大きい)では \S\ref{sec:cloud} の飽和の扱いを使い、両者をつなぐ。
+
+\begin{summary}
+\begin{itemize}
+\item 窓は「2 世代目は回転を保つ($f$ の上限)」と「1 世代目は回転を失う($f$ の下限)」の重なりで、年齢の比 $T_1/T_2\ge R$ と同じである。
+\item 回転を失う速さは $\alpha^5$ に比例するので、窓では重い 1 世代目だけが回転を失う。
+\item 現実的な仮定では、窓は $f\sim10^{12}\GeV$ で、回転を失うのは 12--15 $\Msun$ 以上(GW だけ)の 1 世代目。これを GWTC-5 の集団が許すかを集団解析で決める。
+\end{itemize}
+\end{summary}

@@ -1,0 +1,80 @@
+% 8. 吸収で回転は戻らない
+\section{吸収で BH の回転は戻るか}\label{sec:norestore}
+
+2 世代目の BH を「時計」として使うには、一度失った回転が、雲や伴星を通じた吸収で戻らないことが要る。戻るなら、速く回る BH を見ても回転を失わなかったとは言えない。
+
+\subsection{吸収によるスピンの変化}
+
+振動数 $\omega$、方位量子数 $m$ のモードの量子を BH が $\delta N$ 個吸収すると、$\delta M=\hbar\omega\delta N$、$\delta J=m\hbar\delta N$。$\chi=J/M^2$($G=c=\hbar=1$)なので
+\begin{equation}
+\delta\chi=\frac{\delta J}{M^2}-\frac{2J}{M^3}\delta M=\frac{m\,\delta N}{M^2}-\frac{2\chi}{M}\omega\,\delta N
+=\frac{\delta N}{M^2}\bigl(m-2\chi M\omega\bigr).
+\label{eq:dchi_abs}
+\end{equation}
+モードが吸収されるのは、超放射の条件を満たさないとき、すなわち $\omega>m\Omega_H$ のときである(\S\ref{sec:superradiance})。
+
+\subsection{場合分け}
+
+BH は $|211\rangle$ の臨界より上にいる($\chi\ge\chi_c^{(211)}$、すなわち $\Omega_H\ge E_{211}$)とする。束縛されたモードの振動数は $\omega<\mu$。
+\begin{itemize}
+\item \textbf{$m\le0$}: 式 \eqref{eq:dchi_abs} の括弧は $m-2\chi M\omega\le-2\chi M\omega<0$。吸収はスピンを必ず下げる。
+\item \textbf{$m\ge2$}: 吸収されるには $m\Omega_H<\omega<\mu$、すなわち $\Omega_H<\mu/2$ が要る。しかし $\Omega_H\ge E_{211}=\mu(1-\alpha^2/8)>\mu/2$ なので、$m\ge2$ のモードは超放射し、吸収されない。
+\item \textbf{$m=1$}: 吸収されるのは $\Omega_H<\omega$ のとき。$\omega$ は $E_{211}$ と $\mu$ のあいだにありうる($n\ge3$ の $m=1$ の準位や、自己相互作用の強制振動)。そのとき括弧は $1-2\chi M\omega>0$($M\omega\simeq\alpha<1/2$)で、スピンは上がる。
+\end{itemize}
+
+\paragraph{$m=1$ の吸収には上限がある}
+$m=1$ のモードを吸収すると $\chi$ が上がり、$\Omega_H$ も上がる。$\Omega_H$ が $\omega$ に届くと、そのモードは超放射する側に回り、吸収は止まる。$\omega<\mu$ なので、吸収で上がるのは
+\begin{equation}
+\Omega_H(\chi_\mu)=\mu
+\end{equation}
+となるスピン $\chi_\mu$ までである。$\chi_\mu$ と $\chi_c^{(211)}$(条件は $\Omega_H=E_{211}=\mu(1-\alpha^2/8)$)の差は $\alpha^2$ 程度の割合しかない。
+
+\begin{numcheck}
+$\mu=0.71\times10^{-12}\eV$ で $\chi_\mu-\chi_c^{(211)}$ を数値で解くと(研究ノート E9)、GW241011 の主星($\alpha=0.104$)で $5.0\times10^{-4}$、GRS 1915+105($0.066$)で $1.4\times10^{-4}$、Cyg X-1($0.113$)で $6.2\times10^{-4}$、$10\Msun$($0.053$)で $7.3\times10^{-5}$。どれも観測の誤差よりずっと小さい。
+\end{numcheck}
+
+\subsection{一般の上限: 面積定理から}
+
+外からのトルクがなければ、どんな過程でも $\chi\le\chi_0$(生まれたときの値)であることを示す。
+
+\paragraph{手順 1: $\chi$ を $J$ と $M_\mathrm{irr}$ で書く}
+Christodoulou の式 \eqref{eq:christodoulou} から $M^2=D\equiv M_\mathrm{irr}^2+J^2/(4M_\mathrm{irr}^2)$ なので
+\begin{equation}
+\chi=\frac{J}{M^2}=\frac{J}{D}.
+\end{equation}
+
+\paragraph{手順 2: 偏微分の符号}
+\begin{align}
+\frac{\partial\chi}{\partial J}&=\frac{D-J\,\partial D/\partial J}{D^2}=\frac{D-J^2/(2M_\mathrm{irr}^2)}{D^2}=\frac{M_\mathrm{irr}^2-J^2/(4M_\mathrm{irr}^2)}{D^2},\\
+\frac{\partial\chi}{\partial M_\mathrm{irr}}&=-\frac{J\,\partial D/\partial M_\mathrm{irr}}{D^2}=-\frac{J\bigl(2M_\mathrm{irr}-J^2/(2M_\mathrm{irr}^3)\bigr)}{D^2}=-\frac{2J}{M_\mathrm{irr}}\cdot\frac{M_\mathrm{irr}^2-J^2/(4M_\mathrm{irr}^2)}{D^2}.
+\end{align}
+共通の因子 $M_\mathrm{irr}^2-J^2/(4M_\mathrm{irr}^2)$ は、BH では 0 以上である。実際 \S\ref{sec:kerr} の結果から $M_\mathrm{irr}^2-J^2/(4M_\mathrm{irr}^2)=M^2(1+s)/2-M^2(1-s)/2=M^2s\ge0$($s=\sqrt{1-\chi^2}$)。よって
+\begin{equation}
+\frac{\partial\chi}{\partial J}\ge0,\qquad \frac{\partial\chi}{\partial M_\mathrm{irr}}\le0.
+\end{equation}
+スピンは、角運動量が増えると上がり、既約質量が増えると下がる。
+
+\paragraph{手順 3: 上限}
+\begin{itemize}
+\item 外からのトルクがなければ、雲がもつ正の角運動量はすべて BH から来たものなので、BH が雲を全部吸い戻しても $J_\mathrm{BH}\le J_0$。放出は角運動量を減らすだけである。
+\item 面積定理から $M_\mathrm{irr}\ge M_{\mathrm{irr},0}$。
+\end{itemize}
+手順 2 の符号から
+\begin{equation}
+\chi=\chi(J_\mathrm{BH},M_\mathrm{irr})\le\chi(J_0,M_{\mathrm{irr},0})=\chi_0.
+\end{equation}
+
+\paragraph{例外}
+外から角運動量を持ち込む過程だけが、スピンを生まれたときより上げうる。
+\begin{itemize}
+\item \textbf{ガスの降着}: Eddington 限界でスピンを $O(1)$ 変えるには、Salpeter 時間 $\sim4.5\times10^7$ 年の程度かかる。星団の BBH ではガスが少なく効かない。AGN 円盤の中では効きうる。
+\item \textbf{伴星の軌道}: 共鳴で軌道の角運動量が雲に移ることはありうる。
+\end{itemize}
+
+\begin{summary}
+\begin{itemize}
+\item 吸収によるスピンの変化は $\delta\chi=(\delta N/M^2)(m-2\chi M\omega)$。
+\item $\chi\ge\chi_c^{(211)}$ では、$m\le0$ の吸収はスピンを下げ、$m\ge2$ は吸収されず、$m=1$ の吸収は $\Omega_H=\mu$ のスピン(臨界より $10^{-4}$ ほど上)までしか上げない。
+\item 一般に、外からのトルクがなければ面積定理から $\chi\le\chi_0$。速く回る 2 世代目は、回転を奪われなかったか、ガスで回し直されたかのどちらかである。
+\end{itemize}
+\end{summary}

@@ -1,0 +1,81 @@
+% 5. 雲の成長と BH の回転の減少(自由場)
+\section{雲の成長と BH の回転の減少(自由場)}\label{sec:cloud}
+
+この節では自己相互作用を入れず(自由場)、$|211\rangle$ の雲が育って BH の回転を奪う過程を追う。
+
+\subsection{雲と BH の連立方程式}
+
+雲の粒子数を $N$ とする。粒子 1 個が BH から角運動量 $m\hbar$($|211\rangle$ では $\hbar$)とエネルギー $\hbar\omega$ を持ち去るので
+\begin{equation}
+\frac{\dd N}{\dd t}=\Gamma_N(\chi)\,N,\qquad
+\frac{\dd J}{\dd t}=-m\hbar\,\Gamma_N N,\qquad
+\frac{\dd M}{\dd t}=-\hbar\omega\,\Gamma_N N.
+\label{eq:cloud_ode}
+\end{equation}
+$\Gamma_N$ は BH のスピンの関数で、臨界スピン $\chi_c$ で 0 になる。
+
+\paragraph{粒子数をスピンの単位で数える}
+$J=\chi GM^2/c$ なので、角運動量を $\hbar$ で数えると
+\begin{equation}
+\frac{J}{\hbar}=\chi\,\frac{GM^2}{\hbar c}=\chi\Bigl(\frac{M}{\Mpl}\Bigr)^2,\qquad
+\Mpl=\sqrt{\frac{\hbar c}{G}}=2.18\times10^{-8}\,\mathrm{kg}.
+\end{equation}
+$M=M_\odot$ では $(M_\odot/\Mpl)^2=(1.99\times10^{30}/2.18\times10^{-8})^2=8.3\times10^{75}$ である。そこで粒子数を
+\begin{equation}
+\varepsilon\equiv\frac{N}{GM^2/(\hbar c)}
+\label{eq:epsilon}
+\end{equation}
+で数えると、$|211\rangle$ では $\dd\chi=-\dd\varepsilon$(質量の変化を無視したとき)になる。BH が $\chi_0$ から $\chi_c$ まで回転を失うと、雲には $\varepsilon=\chi_0-\chi_c$ の粒子がたまる。
+
+\subsection{飽和までの時間}
+
+雲は 1 個の量子(量子ゆらぎ)から育つ。$\Gamma_N$ が一定なら $N(t)=e^{\Gamma_Nt}$ で、飽和の粒子数
+\begin{equation}
+N_\mathrm{sat}=\frac{\Delta J}{m\hbar}=\frac{(\chi_0-\chi_c)}{m}\Bigl(\frac{M}{\Mpl}\Bigr)^2
+\end{equation}
+に届く時間は
+\begin{equation}
+t_\mathrm{sat}\simeq\frac{\ln N_\mathrm{sat}}{\Gamma_N}.
+\label{eq:tsat}
+\end{equation}
+$\ln N_\mathrm{sat}$ はほとんど変わらない数である。$M=15\Msun$、$\chi_0-\chi_c=0.38$ では $N_\mathrm{sat}=0.38\times225\times8.3\times10^{75}=7.1\times10^{77}$、$\ln N_\mathrm{sat}=179$。
+
+\begin{numcheck}
+\S\ref{sec:atom} の例($M=15\Msun$、$\mu=7\times10^{-13}\eV$)では、$1/\Gamma_N=1.7$ 年なので
+\[
+t_\mathrm{sat}\simeq179\times1.7\ \text{年}\approx300\ \text{年}.
+\]
+研究ノート E2 では、連立方程式を数値で解いて、スピンが初期値と最終値の中点まで落ちる時刻を 301 年と求めた。最後の数 $e$-fold で $\Gamma_N$ が小さくなる効果は、180 に比べて小さい。
+\end{numcheck}
+
+\paragraph{飽和したあと}
+飽和すると $\chi=\chi_c$ で $\Gamma_N=0$ となり、BH のスピンはそこで止まる。雲は重力波を出してゆっくり減るが、BH の回転は戻らない(\S\ref{sec:norestore})。もっと長い時間がたつと、次の準位 $|322\rangle$($m=2$)が育ち、BH は $m=2$ の臨界スピンまで回転を失う。$|322\rangle$ の率は $\alpha^4$ 倍ほど遅いので、時間は桁で長い。
+
+\subsection{Regge 面: 回転していられない BH の領域}
+
+$\mu$ を決めると、各 $M$ で $\alpha\propto M$ が決まり、臨界スピン $\chi_c(M)$ が決まる。年齢 $T$ のうちに雲が育ちきる($t_\mathrm{sat}<T$)質量の範囲では、BH は $\chi_c$ より速く回っていられない。BH の質量とスピンの平面(Regge 面)に、この「回転していられない領域」が現れる(図~\ref{fig:regge})。
+
+\begin{figure}[H]
+\centering
+\input{figs/fig_regge}
+\caption{Regge 面の模式図($\mu=0.71\times10^{-12}\eV$)。曲線は $m=1$、$2$ の臨界スピン $\chi_c=4m\alpha/(m^2+4\alpha^2)$ で、$\alpha=0.0748\,(M/10M_\odot)(\mu/10^{-12}\eV)$。雲が育ちきる年齢があれば、灰色の領域(曲線より上)の BH は回転を失って曲線まで落ちる。点は GW241011 の主星($19.6\Msun$、$\chi_1=0.78$)。}
+\label{fig:regge}
+\end{figure}
+
+\subsection{自由場の問題: GW241011}
+
+GW241011 の主星($M=19.6\Msun$、$\chi_1=0.78\pm0.09$)は、前の合体で生まれた 2 世代目の BH と考えられている。$\mu=0.71\times10^{-12}\eV$ では $\alpha=0.104$ で、$m=1$ の臨界スピンは $\chi_c=0.40$(表~\ref{tab:chic})。自由場なら、この BH は約 35 年で $0.69$ を下回る(研究ノート E2)。2 世代目の BH が生まれてから合体するまでの時間は少なくとも Myr なので、自由場ではこの BH は残らない。
+
+これが、自由場の解析で $\mu\sim10^{-12}\eV$ が排除される理由である。この粒子が存在する証拠を主張する解析は、スピンを臨界値に寄せる模型に、手で幅 $\sigma_\mathrm{SR}=0.18$ を持たせている(\S\ref{sec:intro})。
+
+\begin{summary}
+\begin{itemize}
+\item 雲は 1 個の量子から $\Gamma_N$ で育ち、$t_\mathrm{sat}\simeq\ln N_\mathrm{sat}/\Gamma_N$($\ln N_\mathrm{sat}\approx180$)で飽和する。BH のスピンは臨界値 $\chi_c$ で止まる。
+\item $15\Msun$、$\mu=7\times10^{-13}\eV$ では約 300 年。BH の年齢(Myr--Gyr)よりずっと短い。
+\item 自由場では、GW241011 の主星は数十年で回転を失う。自己相互作用でこれを避けられるかが、次の 2 節の主題である。
+\end{itemize}
+\end{summary}
+
+\begin{tocode}
+コード: \texttt{sr.chi\_final\_seq} が、各準位の $e$-fold の数を積み、$\ln N_\mathrm{sat}$ に届いたら臨界スピンまで落とす半解析(式 \ref{eq:tsat} の考え方)。\texttt{sr.evolve\_free} が式 \eqref{eq:cloud_ode} の ODE(照合用)。
+\end{tocode}

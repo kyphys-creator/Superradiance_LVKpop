@@ -1,0 +1,86 @@
+% 勉強ノート: 自己相互作用のある ALP の超放射と BH のスピン
+% ビルド: cd study && latexmk -lualatex study_note.tex
+% 前提: 学部の物理(量子力学の水素原子・摂動・Fermi の黄金律、古典力学、特殊相対論)。
+%       一般相対論は必要な結果だけを与える。
+\documentclass[a4paper,10pt]{ltjsarticle}
+\usepackage[margin=22mm,top=22mm,bottom=24mm]{geometry}
+\usepackage{amsmath,amssymb,bm}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{booktabs,tabularx,array,float}
+\usepackage{enumitem}
+\usepackage[most]{tcolorbox}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,decorations.pathmorphing,shapes.geometric,patterns}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepgfplotslibrary{fillbetween,groupplots}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage[colorlinks=true,breaklinks=true,allcolors=MidnightBlue]{hyperref}
+
+% ---------- 記号 ----------
+\newcommand{\Msun}{\ensuremath{\,M_\odot}}
+\newcommand{\eV}{\ensuremath{\,\mathrm{eV}}}
+\newcommand{\GeV}{\ensuremath{\,\mathrm{GeV}}}
+\newcommand{\yr}{\ensuremath{\,\mathrm{yr}}}
+\newcommand{\Mpl}{\ensuremath{M_\mathrm{Pl}}}
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\rp}{\ensuremath{\tilde r_+}}
+\newcommand{\arxiv}[1]{\href{https://arxiv.org/abs/#1}{arXiv:#1}}
+
+% ---------- 配色 ----------
+\definecolor{cA}{HTML}{2A78D6}
+\definecolor{cB}{HTML}{EB6834}
+\definecolor{cC}{HTML}{1BAF7A}
+\definecolor{cD}{HTML}{8E5BC9}
+\definecolor{cM}{HTML}{8A8984}
+\definecolor{ink}{HTML}{0B0B0B}
+\definecolor{ink2}{HTML}{52514E}
+\definecolor{gridc}{HTML}{E4E3DF}
+\pgfplotsset{note/.style={
+  axis line style={ink2}, tick style={ink2}, tick label style={font=\scriptsize, color=ink2},
+  label style={font=\small, color=ink}, major grid style={gridc}, grid=major, clip=true}}
+
+% ---------- 囲み ----------
+\newtcolorbox{summary}[1][]{colback=cA!5, colframe=cA!60, boxrule=0.5pt, arc=2pt, left=5pt, right=5pt, top=3pt, bottom=3pt, fonttitle=\small\bfseries, coltitle=ink, colbacktitle=cA!14, title={まとめ}, #1}
+\newtcolorbox{numcheck}[1][]{colback=cC!5, colframe=cC!60, boxrule=0.5pt, arc=2pt, left=5pt, right=5pt, top=3pt, bottom=3pt, fonttitle=\small\bfseries, coltitle=ink, colbacktitle=cC!14, title={数値で確かめる}, #1}
+\newtcolorbox{caution}[1][]{colback=cB!5, colframe=cB!70, boxrule=0.5pt, arc=2pt, left=5pt, right=5pt, top=3pt, bottom=3pt, fonttitle=\small\bfseries, coltitle=ink, colbacktitle=cB!15, title={注意}, #1}
+\newtcolorbox{tocode}[1][]{colback=cM!6, colframe=cM!60, boxrule=0.4pt, arc=2pt, left=5pt, right=5pt, top=2pt, bottom=2pt, fontupper=\small, #1}
+
+\setlist{itemsep=2pt, topsep=4pt, parsep=0pt}
+\numberwithin{equation}{section}
+
+\title{勉強ノート\\回転するブラックホール・超軽量粒子の雲・自己相互作用\\{\large --- GWTC-5 の BH スピンで ALP を調べるための物理 ---}}
+\author{}
+\date{2026年11月}
+
+\begin{document}
+\maketitle
+\vspace{-2em}
+
+\begin{tcolorbox}[colback=white, colframe=ink2, boxrule=0.4pt, arc=2pt, left=6pt, right=6pt]
+\small
+\textbf{このノートについて}
+\begin{itemize}
+\item 研究(\texttt{Superradiance\_LVKpop})で使った物理を、学部の物理だけを前提に、途中の式を省略せずに導く。
+\item 前提にするのは、量子力学(水素原子、摂動、Fermi の黄金律)、古典力学、特殊相対論である。一般相対論は、必要な結果(Kerr 時空の性質、面積定理)だけを与え、意味を説明する。
+\item 各節の終わりに「まとめ」を置く。研究ノートのエントリ(E1--E10)とコード(\texttt{research/calc/})との対応は、灰色の枠に書く。
+\end{itemize}
+\end{tcolorbox}
+
+\tableofcontents
+\newpage
+
+\input{chapters/ch01_intro}
+\input{chapters/ch02_kerr}
+\input{chapters/ch03_superradiance}
+\input{chapters/ch04_atom}
+\input{chapters/ch05_cloud}
+\input{chapters/ch06_selfint}
+\input{chapters/ch07_equilibrium}
+\input{chapters/ch08_norestore}
+\input{chapters/ch09_secondgen}
+\input{chapters/ch10_window}
+\appendix
+\input{chapters/app_units}
+
+\end{document}

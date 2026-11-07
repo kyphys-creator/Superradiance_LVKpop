@@ -1,0 +1,13 @@
+% Schwarzschild の有効ポテンシャル V(r) = (1-2/r)(1+L^2/r^2)
+\begin{tikzpicture}
+\begin{axis}[note, width=0.6\linewidth, height=0.38\linewidth, xmin=2.5, xmax=25, ymin=0.85, ymax=1.05,
+  xlabel={$r/M$}, ylabel={$V(r)$}, samples=300, domain=2.5:25,
+  legend style={font=\scriptsize, at={(0.98,0.03)}, anchor=south east, fill=white, fill opacity=0.85, text opacity=1, draw=none}, legend cell align=left]
+  \addplot[cA!45, line width=0.9pt] {(1-2/x)*(1+12.5/x^2)}; \addlegendentry{$L^2=12.5$}
+  \addplot[cA, line width=1.1pt] {(1-2/x)*(1+12/x^2)}; \addlegendentry{$L^2=12$(ISCO)}
+  \addplot[cA!60!black, line width=0.9pt, dashed] {(1-2/x)*(1+11/x^2)}; \addlegendentry{$L^2=11$}
+  \addplot[only marks, mark=*, mark size=1.8pt, color=cB] coordinates {(6, 0.8889)};
+  \draw[cB, densely dotted] (axis cs:6,0.85) -- (axis cs:6,1.05);
+  \node[font=\scriptsize, color=cB, anchor=south west] at (axis cs:6.2,0.86) {$r_\mathrm{ISCO}=6M$};
+\end{axis}
+\end{tikzpicture}

@@ -1,0 +1,148 @@
+% 2. 回転するブラックホール
+\section{回転するブラックホール}\label{sec:kerr}
+
+この節では、回転する BH(Kerr BH)について、後で使う量を導く。Kerr 時空そのもの(Einstein 方程式の解)は導かず、結果を与える。この節では $G=c=1$ とし、必要なときに単位を戻す。
+
+\subsection{質量・角運動量・スピン}
+
+孤立した BH は、質量 $M$ と角運動量 $J$ の二つの数で決まる(電荷は無視する)。長さの次元をもつ回転のパラメータ $a$ と、無次元のスピン $\chi$ を
+\begin{equation}
+a\equiv\frac{J}{M},\qquad \chi\equiv\frac{J}{M^2}=\frac{a}{M}
+\qquad\Bigl(\text{単位を戻すと } \chi=\frac{cJ}{GM^2}\Bigr)
+\label{eq:chi}
+\end{equation}
+で定義する。$\chi$ が研究で「スピン」と呼んでいる量である。地平線が存在するには $|\chi|\le1$ でなければならない(次の小節)。
+
+\subsection{地平線}
+
+Kerr 時空を Boyer--Lindquist 座標 $(t,r,\theta,\phi)$ で書くと、計量に次の関数が現れる。
+\begin{equation}
+\Delta(r)\equiv r^2-2Mr+a^2.
+\label{eq:Delta}
+\end{equation}
+$\Delta=0$ となる半径が地平線である。二次方程式 $r^2-2Mr+a^2=0$ を解くと
+\begin{equation}
+r_\pm=\frac{2M\pm\sqrt{4M^2-4a^2}}{2}=M\pm\sqrt{M^2-a^2}=M\bigl(1\pm\sqrt{1-\chi^2}\bigr).
+\label{eq:rpm}
+\end{equation}
+外側の $r_+$ が事象の地平線である。$|\chi|>1$ では根号の中が負になり、地平線がない。以後
+\begin{equation}
+\rp\equiv\frac{r_+}{M}=1+\sqrt{1-\chi^2}
+\label{eq:rptilde}
+\end{equation}
+を使う。回転しない BH($\chi=0$)では $\rp=2$(Schwarzschild 半径 $2M$)、最大に回る BH($\chi=1$)では $\rp=1$ である。
+
+\paragraph{よく使う恒等式}
+$r_+$ は $\Delta(r_+)=0$ を満たすので、$r_+^2-2Mr_++a^2=0$、すなわち
+\begin{equation}
+r_+^2+a^2=2Mr_+.
+\label{eq:identity}
+\end{equation}
+これを何度も使う。
+
+\subsection{地平線の角速度 $\Omega_H$}
+
+回転する BH のまわりでは、空間そのものが回転方向に引きずられる(慣性系の引きずり)。地平線上では、どんな観測者も角速度
+\begin{equation}
+\Omega_H=\frac{a}{r_+^2+a^2}
+\label{eq:OmegaH_def}
+\end{equation}
+で回らざるをえない。これを地平線の角速度と呼ぶ。恒等式 \eqref{eq:identity} を代入すると
+\begin{equation}
+\Omega_H=\frac{a}{2Mr_+}=\frac{\chi M}{2M\cdot M\rp}=\frac{\chi}{2\rp}\cdot\frac{1}{M}.
+\label{eq:OmegaH}
+\end{equation}
+単位を戻すと $\Omega_H=\dfrac{\chi}{2\rp}\dfrac{c^3}{GM}$ である。
+
+\begin{itemize}
+\item $\chi\to0$: $\Omega_H\to0$。
+\item $\chi=1$: $\rp=1$ なので $\Omega_H=1/(2M)$。
+\item $\chi\ll1$: $\rp\simeq2$ なので $\Omega_H\simeq\chi/(4M)$。
+\end{itemize}
+
+\begin{numcheck}
+$M=15\Msun$、$\chi=0.69$ では、$\rp=1+\sqrt{1-0.476}=1.724$、$\Omega_H M=0.69/(2\times1.724)=0.200$。$t_g=GM/c^3=74\,\mu\mathrm{s}$ なので $\Omega_H=0.200/74\,\mu\mathrm{s}=2.7\times10^3\,\mathrm{s}^{-1}$。
+\end{numcheck}
+
+\subsection{地平線の面積と既約質量}
+
+地平線の面積は
+\begin{equation}
+A=4\pi(r_+^2+a^2)=8\pi Mr_+=8\pi M^2\rp
+\label{eq:area}
+\end{equation}
+である(2 番目の等号で恒等式 \eqref{eq:identity} を使った)。
+
+面積を「同じ面積をもつ回転しない BH の質量」で表したものを既約質量 $M_\mathrm{irr}$ と呼ぶ。回転しない BH の面積は $4\pi(2M)^2=16\pi M^2$ なので、
+\begin{equation}
+A\equiv16\pi M_\mathrm{irr}^2
+\quad\Longrightarrow\quad
+M_\mathrm{irr}^2=\frac{A}{16\pi}=\frac{8\pi M^2\rp}{16\pi}=\frac{M^2\rp}{2}.
+\label{eq:Mirr}
+\end{equation}
+
+\subsection{Christodoulou の式: 質量 = 既約質量 + 回転のエネルギー}
+
+$M$ を $M_\mathrm{irr}$ と $J$ で表す。$s\equiv\sqrt{1-\chi^2}$ と書くと、$\rp=1+s$ で、式 \eqref{eq:Mirr} は $M_\mathrm{irr}^2=M^2(1+s)/2$ である。次の量を計算する。
+\begin{align}
+\frac{J^2}{4M_\mathrm{irr}^2}
+&=\frac{\chi^2M^4}{4\cdot M^2(1+s)/2}=\frac{\chi^2M^2}{2(1+s)}
+=\frac{(1-s^2)M^2}{2(1+s)}=\frac{(1-s)M^2}{2}.
+\end{align}
+3 番目の等号で $\chi^2=1-s^2$ を使い、最後に $1-s^2=(1-s)(1+s)$ で約分した。これと $M_\mathrm{irr}^2=(1+s)M^2/2$ を足すと
+\begin{equation}
+M_\mathrm{irr}^2+\frac{J^2}{4M_\mathrm{irr}^2}=\frac{(1+s)M^2}{2}+\frac{(1-s)M^2}{2}=M^2.
+\label{eq:christodoulou}
+\end{equation}
+これが Christodoulou の式である。BH の質量は、取り出せない部分 $M_\mathrm{irr}$ と、回転に蓄えられた部分 $J^2/(4M_\mathrm{irr}^2)$ からなる。
+
+\paragraph{取り出せるエネルギー}
+$J$ を 0 まで取り出したとき残る質量は $M_\mathrm{irr}$ である。取り出せるエネルギーは $M-M_\mathrm{irr}=M(1-\sqrt{\rp/2})$ で、$\chi=1$ では $M(1-1/\sqrt2)=0.29M$ になる。超放射の雲は、このエネルギーの一部を吸い取る。
+
+\subsection{面積定理と BH の第一法則}
+
+\paragraph{面積定理}
+古典的な過程では、地平線の面積は減らない(Hawking の面積定理)。
+\begin{equation}
+\dd A\ge0\quad\Longleftrightarrow\quad\dd M_\mathrm{irr}\ge0.
+\label{eq:areatheorem}
+\end{equation}
+これは一般相対論の定理で、ここでは結果として使う。
+
+\paragraph{第一法則}
+Christodoulou の式 \eqref{eq:christodoulou} を $M=M(M_\mathrm{irr},J)$ とみて微分すると、BH の第一法則が出る。まず
+\begin{equation}
+2M\,\dd M=\Bigl(2M_\mathrm{irr}-\frac{J^2}{2M_\mathrm{irr}^3}\Bigr)\dd M_\mathrm{irr}+\frac{2J}{4M_\mathrm{irr}^2}\,\dd J.
+\end{equation}
+$\dd J$ の係数を $2M$ で割ると
+\begin{equation}
+\frac{\partial M}{\partial J}=\frac{J}{4MM_\mathrm{irr}^2}=\frac{\chi M^2}{4M\cdot M^2\rp/2}=\frac{\chi}{2\rp M}=\Omega_H
+\end{equation}
+となり、式 \eqref{eq:OmegaH} の地平線の角速度に一致する。$\dd M_\mathrm{irr}$ の項は、$\dd A=32\pi M_\mathrm{irr}\dd M_\mathrm{irr}$ を使って面積で書き直すと、$(\kappa/8\pi)\dd A$ の形になる($\kappa$ は表面重力、$\kappa=\sqrt{1-\chi^2}/(2r_+)$)。まとめると
+\begin{equation}
+\dd M=\frac{\kappa}{8\pi}\dd A+\Omega_H\,\dd J,\qquad \kappa\ge0.
+\label{eq:firstlaw}
+\end{equation}
+
+\paragraph{$\kappa$ の確認}
+$\dd M_\mathrm{irr}$ の係数は $(M_\mathrm{irr}-J^2/4M_\mathrm{irr}^3)/M$ である。$\dd M_\mathrm{irr}=\dd A/(32\pi M_\mathrm{irr})$ を代入すると、
+\[
+\frac{\kappa}{8\pi}=\frac{1}{32\pi M}\Bigl(1-\frac{J^2}{4M_\mathrm{irr}^4}\Bigr),\qquad
+\frac{J^2}{4M_\mathrm{irr}^4}=\frac{\chi^2M^4}{M^4\rp^2}=\frac{\chi^2}{\rp^2}
+\]
+($M_\mathrm{irr}^4=M^4\rp^2/4$ を使った)。$\rp^2-\chi^2=(1+s)^2-(1-s^2)=2s(1+s)=2s\rp$ なので
+\[
+\kappa=\frac{1}{4M}\cdot\frac{\rp^2-\chi^2}{\rp^2}=\frac{2s\rp}{4M\rp^2}=\frac{\sqrt{1-\chi^2}}{2M\rp}=\frac{\sqrt{1-\chi^2}}{2r_+}.
+\]
+
+\begin{summary}
+\begin{itemize}
+\item 地平線 $r_+=M\rp$、$\rp=1+\sqrt{1-\chi^2}$。地平線の角速度 $\Omega_H=\chi/(2r_+)$。
+\item 面積 $A=8\pi M^2\rp=16\pi M_\mathrm{irr}^2$。Christodoulou の式 $M^2=M_\mathrm{irr}^2+J^2/(4M_\mathrm{irr}^2)$。
+\item 面積定理 $\dd A\ge0$ と第一法則 $\dd M=(\kappa/8\pi)\dd A+\Omega_H\dd J$。次の節で、この二つから超放射の条件を導く。
+\end{itemize}
+\end{summary}
+
+\begin{tocode}
+コード: \texttt{sr.rplus(chi)} が $\rp$、\texttt{sr.omegaH(chi)} が $\Omega_HM=\chi/(2\rp)$。
+\end{tocode}

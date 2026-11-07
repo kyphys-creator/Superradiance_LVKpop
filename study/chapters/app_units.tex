@@ -1,0 +1,66 @@
+% 付録
+\section{単位と数値}\label{app:units}
+
+\begin{table}[H]
+\centering\small
+\caption{よく使う定数と換算。}
+\label{tab:units}
+\begin{tabular}{@{}lll@{}}
+\toprule
+量 & 値 & 使う場所 \\
+\midrule
+$\hbar$ & $6.582\times10^{-16}\eV\,\mathrm{s}$ & $\mu$ を振動数に直す \\
+$\mu c^2/\hbar$ & $1.519\times10^{3}\,\mathrm{s}^{-1}\,(\mu/10^{-12}\eV)$ & 率の単位 \\
+$GM_\odot/c^3$ & $4.925\times10^{-6}\,\mathrm{s}$ & $t_g$、$\alpha$ \\
+$GM_\odot/c^2$ & $1.477\,\mathrm{km}$ & $r_g$ \\
+$\alpha$ & $0.0748\,(M/10M_\odot)(\mu/10^{-12}\eV)$ & すべて \\
+$\Mpl=\sqrt{\hbar c/G}$ & $2.18\times10^{-8}\,\mathrm{kg}=1.221\times10^{19}\GeV$ & $\varepsilon$、$(\Mpl/f)^4$ \\
+$(M_\odot/\Mpl)^2$ & $8.35\times10^{75}$ & 粒子数の単位 $GM^2/\hbar c$ \\
+1 年 & $3.156\times10^7\,\mathrm{s}$ & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{$\varepsilon$ の単位から粒子数へ}
+$N=\varepsilon\,GM^2/(\hbar c)=\varepsilon\,(M/\Mpl)^2=8.35\times10^{75}\,\varepsilon\,(M/M_\odot)^2$。$M=19.6\Msun$ で $\varepsilon=1.8\times10^{-9}$(GW241011 の主星の準平衡、$f=4\times10^{12}\GeV$)なら $N=5.8\times10^{69}$。
+
+\section{Leaver の連分数法の考え方}\label{app:leaver}
+
+\S\ref{sec:atom} の成長率の式は $\alpha$ の小さい極限の式である。研究では、Kerr 時空の Klein--Gordon 方程式を数値的に解いて相対論的な率を出した(研究ノート E4、\texttt{research/calc/leaver.py})。考え方だけを書く。
+\begin{enumerate}
+\item 場を $\varphi=e^{-i\omega t+im\phi}S(\theta)R(r)$ と分けると、角度の式と動径の式に分かれる(Kerr 時空でも変数分離できる)。
+\item 動径の解を、地平線で入っていくだけ、無限遠で減衰する形を先に括り出して
+\[
+R(r)=(r-r_+)^{-i\sigma}(r-r_-)^{i\sigma+\chi-1}e^{qr}\sum_{n=0}^\infty a_n\Bigl(\frac{r-r_+}{r-r_-}\Bigr)^n,\qquad q=-\sqrt{\mu^2-\omega^2}
+\]
+と置く(Dolan、\arxiv{0705.2880})。ここでの $\chi$ は Dolan の記号の指数で、スピンとは別物である。
+\item 方程式に入れると、係数 $a_n$ が三項の漸化式 $\alpha_na_{n+1}+\beta_na_n+\gamma_na_{n-1}=0$ を満たす。
+\item 級数が収束する(境界条件を満たす)のは、連分数の条件 $\beta_0-\alpha_0\gamma_1/(\beta_1-\alpha_1\gamma_2/(\beta_2-\cdots))=0$ を満たす $\omega$ だけである。これを複素数の $\omega$ について解くと、$\omega=E+i\Gamma$ が出る。
+\end{enumerate}
+研究のコードは、Dolan の表の最大成長率(6 点)を 3 桁で再現した。小さい $\alpha$ では解析式 \eqref{eq:bcst} に近づく。
+
+\section{式と文献とコードの対応}\label{app:map}
+
+\begin{table}[H]
+\centering\small
+\caption{このノートの主な式と、典拠・研究ノート・コードの対応。}
+\label{tab:map}
+\begin{tabularx}{\linewidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+式 & 中身 & 典拠 & 研究ノート・コード \\
+\midrule
+\eqref{eq:chic} & 臨界スピン & 本ノートで導出 & E2、\texttt{si.chi\_threshold\_211} \\
+\eqref{eq:fine} & 準位のエネルギー & \arxiv{1908.10370} 式 2.28--2.29 & \texttt{sr.omega\_over\_mu} \\
+\eqref{eq:bcst} & 超放射の率(振幅) & \arxiv{1908.10370} 式 2.32--2.34 & E2、\texttt{sr.gamma\_over\_mu} \\
+\eqref{eq:gammaN} & 粒子数の率 $=2\Gamma$ & 本ノート(式 2.27 から) & \texttt{sr.NORM\_N} \\
+\eqref{eq:GP} & 非線形 Schr\"odinger 方程式 & 本ノートで導出(BGLS 式 12) & --- \\
+\eqref{eq:gamma_SI} & 自己相互作用の率 & BGLS 式 18、21、Table V・VI & E3、\texttt{si.g\_bh}、\texttt{si.g\_inf} \\
+\eqref{eq:rate211}--\eqref{eq:rateJ} & 率の方程式 & BGLS 式 34--36 & E5、\texttt{e05\_kinetics.py} \\
+\eqref{eq:eq_occ} & 準平衡 & BGLS 式 55a,b(本ノートで導出) & E3、\texttt{si.eps\_eq} \\
+\eqref{eq:chidot_H} & 回転を失う速さ & 本ノートで導出 & E3、E10、\texttt{si.chidot}、\texttt{chisr.H} \\
+\eqref{eq:closedform} & 閉じた解 & 本ノートで導出 & --- \\
+\eqref{eq:dchi_abs} & 吸収によるスピンの変化 & 本ノートで導出 & E6、E9 \\
+--- & 残骸のスピン & \arxiv{1605.01938} 式 13--17 & E10、\texttt{hbr16.a\_final} \\
+\bottomrule
+\end{tabularx}
+\end{table}

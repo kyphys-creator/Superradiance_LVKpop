@@ -1,0 +1,15 @@
+% 閉じた解 x(t) = (x0^{-1/2} + K t/2)^{-2} によるスピン(説明用)
+% chi = 0.338 + x、x0 = 0.442、K(f = 4e12) = 3.4e-8 /yr、K は f^2 に比例
+\begin{tikzpicture}
+\begin{axis}[note, width=0.66\linewidth, height=0.40\linewidth, xmode=log, xmin=1e4, xmax=1e10, ymin=0.3, ymax=0.82,
+  xlabel={年齢 $t$ [yr]}, ylabel={スピン $\chi$}, samples=200, domain=1e4:1e10,
+  legend style={font=\scriptsize, at={(0.02,0.03)}, anchor=south west, fill=white, fill opacity=0.85, text opacity=1, draw=none}, legend cell align=left]
+  \addplot[cA!45, line width=1pt] {0.338 + (0.442^(-0.5) + 0.5*3.4e-9*x)^(-2)}; \addlegendentry{$f=1.3\times10^{12}\GeV$}
+  \addplot[cA, line width=1pt] {0.338 + (0.442^(-0.5) + 0.5*3.4e-8*x)^(-2)}; \addlegendentry{$f=4\times10^{12}\GeV$}
+  \addplot[cA!60!black, line width=1pt, dashed] {0.338 + (0.442^(-0.5) + 0.5*3.4e-7*x)^(-2)}; \addlegendentry{$f=1.3\times10^{13}\GeV$}
+  \addplot[cB, densely dotted, line width=0.8pt] {0.69};
+  \addplot[ink2, densely dashdotted, line width=0.6pt] {0.338};
+  \node[font=\scriptsize, color=cB, anchor=south east] at (axis cs:8e9,0.695) {観測の下限 0.69};
+  \node[font=\scriptsize, color=ink2, anchor=south east] at (axis cs:8e9,0.343) {$2\alpha\rp$(臨界の近似)};
+\end{axis}
+\end{tikzpicture}

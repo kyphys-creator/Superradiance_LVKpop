@@ -1,0 +1,29 @@
+% 自己相互作用による二つの過程(模式図)
+\begin{tikzpicture}[
+  st/.style={draw, rounded corners=2pt, minimum width=1.2cm, minimum height=0.6cm, font=\small, line width=0.7pt},
+  ar/.style={-{Stealth[length=2.2mm]}, line width=0.8pt}]
+  % (a)
+  \node[font=\small\bfseries] at (2.0,2.3) {(a) $211\times211\to322\times\mathrm{BH}$};
+  \node[st, draw=cA, text=cA] (a1) at (0,1.2) {211};
+  \node[st, draw=cA, text=cA] (a2) at (0,0.0) {211};
+  \node[circle, fill=ink2, inner sep=1.5pt] (v) at (1.6,0.6) {};
+  \node[st, draw=cB, text=cB] (a3) at (3.4,1.2) {322};
+  \node[st, draw=ink, fill=ink, text=white] (bh) at (3.4,0.0) {BH};
+  \draw[ar, cA] (a1) -- (v); \draw[ar, cA] (a2) -- (v);
+  \draw[ar, cB] (v) -- (a3);
+  \draw[ar, ink, decorate, decoration={snake, amplitude=1.2pt, segment length=5pt, post length=2mm}] (v) -- (bh);
+  \node[font=\scriptsize, color=ink2, anchor=north] at (2.5,-0.45) {$\omega'=\mu(1-7\alpha^2/36)<\mu$、$m'=0$};
+  % (b)
+  \begin{scope}[xshift=7.2cm]
+  \node[font=\small\bfseries] at (2.0,2.3) {(b) $322\times322\to211\times\infty$};
+  \node[st, draw=cB, text=cB] (b1) at (0,1.2) {322};
+  \node[st, draw=cB, text=cB] (b2) at (0,0.0) {322};
+  \node[circle, fill=ink2, inner sep=1.5pt] (w) at (1.6,0.6) {};
+  \node[st, draw=cA, text=cA] (b3) at (3.4,1.2) {211};
+  \node[st, draw=cC, text=cC!70!black] (inf) at (3.4,0.0) {$\infty$};
+  \draw[ar, cB] (b1) -- (w); \draw[ar, cB] (b2) -- (w);
+  \draw[ar, cA] (w) -- (b3);
+  \draw[ar, cC!70!black, decorate, decoration={snake, amplitude=1.2pt, segment length=5pt, post length=2mm}] (w) -- (inf);
+  \node[font=\scriptsize, color=ink2, anchor=north] at (2.5,-0.45) {$\omega'=\mu(1+\alpha^2/72)>\mu$、$m'=3$};
+  \end{scope}
+\end{tikzpicture}

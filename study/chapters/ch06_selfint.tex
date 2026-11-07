@@ -1,0 +1,173 @@
+% 6. ALP の自己相互作用
+\section{ALP の自己相互作用}\label{sec:selfint}
+
+\subsection{ALP のポテンシャル}
+
+ALP(axion-like particle)は、周期的なポテンシャルをもつスカラー場である。
+\begin{equation}
+V(\varphi)=\mu^2f^2\Bigl[1-\cos\Bigl(\frac{\varphi}{f}\Bigr)\Bigr].
+\label{eq:Vcos}
+\end{equation}
+$f$ を崩壊定数と呼ぶ。$\cos x=1-\dfrac{x^2}{2}+\dfrac{x^4}{24}-\cdots$ を $x=\varphi/f$ で使うと
+\begin{equation}
+V(\varphi)=\mu^2f^2\Bigl[\frac{\varphi^2}{2f^2}-\frac{\varphi^4}{24f^4}+\cdots\Bigr]
+=\frac12\mu^2\varphi^2-\frac{\lambda}{4!}\varphi^4+\cdots,
+\qquad \lambda\equiv\frac{\mu^2}{f^2}.
+\label{eq:Vexpand}
+\end{equation}
+第 1 項が質量の項、第 2 項が四次の自己相互作用である。符号が負なので、粒子どうしは引き合う。$f$ が小さいほど自己相互作用は強い。
+
+\paragraph{QCD アクシオンと ALP}
+QCD アクシオンでは $\mu$ と $f$ が $\mu\approx0.57\,\mathrm{neV}\times(10^{16}\GeV/f)$ で結ばれていて、$\mu=0.71\times10^{-12}\eV$ なら $f\approx8\times10^{18}\GeV$ になる。ALP では $\mu$ と $f$ は独立で、研究の窓は $f\sim10^{12}\GeV$ にある。
+
+\paragraph{$\lambda$ の大きさ}
+$\mu=7\times10^{-13}\eV$、$f=10^{12}\GeV=10^{21}\eV$ では $\lambda=\mu^2/f^2=(7\times10^{-34})^2=4.9\times10^{-67}$。極端に小さいが、雲の粒子数は $N\sim10^{77}$ なので、まとまった効果が大きくなる。
+
+\subsection{運動方程式と非線形 Schr\"odinger 方程式}
+
+運動方程式は $\partial_t^2\varphi-\nabla^2\varphi+V'(\varphi)=0$ で、$V'=\mu^2\varphi-(\lambda/6)\varphi^3$ だから
+\begin{equation}
+\partial_t^2\varphi-\nabla^2\varphi+\mu^2\varphi-\frac{\lambda}{6}\varphi^3=0.
+\label{eq:EOM_lambda}
+\end{equation}
+重力を入れるのは \S\ref{sec:atom} と同じなので、ここでは新しい $\varphi^3$ の項だけを扱う。
+
+\paragraph{$\varphi^3$ の展開}
+$a\equiv\psi e^{-i\mu t}$ と書くと、$\varphi=(2\mu)^{-1/2}(a+a^*)$ で
+\begin{equation}
+\varphi^3=(2\mu)^{-3/2}\bigl(a^3+3a^2a^*+3aa^{*2}+a^{*3}\bigr).
+\end{equation}
+$a^2a^*=|\psi|^2\psi\,e^{-i\mu t}$ は、もとの場と同じ $e^{-i\mu t}$ で振動する。$a^3\propto e^{-3i\mu t}$ は速く振動し、ゆっくり変わる $\psi$ の式には効かないので落とす。$e^{-i\mu t}$ の部分は
+\begin{equation}
+\varphi^3\supset(2\mu)^{-3/2}\cdot3|\psi|^2\psi\,e^{-i\mu t}.
+\end{equation}
+
+\paragraph{集める}
+\S\ref{sec:atom} と同じ手順で $e^{-i\mu t}$ の係数を集めると(重力の項を含めて)
+\begin{equation}
+(2\mu)^{-1/2}\bigl(-2i\mu\dot\psi-\nabla^2\psi+2\Phi\mu^2\psi\bigr)-\frac{\lambda}{6}(2\mu)^{-3/2}\cdot3|\psi|^2\psi=0.
+\end{equation}
+両辺に $(2\mu)^{1/2}$ をかけると
+\begin{equation}
+-2i\mu\dot\psi-\nabla^2\psi+2\Phi\mu^2\psi-\frac{\lambda}{2}\cdot\frac{|\psi|^2\psi}{2\mu}=0.
+\end{equation}
+$-2\mu$ で割って整理する($\mu\Phi=-\alpha/r$)。
+\begin{equation}
+\boxed{\;i\frac{\partial\psi}{\partial t}=\Bigl(-\frac{\nabla^2}{2\mu}-\frac{\alpha}{r}\Bigr)\psi-\frac{\lambda}{8\mu^2}|\psi|^2\psi\;}
+\label{eq:GP}
+\end{equation}
+これは引力の非線形 Schr\"odinger 方程式(Gross--Pitaevskii 方程式)で、\arxiv{2011.11646}(以下 BGLS)の式 12 と一致する。
+
+\subsection{非線形項は準位をつなぐ}
+
+雲がいくつかの準位の重ね合わせだとする。
+\begin{equation}
+\psi=\sum_i c_i\,\Psi_i(\bm x)\,e^{-i(E_i-\mu)t},\qquad \Psi_i\propto e^{im_i\phi}.
+\end{equation}
+非線形項 $|\psi|^2\psi=\psi\,\psi\,\psi^*$ には、3 つの準位の積 $c_ic_jc_k^*\Psi_i\Psi_j\Psi_k^*$ が現れる。この積は
+\begin{itemize}
+\item 振動数 $E_i+E_j-E_k$ で振動し、
+\item 方位の依存性 $e^{i(m_i+m_j-m_k)\phi}$ をもつ。
+\end{itemize}
+これは、粒子 $i$ と $j$ が衝突して $k$ ともう一つの状態に移る過程にあたる。もう一つの状態は、振動数 $\omega'=E_i+E_j-E_k$、方位量子数 $m'=m_i+m_j-m_k$ をもつ。その行き先は振動数で決まる。
+\begin{itemize}
+\item $\omega'>\mu$: 束縛されず、無限遠に逃げる(スカラー波の放出)。
+\item $\omega'<\mu$ で、育つ準位に一致しない: 束縛されているが超放射しないモードを強制的に揺らし、そのモードは BH に吸収される。
+\end{itemize}
+
+\paragraph{主な二つの過程}
+準位のエネルギー $E_n=\mu(1-\alpha^2/2n^2)$ を使って計算する。
+
+\textbf{(a) $211\times211\to322\times\mathrm{BH}$}: $i=j=211$、$k=322$。
+\begin{align}
+\omega'&=2E_{211}-E_{322}=\mu\Bigl[2\Bigl(1-\frac{\alpha^2}{8}\Bigr)-\Bigl(1-\frac{\alpha^2}{18}\Bigr)\Bigr]
+=\mu\Bigl(1-\frac{\alpha^2}{4}+\frac{\alpha^2}{18}\Bigr)=\mu\Bigl(1-\frac{7\alpha^2}{36}\Bigr)<\mu,\\
+m'&=1+1-2=0.
+\end{align}
+束縛されていて $m'=0$ なので超放射せず、BH に吸収される。結果として、$|211\rangle$ の粒子 2 個が、$|322\rangle$ の 1 個と、BH に落ちる 1 個になる。BH に落ちる粒子は角運動量をもたない($m'=0$)。
+
+\textbf{(b) $322\times322\to211\times\infty$}: $i=j=322$、$k=211$。
+\begin{align}
+\omega'&=2E_{322}-E_{211}=\mu\Bigl[2\Bigl(1-\frac{\alpha^2}{18}\Bigr)-\Bigl(1-\frac{\alpha^2}{8}\Bigr)\Bigr]
+=\mu\Bigl(1-\frac{\alpha^2}{9}+\frac{\alpha^2}{8}\Bigr)=\mu\Bigl(1+\frac{\alpha^2}{72}\Bigr)>\mu,\\
+m'&=2+2-1=3.
+\end{align}
+無限遠に逃げる。$|322\rangle$ の粒子 2 個が、$|211\rangle$ の 1 個と、角運動量 $3\hbar$ をもって逃げる 1 個になる。
+
+\begin{figure}[H]
+\centering
+\input{figs/fig_processes}
+\caption{自己相互作用による二つの過程。(a) $|211\rangle$ の 2 個が $|322\rangle$ と BH に吸収される $m=0$ の波になる。(b) $|322\rangle$ の 2 個が $|211\rangle$ と無限遠に逃げる $m=3$ の波になる。}
+\label{fig:processes}
+\end{figure}
+
+\subsection{Bose 増強と率の方程式}
+
+\paragraph{Fermi の黄金律と占有数}
+ボソンの遷移 $i+j\to k+l$ の率は、Fermi の黄金律で $|\text{行列要素}|^2$ に比例し、さらに始状態と終状態の占有数の因子がつく。
+\begin{equation}
+\text{率}\propto N_i\,N_j\,(1+N_k)\,(1+N_l).
+\end{equation}
+$(1+N)$ は誘導放出の因子(Bose 増強)である。過程 (a) では $l$ は BH に落ちる状態で $N_l\simeq0$、$k=322$ は占有数が巨大なので $(1+N_{322})\simeq N_{322}$。したがって
+\begin{equation}
+\text{(a) の率}=\Gamma_\mathrm{BH}\,N_{211}^2\,N_{322},\qquad
+\text{(b) の率}=\Gamma_\infty\,N_{322}^2\,N_{211}.
+\end{equation}
+$N\sim10^{77}$ の雲では古典的な波の非線形性と同じだが、粒子の言葉では「誘導された 3 体の遷移」と読める。
+
+\paragraph{率の方程式}
+1 回の (a) で $N_{211}$ は 2 減り $N_{322}$ は 1 増える。1 回の (b) で $N_{322}$ は 2 減り $N_{211}$ は 1 増える。超放射($\Gamma_{211}$、$\Gamma_{322}$、粒子数の率)と合わせて
+\begin{align}
+\frac{\dd N_{211}}{\dd t}&=\Gamma_{211}N_{211}-2\Gamma_\mathrm{BH}N_{211}^2N_{322}+\Gamma_\infty N_{211}N_{322}^2,
+\label{eq:rate211}\\
+\frac{\dd N_{322}}{\dd t}&=\Gamma_{322}N_{322}+\Gamma_\mathrm{BH}N_{211}^2N_{322}-2\Gamma_\infty N_{211}N_{322}^2,
+\label{eq:rate322}\\
+\frac{\dd J}{\dd t}&=-\hbar\bigl(\Gamma_{211}N_{211}+2\Gamma_{322}N_{322}\bigr).
+\label{eq:rateJ}
+\end{align}
+BH の角運動量を変えるのは超放射だけである。(a) で BH に落ちる波は $m=0$ なので角運動量を運ばない。これは BGLS の式 34--36 の主な項である(重力波の放出の項は小さいので省いた)。
+
+\subsection{率の係数と、$\varepsilon$ の単位}
+
+$\Gamma_\mathrm{BH}$、$\Gamma_\infty$ は行列要素の 2 乗なので $\lambda^2$ に比例し、残りは $\alpha$ のべきと数値の係数になる。BGLS は水素原子の波動関数で重なり積分を計算した(式 18、21、Table I)。
+\begin{equation}
+\Gamma_\mathrm{BH}\simeq4\times10^{-7}\,\alpha^7\lambda^2\rp\,\mu,\qquad
+\Gamma_\infty\simeq1\times10^{-8}\,\alpha^4\lambda^2\,\mu.
+\label{eq:GammaN_SI}
+\end{equation}
+
+\paragraph{$\varepsilon$ の単位に直す}
+式 \eqref{eq:epsilon} の $\varepsilon=N/(GM^2)$($\hbar=c=1$)を使う。$N=GM^2\,\varepsilon$ を式 \eqref{eq:rate211} に代入して $GM^2$ で割ると、3 体の項の係数は $(GM^2)^2$ 倍になる。
+\begin{equation}
+\gamma_\mathrm{BH}\equiv\Gamma_\mathrm{BH}\,(GM^2)^2,\qquad \gamma_\infty\equiv\Gamma_\infty\,(GM^2)^2.
+\end{equation}
+$\lambda=\mu^2/f^2$、$G=1/\Mpl^2$、$\alpha=GM\mu=M\mu/\Mpl^2$ を使うと
+\begin{equation}
+\lambda^2(GM^2)^2=\frac{\mu^4}{f^4}\cdot\frac{M^4}{\Mpl^4}=\Bigl(\frac{M\mu}{\Mpl^2}\Bigr)^4\Bigl(\frac{\Mpl}{f}\Bigr)^4=\alpha^4\Bigl(\frac{\Mpl}{f}\Bigr)^4.
+\end{equation}
+したがって
+\begin{equation}
+\boxed{\;\gamma_\mathrm{BH}=\kappa_\mathrm{BH}\,\alpha^{11}\Bigl(\frac{\Mpl}{f}\Bigr)^4\rp\,\mu,\qquad
+\gamma_\infty=\kappa_\infty\,\alpha^{8}\Bigl(\frac{\Mpl}{f}\Bigr)^4\mu\;}
+\label{eq:gamma_SI}
+\end{equation}
+で、BGLS の精密な値(Table V・VI)は $\kappa_\mathrm{BH}=4.3\times10^{-7}$、$\kappa_\infty=1.1\times10^{-8}$。$\Mpl=1/\sqrt G=1.22\times10^{19}\GeV$ である。$\varepsilon$ の単位での率の方程式は、式 \eqref{eq:rate211}--\eqref{eq:rateJ} の $N$ を $\varepsilon$ に、$\Gamma$ を $\gamma$ に置き換えたもので、角運動量の式は $\dd\chi/\dd t=-\gamma_{211}\varepsilon_{211}-2\gamma_{322}\varepsilon_{322}$ になる($\chi=J/GM^2$、質量を固定)。超放射の率は単位によらず $\gamma_{211}=\Gamma_{211}$ である。
+
+\begin{caution}
+\begin{itemize}
+\item 式 \eqref{eq:gamma_SI} は $\alpha$ の主要項である。Kerr 時空での計算(\arxiv{2412.03655})では、$\gamma_\mathrm{BH}$ は $\alpha=0.1$ で約 2.5 倍、$\alpha=0.2$ で約 5 倍大きい(研究ノート E7)。$\gamma_\infty$ の補正は 1.0--1.2 倍で小さい。
+\item $\Mpl$ を換算 Planck 質量 $2.4\times10^{18}\GeV$ と取り違えると、$(\Mpl/f)^4$ が 35 倍ずれる。
+\end{itemize}
+\end{caution}
+
+\begin{summary}
+\begin{itemize}
+\item ALP のポテンシャルを展開すると引力の四次の結合 $-(\lambda/4!)\varphi^4$、$\lambda=\mu^2/f^2$ が出る。非相対論の極限では $-(\lambda/8\mu^2)|\psi|^2\psi$ の項になる。
+\item 非線形項は準位をつなぐ。$211\times211\to322\times\mathrm{BH}$(振動数 $\mu(1-7\alpha^2/36)$、$m=0$、BH に吸収)と $322\times322\to211\times\infty$(振動数 $\mu(1+\alpha^2/72)$、$m=3$、無限遠へ)。
+\item 率は Bose 増強で $N_{211}^2N_{322}$、$N_{322}^2N_{211}$ に比例する。$\varepsilon$ の単位で $\gamma_\mathrm{BH}\propto\alpha^{11}(\Mpl/f)^4$、$\gamma_\infty\propto\alpha^8(\Mpl/f)^4$。
+\end{itemize}
+\end{summary}
+
+\begin{tocode}
+コード: \texttt{si.g\_bh}、\texttt{si.g\_inf} が式 \eqref{eq:gamma_SI}(\texttt{KAPPA\_BH}、\texttt{KAPPA\_INF}、\texttt{MPL\_GEV})。\texttt{e05\_kinetics.py} が率の方程式を ODE で解く(研究ノート E5)。
+\end{tocode}

@@ -1,0 +1,115 @@
+% 9. 2 世代目の BH
+\section{2 世代目の BH: 生まれたときのスピンと年齢}\label{sec:secondgen}
+
+星団の中では、BH どうしの合体でできた BH が、また別の BH と合体することがある(階層合体)。前の合体で生まれた BH を 2 世代目と呼ぶ。2 世代目は、生まれたときのスピンが合体の物理でほぼ決まっているので、超放射の「較正された時計」に使える。
+
+\subsection{最内安定円軌道(ISCO)}
+
+合体の直前、二つの BH は最内安定円軌道の近くから落ち込む。その角運動量が残骸のスピンになる。まず、回転しない BH のまわりの試験粒子で ISCO を求める。
+
+\paragraph{有効ポテンシャル}
+Schwarzschild 時空の測地線では、単位質量あたりのエネルギー $E$ と角運動量 $L$ が保存し、動径方向の運動は
+\begin{equation}
+\Bigl(\frac{\dd r}{\dd\tau}\Bigr)^2+V(r)=E^2,\qquad V(r)=\Bigl(1-\frac{2M}{r}\Bigr)\Bigl(1+\frac{L^2}{r^2}\Bigr)
+\end{equation}
+に従う($G=c=1$、$\tau$ は固有時)。これは結果として与える。$V$ を展開すると
+\begin{equation}
+V=1-\frac{2M}{r}+\frac{L^2}{r^2}-\frac{2ML^2}{r^3}.
+\end{equation}
+最後の項が Newton 力学にない一般相対論の項で、近距離の引力を強める。
+
+\paragraph{円軌道と安定の限界}
+円軌道は $V'(r)=0$、安定の限界は $V''(r)=0$ である。
+\begin{align}
+V'&=\frac{2M}{r^2}-\frac{2L^2}{r^3}+\frac{6ML^2}{r^4}=0
+\quad\xrightarrow{\times r^4/2}\quad Mr^2-L^2r+3ML^2=0,
+\label{eq:Vp}\\
+V''&=-\frac{4M}{r^3}+\frac{6L^2}{r^4}-\frac{24ML^2}{r^5}=0
+\quad\xrightarrow{\times r^5/2}\quad -2Mr^2+3L^2r-12ML^2=0.
+\label{eq:Vpp}
+\end{align}
+式 \eqref{eq:Vp} から $L^2(r-3M)=Mr^2$、すなわち $L^2=Mr^2/(r-3M)$。これを式 \eqref{eq:Vpp} に入れて $Mr^2$ で割ると
+\begin{equation}
+-2+\frac{3r-12M}{r-3M}=0\quad\Longrightarrow\quad 3r-12M=2r-6M\quad\Longrightarrow\quad r_\mathrm{ISCO}=6M.
+\end{equation}
+このとき
+\begin{equation}
+L_\mathrm{ISCO}^2=\frac{M(6M)^2}{3M}=12M^2,\quad L_\mathrm{ISCO}=2\sqrt3\,M,\qquad
+E_\mathrm{ISCO}^2=V(6M)=\Bigl(1-\frac13\Bigr)\Bigl(1+\frac{12}{36}\Bigr)=\frac89.
+\end{equation}
+
+\begin{figure}[H]
+\centering
+\input{figs/fig_veff}
+\caption{Schwarzschild 時空の有効ポテンシャル $V(r)$($M=1$)。$L=2\sqrt3$ で極大と極小がつながり(変曲点)、$r=6M$ が最内安定円軌道になる。}
+\label{fig:veff}
+\end{figure}
+
+\subsection{等質量の合体の残骸のスピン}
+
+\paragraph{いちばん単純な見積もり}
+全質量 $M$、換算質量 $\nu M$($\nu=m_1m_2/M^2$、等質量で $\nu=1/4$)の連星が ISCO から落ち込むとする。軌道の角運動量は $\nu M\cdot L_\mathrm{ISCO}=\nu M\cdot2\sqrt3M$ なので、残骸のスピンは($M_f\simeq M$ として)
+\begin{equation}
+\chi_f\simeq\frac{2\sqrt3\,\nu M^2}{M^2}=2\sqrt3\,\nu=\frac{\sqrt3}{2}=0.866\quad(\nu=1/4).
+\end{equation}
+数値相対論の値 0.686 より大きい。比べる質量が同じくらいだと試験粒子の近似が崩れ、落ち込むあいだに重力波が角運動量を持ち去るからである。
+
+\paragraph{数値相対論の当てはめ}
+Hofmann, Barausse \& Rezzolla(\arxiv{1605.01938})は、この見積もりに $\nu$ の高次の項を足して数値相対論に合わせた。回らない親では($a_\mathrm{eff}=0$)
+\begin{equation}
+\chi_f=\nu\,L_\mathrm{ISCO}(0)+k_{00}\nu^2+k_{10}\nu^3,\qquad L_\mathrm{ISCO}(0)=2\sqrt3
+\end{equation}
+($L_\mathrm{ISCO}$ を単位質量・$M=1$ で書いた)。係数 $k_{10}=3.79245$(同論文 Table 1)と、等質量で 0.68646 になる条件から決まる $k_{00}=-3.8212$ を使うと、$\nu=1/4$ で
+\begin{equation}
+\chi_f=0.8660-\frac{3.8212}{16}+\frac{3.79245}{64}=0.8660-0.2388+0.0593=0.6865.
+\end{equation}
+単純な見積もりを、重力波で失う分だけ下げたものになっている。
+
+\paragraph{一般の場合}
+親のスピン $a_1$、$a_2$ と、それらと軌道の角運動量のなす角 $\beta$、$\gamma$、親どうしのなす角 $\alpha$ があるとき(同論文の式 13--17)、
+\begin{equation}
+|\bm a_f|=\frac{1}{(1+q)^2}\Bigl[a_1^2+a_2^2q^4+2a_1a_2q^2\cos\alpha+2(a_1\cos\beta+a_2q^2\cos\gamma)|\bm\ell|q+|\bm\ell|^2q^2\Bigr]^{1/2}
+\end{equation}
+で、$|\bm\ell|$ は上の $L_\mathrm{ISCO}$ と補正の項を $a_\mathrm{eff}$(軌道に沿ったスピンの成分の組み合わせ)で評価したものである。質量比 $q=m_2/m_1$ が小さいほど軌道の角運動量の寄与が減り、$q=1/3$ では 0.540 になる。
+
+\subsection{2 世代目のスピンの分布}
+
+親の質量比とスピンの分布を与え、上の式で残骸のスピンを計算した(研究ノート E10、親のスピンの向きは星団を想定して等方)。
+
+\begin{table}[H]
+\centering\small
+\caption{2 世代目の生まれたときのスピン(\arxiv{1605.01938} の一般スピン版、研究ノート E10)。}
+\label{tab:natal}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+親の分布 & 中央値 & 5--95\% & $P(\chi\ge0.72)$ & $P(\chi\ge0.78)$ \\
+\midrule
+回らない、$q\in[0.5,1]$ & 0.675 & 0.63--0.69 & 0 & 0 \\
+$a\sim\mathcal U(0,0.5)$、$q\in[0.5,1]$ & 0.676 & 0.60--0.75 & 15\% & 0.5\% \\
+$a\sim\mathrm{Beta}(2,5)$、$q\in[0.5,1]$ & 0.677 & 0.59--0.76 & 18\% & 1.8\% \\
+$a\sim\mathrm{Beta}(2,5)$、$q\in[0.25,1]$ & 0.657 & 0.49--0.75 & 13\% & 1.5\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+2 世代目は $\chi\approx0.68$ に集中する。GW241011 の主星の観測値 $0.78\pm0.09$ は分布の上の端にあり、0.78 で生まれる確率は 2\% 以下である。
+
+\subsection{年齢}
+
+超放射の判定で効くのは、BH が生まれてから合体するまでの時間(年齢)である。
+\begin{itemize}
+\item \textbf{1 世代目}: 星が BH になってから合体するまで。古い球状星団から来る低赤方偏移の合体では、数 Gyr 以上が目安である。
+\item \textbf{2 世代目}: 前の合体から次の合体まで。星団の中心に沈み、相手を見つけて連星を締めるまでの時間で、重い 2 世代目の遅れの最小値は $\sim5\times10^7$--$3\times10^8$ 年が目安である(研究ノート E9)。分布を直接示した文献はない。
+\end{itemize}
+2 世代目は 1 世代目より若い。この年齢の差が、自己相互作用の窓の鍵になる(\S\ref{sec:window})。
+
+\begin{summary}
+\begin{itemize}
+\item Schwarzschild の ISCO は $r=6M$、$L=2\sqrt3M$。単純な見積もり $\chi_f\simeq2\sqrt3\nu=0.866$ に、重力波で失う分の補正を入れると等質量で 0.686。
+\item 2 世代目の生まれたときのスピンは $\approx0.68$ に集中する(親が回っていても 95\% が 0.76 以下)。
+\item 2 世代目は 1 世代目より若い。
+\end{itemize}
+\end{summary}
+
+\begin{tocode}
+コード: \texttt{hbr16.a\_final} が \arxiv{1605.01938} の式 16(\texttt{r\_isco}、\texttt{l\_isco}、\texttt{e\_isco} が式 2--6)。\texttt{e10\_gwonly.py} が表~\ref{tab:natal} を計算する。
+\end{tocode}

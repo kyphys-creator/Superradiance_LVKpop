@@ -1,0 +1,14 @@
+% 準平衡での角運動量とエネルギーの流れ
+\begin{tikzpicture}[
+  bx/.style={draw, rounded corners=2pt, minimum width=1.5cm, minimum height=0.75cm, font=\small, line width=0.7pt},
+  ar/.style={-{Stealth[length=2.2mm]}, line width=0.9pt}]
+  \node[bx, fill=ink, text=white] (bh) at (0,0) {BH};
+  \node[bx, draw=cA, text=cA] (s1) at (4.0,0) {$|211\rangle$};
+  \node[bx, draw=cB, text=cB] (s2) at (8.0,0) {$|322\rangle$};
+  \node[bx, draw=cC, text=cC!70!black] (inf) at (12.0,0) {無限遠};
+  \draw[ar, ink2] (bh) -- node[above, font=\scriptsize, align=center] {超放射 $S$\\$J$: $3R_\infty\hbar$} (s1);
+  \draw[ar, ink2] (s1) -- node[above, font=\scriptsize, align=center] {(a) $R_\mathrm{BH}=2R_\infty$} (s2);
+  \draw[ar, ink2] (s2) -- node[above, font=\scriptsize, align=center] {(b) $R_\infty$\\$J$: $3R_\infty\hbar$} (inf);
+  \draw[ar, ink2, dashed] (s1.south) to[out=-130, in=-50] node[below, font=\scriptsize, align=center] {(a) で吸い戻すエネルギー $\simeq2R_\infty\mu$(角運動量 0)} (bh.south);
+  \draw[ar, ink2, dashed] (s2.north) to[out=140, in=40] node[above, font=\scriptsize] {(b) で $|211\rangle$ に戻る 1 個} (s1.north);
+\end{tikzpicture}

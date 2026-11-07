@@ -1,0 +1,29 @@
+% 重力原子の準位(模式図)
+\begin{tikzpicture}[x=1cm,y=1cm]
+  % 連続状態
+  \fill[cM!15] (-0.2,4.6) rectangle (6.4,5.3);
+  \draw[ink2, thick] (-0.2,4.6) -- (6.4,4.6) node[right, font=\small] {$E=\mu$};
+  \node[font=\scriptsize, color=ink2] at (3.1,5.0) {連続状態(無限遠に逃げられる)};
+  % 準位: y = 4.6 - 3.6/n^2
+  \foreach \n/\y in {1/1.0, 2/3.10, 3/3.75, 4/4.20}{
+    \node[font=\small, anchor=east] at (-0.3,\y) {$n=\n$};
+  }
+  % l = 0,1,2,3 の列
+  \foreach \l/\x in {0/0.4, 1/2.0, 2/3.6, 3/5.2}{
+    \node[font=\small] at (\x+0.4,0.3) {$\ell=\l$};
+  }
+  \draw[ink, line width=0.9pt] (0.0,1.0) -- (0.8,1.0) node[midway, above, font=\scriptsize] {100};
+  \draw[ink, line width=0.9pt] (0.0,3.10) -- (0.8,3.10) node[midway, below, font=\scriptsize] {200};
+  \draw[cA, line width=1.6pt] (1.6,3.10) -- (2.4,3.10) node[midway, below, font=\scriptsize, color=cA] {211};
+  \draw[ink, line width=0.9pt] (0.0,3.75) -- (0.8,3.75);
+  \draw[ink, line width=0.9pt] (1.6,3.75) -- (2.4,3.75);
+  \draw[cB, line width=1.6pt] (3.2,3.75) -- (4.0,3.75) node[midway, below, font=\scriptsize, color=cB] {322};
+  \draw[ink, line width=0.9pt] (0.0,4.20) -- (0.8,4.20);
+  \draw[ink, line width=0.9pt] (1.6,4.20) -- (2.4,4.20);
+  \draw[ink, line width=0.9pt] (3.2,4.20) -- (4.0,4.20);
+  \draw[cD, line width=1.6pt] (4.8,4.20) -- (5.6,4.20) node[midway, below, font=\scriptsize, color=cD] {433};
+  % 注記
+  \draw[-{Stealth[length=2mm]}, ink2] (6.0,1.0) -- (6.0,4.5);
+  \node[font=\scriptsize, color=ink2, align=left, anchor=west] at (6.1,2.6) {束縛エネルギー\\$\mu\alpha^2/2n^2$};
+  \node[font=\scriptsize, color=ink2, align=center] at (2.6,2.0) {超放射で育つのは $m\ge1$\\(色の付いた $m=\ell$ の準位)};
+\end{tikzpicture}

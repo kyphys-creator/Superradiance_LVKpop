@@ -1,0 +1,91 @@
+% 3. 超放射の条件
+\section{超放射: 回転から波を増幅する条件}\label{sec:superradiance}
+
+\subsection{第一法則と面積定理から導く}
+
+BH に、振動数 $\omega$、方位量子数 $m$ の波が当たるとする。波は $e^{-i\omega t+im\phi}$ の形で、量子 1 個はエネルギー $\hbar\omega$ と、BH の回転軸まわりの角運動量 $m\hbar$ をもつ。BH がこの波の量子を $\delta N$ 個吸収すると(放出なら $\delta N<0$)、
+\begin{equation}
+\delta M=\hbar\omega\,\delta N,\qquad \delta J=m\hbar\,\delta N.
+\end{equation}
+第一法則 \eqref{eq:firstlaw} に代入すると
+\begin{equation}
+\frac{\kappa}{8\pi}\,\delta A=\delta M-\Omega_H\delta J=\hbar\,\delta N\,(\omega-m\Omega_H).
+\label{eq:sr_firstlaw}
+\end{equation}
+面積定理 $\delta A\ge0$ と $\kappa\ge0$ から、右辺は 0 以上でなければならない。
+\begin{equation}
+\delta N\,(\omega-m\Omega_H)\ge0.
+\end{equation}
+\begin{itemize}
+\item $\omega>m\Omega_H$ のとき: $\delta N\ge0$。BH は波を吸収できる(ふつうの吸収)。
+\item $\omega<m\Omega_H$ のとき: $\delta N\le0$。BH はこの波を吸収できず、量子を放出するしかない。入ってきた波は、より大きな振幅で跳ね返される。
+\end{itemize}
+後者を超放射と呼ぶ。条件は
+\begin{equation}
+\boxed{\;0<\omega<m\Omega_H\;}
+\label{eq:sr_condition}
+\end{equation}
+である。このとき BH は質量 $\hbar\omega$ と角運動量 $m\hbar$ を 1 量子ごとに失う。失う質量は回転のエネルギー $J^2/(4M_\mathrm{irr}^2)$ から来るので、既約質量(面積)は減らない。
+
+\paragraph{直観}
+回転する物体の上に乗った観測者には、波の振動数は $\omega'=\omega-m\Omega$ に見える(角度 $\phi$ が $\phi'=\phi-\Omega t$ に変わるので、$e^{-i\omega t+im\phi}=e^{-i(\omega-m\Omega)t+im\phi'}$)。$\omega<m\Omega$ では $\omega'<0$ になり、回転系での「吸収」が、静止系では「放出」に見える。回転する円柱が電磁波を増幅する効果(Zel'dovich)と同じ仕組みである。
+
+\subsection{質量のある粒子: 増幅が繰り返される}
+
+質量 $\mu$ の粒子の波は、振動数が $\omega<\mu$ なら無限遠に逃げられず、BH のまわりに束縛される(水素原子の束縛状態と同じ。\S\ref{sec:atom})。束縛された波は BH に何度も当たり、超放射の条件を満たしていれば、当たるたびに増幅される。その結果、波の振幅は指数関数的に育つ。質量が「鏡」の役をする「ブラックホール爆弾」である。
+
+束縛状態では $\omega\simeq\mu$ なので、超放射の条件 \eqref{eq:sr_condition} は $\mu<m\Omega_H$ になる。両辺に $M$ をかけ、式 \eqref{eq:OmegaH} と $\alpha=M\mu$($G=\hbar=c=1$)を使うと
+\begin{equation}
+\alpha<m\,\Omega_HM=\frac{m\chi}{2\rp}=\frac{m\chi}{2(1+\sqrt{1-\chi^2})}.
+\label{eq:sr_alpha}
+\end{equation}
+右辺は $\chi=1$ で最大値 $m/2$ をとるので、$m=1$ の状態が育つには少なくとも $\alpha<1/2$ が要る。
+
+\subsection{臨界スピン}\label{sec:chic}
+
+BH が回転を失っていくと、やがて式 \eqref{eq:sr_alpha} の等号が成り立ち、超放射が止まる。そのときのスピン $\chi_c$ を求める。
+\begin{equation}
+m\chi_c=2\alpha\bigl(1+\sqrt{1-\chi_c^2}\bigr).
+\end{equation}
+根号を一方に集める。
+\begin{equation}
+m\chi_c-2\alpha=2\alpha\sqrt{1-\chi_c^2}.
+\label{eq:chic_step}
+\end{equation}
+右辺は 0 以上なので、$m\chi_c\ge2\alpha$ が必要である。両辺を 2 乗すると
+\begin{align}
+m^2\chi_c^2-4m\alpha\chi_c+4\alpha^2&=4\alpha^2(1-\chi_c^2),\\
+(m^2+4\alpha^2)\chi_c^2-4m\alpha\chi_c&=0.
+\end{align}
+$\chi_c\ne0$ の解は
+\begin{equation}
+\boxed{\;\chi_c=\frac{4m\alpha}{m^2+4\alpha^2}\;}
+\label{eq:chic}
+\end{equation}
+である。これが $m\chi_c\ge2\alpha$ を満たすことは、$m\chi_c-2\alpha=2\alpha(m^2-4\alpha^2)/(m^2+4\alpha^2)\ge0$($\alpha\le m/2$ のとき)で確かめられる。
+
+\begin{table}[H]
+\centering\small
+\caption{臨界スピン $\chi_c$(式 \ref{eq:chic})。$\alpha$ が大きいほど、BH は多くの回転を残す。}
+\label{tab:chic}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+$\alpha$ & 0.02 & 0.05 & 0.08 & 0.10 & 0.15 & 0.20 \\
+\midrule
+$m=1$ & 0.080 & 0.198 & 0.312 & 0.385 & 0.550 & 0.690 \\
+$m=2$ & 0.040 & 0.100 & 0.159 & 0.198 & 0.293 & 0.385 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{caution}
+正確には、束縛状態の振動数は $\omega=E_{n\ell m}$ で、$\mu$ より少し小さい($E\simeq\mu(1-\alpha^2/2n^2)$、\S\ref{sec:atom})。研究のコードでは $m\Omega_H=E_{n\ell m}$ を数値的に解いている(\texttt{si.chi\_threshold\_211})。$\alpha=0.104$ での差は $\chi_c$ で $5\times10^{-4}$ ほどで、式 \eqref{eq:chic} で十分よい。
+\end{caution}
+
+\begin{summary}
+\begin{itemize}
+\item 面積定理と第一法則から、$\omega<m\Omega_H$ の波は BH に吸収されず増幅される(超放射)。
+\item 質量のある粒子の束縛状態($\omega\simeq\mu$)は繰り返し増幅されて指数関数的に育つ。
+\item 成長は BH のスピンが臨界値 $\chi_c=4m\alpha/(m^2+4\alpha^2)$ まで下がると止まる。
+\end{itemize}
+\end{summary}
