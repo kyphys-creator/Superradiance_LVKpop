@@ -14,7 +14,7 @@ LIGO–Virgo–KAGRA(LVK)の GWTC-5 の BH スピンの集団で、自己相互�
 ## リポジトリ情報
 - パス: `~/Documents/Claude/Superradiance_LVKpop/`
 - ブランチ: `main`
-- リモート: なし(2026-11-03 時点)
+- リモート: `kyphys-creator/Superradiance_LVKpop`(private、2026-11-07 作成。push の前に visibility が PRIVATE であることを確かめる)
 - 親の `~/Documents/Claude` のリポは NS-PBH のフォルダ以外を無視するので、ここは独立したリポジトリ。
 
 ## 構造
