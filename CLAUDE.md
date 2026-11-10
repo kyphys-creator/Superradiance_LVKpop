@@ -1,6 +1,6 @@
 # Superradiance_LVKpop
 
-> ⚠️ このリポは private 必須(未発表の研究)。public にしない。リモートを作るときは private にし、push の前に `gh repo view --json visibility` で PRIVATE を確かめる。
+> ⚠️ リモートは public(2026-11-10 のユーザー決定「public のままでいいです」)。未発表の研究なので、push するものは公開してよい内容に限る。メール・返信の下書きなどのやりとりは入れない。visibility を変えるのはユーザーの指示があるときだけ。
 
 ## 概要
 LIGO–Virgo–KAGRA(LVK)の GWTC-5 の BH スピンの集団で、自己相互作用(四次結合、強さ $\propto 1/f^2$)のある超軽量スカラーの超放射を検定し、質量 $\mu$ と崩壊定数 $f$ の面 $(\mu, f)$ で排除または支持を決める研究プロジェクト。
@@ -14,7 +14,7 @@ LIGO–Virgo–KAGRA(LVK)の GWTC-5 の BH スピンの集団で、自己相互�
 ## リポジトリ情報
 - パス: `~/Documents/Claude/Superradiance_LVKpop/`
 - ブランチ: `main`
-- リモート: `kyphys-creator/Superradiance_LVKpop`(private、2026-11-07 作成。push の前に visibility が PRIVATE であることを確かめる)
+- リモート: `kyphys-creator/Superradiance_LVKpop`(2026-11-07 に private で作成。2026-11-10 にユーザーの決定で public)
 - 親の `~/Documents/Claude` のリポは NS-PBH のフォルダ以外を無視するので、ここは独立したリポジトリ。
 
 ## 構造
