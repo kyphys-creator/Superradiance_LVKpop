@@ -35,12 +35,13 @@ def main():
     a322, c322, F322 = rel_F(3, 2, 2)
     os.makedirs(PKG, exist_ok=True)
     np.savez(os.path.join(PKG, "chi_sr_tables.npz"),
-             ALPHAS=chisr.ALPHAS, U=chisr.U, CHI_TOP=chisr.CHI_TOP,
-             lnI=tab["lnI"], chic=tab["chic"], Y=tab["Y"], uinv=tab["uinv"],
+             ALPHAS=chisr.ALPHAS, W=chisr.W, CHI_TOP=chisr.CHI_TOP,
+             lnI=tab["lnI"], chic=tab["chic"], chic2=tab["chic2"], Y=tab["Y"], winv=tab["winv"],
              rel211_alpha=a211, rel211_chi=c211, rel211_F=F211, rel211_range=np.array(sr._REL_RANGE[(2, 1, 1)]),
              rel322_alpha=a322, rel322_chi=c322, rel322_F=F322, rel322_range=np.array(sr._REL_RANGE[(3, 2, 2)]),
              HBAR_EVS=sr.HBAR_EVS, TSUN=sr.TSUN, N0=sr.N0, YR=sr.YR,
-             MPL_GEV=si.MPL_GEV, KAPPA_BH=si.KAPPA_BH, KAPPA_INF=si.KAPPA_INF, F_FREE_322=chisr.F_FREE_322)
+             MPL_GEV=si.MPL_GEV, KAPPA_BH=si.KAPPA_BH, KAPPA_INF=si.KAPPA_INF, KAPPA_BH_544=chisr.KAPPA_BH_544,
+             ALPHA_2LEVEL=chisr.ALPHA_2LEVEL, ALPHA_MAX=chisr.ALPHA_MAX, F_FP_MAX=chisr.F_FP_MAX)
     # 単体版と比べる
     sys.path.insert(0, PKG)
     import chi_sr as pkg  # noqa: E402
@@ -55,6 +56,15 @@ def main():
     c_ref, r_ref = chisr.chi_sr(tab, M, c0, T, mu, f)
     c_pkg, r_pkg = model(M, c0, T, mu, f)
     print("max |chi diff| =", np.max(np.abs(c_ref - c_pkg)), " regime mismatches =", int(np.sum(r_ref != r_pkg)))
+    # 入力の検査が働くこと
+    for bad in [dict(chi0=1.0), dict(chi0=-0.1), dict(M=-1.0), dict(f=np.nan)]:
+        args = dict(M=10.0, chi0=0.5, T=1e8, mu=1e-12, f=1e12); args.update(bad)
+        try:
+            model(args["M"], args["chi0"], args["T"], args["mu"], args["f"])
+            print("input check FAILED for", bad)
+        except ValueError:
+            pass
+    print("input checks ok")
 
 
 if __name__ == "__main__":

@@ -123,23 +123,30 @@ def chi_threshold(M, chi, mu_eV, n, l, m):
     """
     a_sun = alpha_of(1.0, mu_eV)            # alpha / (M/Msun)
     J0 = chi * M ** 2
-    Mf, chif = M, chi
-    for _ in range(4):
+
+    def crit(Mf):                           # 質量 Mf での臨界スピン(二分法で m Omega_H = G M omega を解く)
         a = a_sun * Mf
-        lo, hi = 0.0, chif
-        for _ in range(60):                 # 二分法で m Omega_H = G M omega を解く
+        lo, hi = 0.0, chi
+        for _ in range(60):
             mid = 0.5 * (lo + hi)
             if m * omegaH(mid) - a * omega_over_mu(a, n, l, m, mid) > 0:
                 hi = mid
             else:
                 lo = mid
-        chif = 0.5 * (lo + hi)
-        # 角運動量の受け渡しで質量が減る: dM = (alpha_sun (omega/mu) / m) dJ
-        w = omega_over_mu(a, n, l, m, chif)
-        # J0 - Mf^2 chif = dJ,  M - Mf = a_sun w dJ / m を Mf について解く(1 回の更新)
-        dJ = J0 - Mf ** 2 * chif
-        Mf = M - a_sun * w * dJ / m
-    return Mf, chif
+        return 0.5 * (lo + hi)
+
+    # 角運動量の受け渡しで質量が減る: dM = (alpha_sun (omega/mu) / m) dJ、dJ = J0 - Mf^2 chif。
+    # Mf を自己無撞着に解く(E12: 以前は 4 回で打ち切っていた)。重い BH で振動しないよう半分ずつ動かす。
+    Mf = M
+    for _ in range(200):
+        chif = crit(Mf)
+        w = omega_over_mu(a_sun * Mf, n, l, m, chif)
+        Mnew = M - a_sun * w * (J0 - Mf ** 2 * chif) / m
+        if abs(Mnew - Mf) < 1e-13 * M:
+            Mf = Mnew
+            break
+        Mf = 0.5 * (Mf + Mnew)
+    return Mf, crit(Mf)
 
 
 def chi_final_seq(M0, chi0, mu_eV, t_yr, levels, norm=NORM_N, rel=False):

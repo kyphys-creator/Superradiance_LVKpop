@@ -62,18 +62,44 @@ $M_\mathrm{min}$(GRS も入れる) & --- & $15.5/19.3\Msun$ \\
 \end{itemize}
 したがって、最後に決めるのは集団解析である。問いは「GWTC-5 の質量とスピンの相関が、重い 1 世代目だけが回転を失う形を許すか」になる。
 
+\subsection{年齢と判定の幅への依存(研究ノート E12)}
+
+\paragraph{$f$ と年齢は縮退している}
+準平衡ではスピンは $\tau=\mu(f/\Mpl)^2T$ だけで決まる(\S\ref{sec:equilibrium})。したがって GW241011 の主星からの上限は、実は $f\sqrt{T_2}$ の上限で、年齢を 4 倍にすると $f$ の上限は半分になる。上の「現実的な」$T_2=5\times10^7$ 年は、$(50+50)\Msun$ の連星の遅れの最小値の目安で、GW241011 の主星の親に近い $(10+10)\Msun$ では $3\times10^8$ 年になる。
+\begin{center}\small
+\begin{tabular}{rccc}
+\toprule
+$T_2$ [年] & 生まれたスピン & $f$ の上限 [GeV] & 回転を失う 1 世代目($\chi_0=0.7$、$\delta=0.02/0.05$)\\
+\midrule
+$5\times10^7$ & 0.72 & $1.1\times10^{12}$ & $16.2/14.5\Msun$ 以上\\
+$3\times10^8$ & 0.72 & $4.6\times10^{11}$ & $22.4/20.1\Msun$ 以上\\
+$3\times10^8$ & 0.78 & $7.6\times10^{11}$ & $18.8/16.8\Msun$ 以上\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{判定の幅 $\delta$ は 0 にできない}
+準平衡では臨界からのずれが $x(t)=[x_0^{-1/2}+Kt/2]^{-2}$ で近づくので(\S\ref{sec:equilibrium})、臨界 $+\delta$ に届く時間は $t=(2/K)(\delta^{-1/2}-x_0^{-1/2})$。$\delta$ が小さいと $t\simeq2/(K\sqrt\delta)$ で、$K\propto f^2$ だから、1 世代目の下限は
+\begin{equation}
+f_\mathrm{low}\propto\delta^{-1/4}
+\end{equation}
+で増える。$15\Msun$、6 Gyr、$\chi_0=0.7$ では $\delta=0.18$、0.05、0.01、0.001 で $f_\mathrm{low}=0.56$、1.0、1.7、$3.1\times10^{12}\GeV$。$\delta\to0$ では下限が GW241011 の上限を超え、窓は定義から閉じる。$\delta$ は説明のための判定で、集団解析では置かない。$\chi_\mathrm{SR}$ が予言する臨界からのずれ $x\approx4/(KT)^2\propto\alpha^{-10}f^{-4}T^{-2}$ を、そのまま測定と比べる。
+
+\paragraph{1 世代目の自然スピン}
+1 世代目の自然スピンが低い(例: Beta(0.69, 2.28))と、$10$、$15$、$20\Msun$ のうち 211 の臨界より上で生まれるのは 43、30、20\% だけである。残りは 211 の信号をそもそも持たず、一部は 322 だけが育つ(\S\ref{sec:equilibrium} の固定点の外で、まだ扱っていない)。
+
 \subsection{集団解析に渡すもの}
 
 集団解析では、BH ごとに(質量、生まれたときのスピン、年齢)をモンテカルロで振り、$(\mu,f)$ を推定する。そのとき要る関数は、年齢 $T$ のあとのスピン
 \begin{equation}
 \chi_\mathrm{SR}(M,\chi_0,T;\mu,f)=\chi_T\Bigl(\alpha=GM\mu,\ \chi_0,\ \tau=\mu(f/\Mpl)^2T\Bigr)
 \end{equation}
-である(\S\ref{sec:equilibrium})。準平衡では三つの量だけの関数なので、表から $10^6$ 回を 0.2 秒で引ける(研究ノート E10)。自由場の側($f$ が大きい)では \S\ref{sec:cloud} の飽和の扱いを使い、両者をつなぐ。
+である(\S\ref{sec:equilibrium})。準平衡では三つの量だけの関数なので、表から $10^6$ 回を 1 秒以内で引ける(研究ノート E10--E12)。自由場の側($f$ が大きい)では \S\ref{sec:cloud} の飽和の扱いを使い、両者をつなぐ。
 
 \begin{summary}
 \begin{itemize}
 \item 窓は「2 世代目は回転を保つ($f$ の上限)」と「1 世代目は回転を失う($f$ の下限)」の重なりで、年齢の比 $T_1/T_2\ge R$ と同じである。
 \item 回転を失う速さは $\alpha^5$ に比例するので、窓では重い 1 世代目だけが回転を失う。
-\item 現実的な仮定では、窓は $f\sim10^{12}\GeV$ で、回転を失うのは 12--15 $\Msun$ 以上(GW だけ)の 1 世代目。これを GWTC-5 の集団が許すかを集団解析で決める。
+\item 現実的な仮定では、窓は $f\sim10^{12}\GeV$ で、回転を失うのは 12--15 $\Msun$ 以上(GW だけ)の 1 世代目。ただし $f$ の上限は $f\sqrt{T_2}$ の上限で、1 世代目の下限は判定の幅 $\delta$ に $\delta^{-1/4}$ で依存する。これを GWTC-5 の集団が許すかを、$\delta$ を使わずに集団解析で決める。
 \end{itemize}
 \end{summary}

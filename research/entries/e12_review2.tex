@@ -1,0 +1,162 @@
+% エントリ 12(2026-11-10): 二度目の検証と訂正
+\section{[E12, 2026-11-10] 二度目の検証と訂正: 211 の臨界より下への降下、年齢と判定の幅}\label{sec:e12}
+
+E10・E11 と勉強ノートを、三つの観点から独立に検証した(ユーザー指示「ここまでの研究を査読」)。
+\begin{itemize}
+\item \textbf{論文としての査読}: 主張、仮定、新しさ、残る作業。
+\item \textbf{理論}: $\chi_\mathrm{SR}$ の運動論を、E5 の ODE を自分で解き直して確かめる。
+\item \textbf{コードと勉強ノート}: 式と実装、数値の照合。
+\end{itemize}
+検証者には結論を伝えず、ファイルだけを渡した。指摘はすべて自分で計算し直してから採った。過去のエントリは書き換えず、訂正をここにまとめる。計算は \texttt{calc/e12\_review.py}、出力は \texttt{calc/out/e12.json}。関数の修正は \texttt{calc/chisr.py} と単体版 \texttt{share/chi\_sr/}(\texttt{calc/export\_chisr.py} で 20 万個の標本が完全に一致することを確かめた)。
+
+\subsection{訂正 1: 準平衡の枝は 211 の臨界で止まっていた(重要)}
+
+E10 の表は E3 の式(BGLS 式 55)から作ったので、322 の超放射 $\gamma_{322}$ を落としていた。そのため BH のスピンは 211 の臨界より下に行けなかった。$\gamma_{322}$ を残して BGLS 式 34--36 の右辺を 0 とおくと、固定点は次のようになる($u=\gamma_\mathrm{BH}\varepsilon_{211}^2$)。
+\begin{gather}
+3u^2+\Bigl(2\gamma_{322}-\frac{4\gamma_\infty\gamma_{211}}{\gamma_\mathrm{BH}}\Bigr)u-\gamma_{322}^2=0,\qquad
+\varepsilon_{322}=\frac{u+\gamma_{322}}{2\gamma_\infty\varepsilon_{211}},\\
+\dot\chi=-\gamma_{211}\varepsilon_{211}-2\gamma_{322}\varepsilon_{322}=-3\gamma_\infty\varepsilon_{211}\varepsilon_{322}^2 .
+\end{gather}
+$\gamma_{322}\to0$ で E3 の式に戻る。211 の臨界より下では 211 は吸収される($\gamma_{211}<0$)が、$322\times322\to211\times\infty$ が 211 を補充するので、
+\begin{equation}
+\dot\chi\simeq-\frac32\gamma_{322}\sqrt{\frac{|\gamma_{211}|}{\gamma_\infty}}
+\end{equation}
+で 322 の臨界まで下がる。この速さは $\gamma_\mathrm{BH}$ によらず、やはり $\mu(f/\Mpl)^2$ に比例する。そこで E10 の表の方法はそのまま使え、表を 322 の臨界まで延ばした。回転を失う速さが最も遅いのは 211 の臨界のすぐ上と下(幅 $10^{-8}$ ほど)なので、表の格子はそこを対数で詰めた。
+
+\begin{result}
+E5 の ODE(BH の質量は固定)と比べた($\mu=0.71\times10^{-12}\eV$)。
+\begin{itemize}
+\item \textbf{準平衡の側}(印 1・4): GW241011 の主星($f=10^{13}$--$10^{16}\GeV$、$T\le10^{10}\yr$)、$25\Msun$($\chi_0=0.8$、$10^{14}$、$10^{15}\GeV$)、$30\Msun$($10^{13}$、$10^{14}\GeV$)、$15\Msun$($10^{13}\GeV$)で、差は最大 0.0033。E11 の関数は 211 の臨界で止まるので、同じ点で最大 0.18 ずれていた(例: GW241011 の主星、$f=10^{16}\GeV$、$10^9\yr$ で ODE 0.219、E11 0.399、E12 0.220)。
+\item \textbf{どこで効くか}: 211 の臨界より下への降下が $10^{10}\yr$ で目に見えるのは、GW241011 の主星($\alpha=0.104$)で $f\gtrsim10^{15}\GeV$(0.0065)、$25\Msun$($0.133$)で $10^{15}\GeV$ からである。$f\lesssim10^{13}\GeV$ では起きない。窓($f\sim10^{12}\GeV$)の数値は変わらない(GW241011 の主星、$T=5\times10^7\yr$、$f=10^{12}\GeV$ で 0.7508、E11 と同じ)。
+\item \textbf{E11 の結果の訂正}: 「準平衡の側で 322 の段階は起きない」は、調べた範囲($f\le10^{13}\GeV$、$\alpha\le0.13$)でだけ正しい。「$f\approx10^{16}\GeV$ でスピンが 0.2 ほど飛ぶ」は、この落としのためで、領域 B の不確かさのためではなかった。直したあとの飛びは、$T=10^9\yr$ の GW241011 の主星で 0.015(BH の質量の減少を、自由場の側でだけ入れているため)。
+\end{itemize}
+\end{result}
+
+\begin{figure}[H]
+\centering
+\input{figs/e12_scan}
+\caption{直した $\chi_\mathrm{SR}$ の $f$ 依存($\mu=0.71\times10^{-12}\eV$、$T=10^9\yr$)。破線は E11 の関数(211 の臨界で止まる)、丸は E5 の ODE。灰色の $f>10^{17}\GeV$ は、ODE の解法が止まるので確かめていない。$30\Msun$ は $\alpha=0.159$ で、二準位の近似が粗い印 4。}
+\label{fig:e12}
+\end{figure}
+
+\subsection{訂正 2: 自由場の側の 322 の時期}
+
+自由場の側(BGLS の領域 B)では、211 が飽和したあと $211\times211\to322\times\mathrm{BH}$ が 322 をすぐに育てる(BGLS 式 44--45)。E11 は 322 を 1 個の量子から数えていたので遅すぎた。$f\le10^{17}\GeV$ では、211 の飽和のあと訂正 1 の固定点で降下させることにした。
+\begin{itemize}
+\item $f=3\times10^{16}\GeV$ の GW241011 の主星では、ODE との差は最大 0.053($10^8\yr$。ODE のほうが速い)。BH の質量の減少による 0.016 のずれも含む。
+\item $f>10^{17}\GeV$ は E11 のまま(322 を 1 個の量子から)にした。E5 の ODE はここで止まるので確かめていない。$f=10^{17}\GeV$ の切り替えで、スピンが最大 0.15 飛ぶ($15\Msun$、$10^9\yr$)。$f\to\infty$ では自由場の文献と同じ数え方に戻る。
+\end{itemize}
+
+\subsection{訂正 3: 印 3(322 から育つ BH)の範囲と判定}
+
+印 3 は「$\gamma_{322}$ だけが正」、すなわち $\chi_c^{(322)}<\chi_0\le\chi_c^{(211)}$ の BH である。これは $\chi_0$ で決まり、E11 と README の「$\gtrsim35\Msun$」は $\chi_0\approx0.7$ のときだけの言い方だった。1 世代目の自然スピンを \arxiv{2607.01317} の事後分布の中央値 Beta(0.69, 2.28) とすると、どの質量でも 1--2 割が印 3 にあたる(表~\ref{tab:e12zone})。
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{rcccccc}
+\toprule
+$M\ [\Msun]$ & $\alpha$ & $\chi_c^{(211)}$ & $\chi_c^{(322)}$ & 211 が超放射 & 322 から育つ & 超放射しない\\
+\midrule
+8 & 0.043 & 0.169 & 0.085 & 0.50 & 0.17 & 0.32\\
+10 & 0.053 & 0.210 & 0.106 & 0.43 & 0.19 & 0.37\\
+15 & 0.080 & 0.311 & 0.158 & 0.30 & 0.22 & 0.48\\
+20 & 0.106 & 0.406 & 0.210 & 0.20 & 0.23 & 0.57\\
+25 & 0.133 & 0.495 & 0.261 & 0.14 & 0.23 & 0.64\\
+30 & 0.159 & 0.577 & 0.311 & 0.09 & 0.21 & 0.70\\
+40 & 0.213 & 0.717 & 0.406 & 0.03 & 0.17 & 0.80\\
+50 & 0.266 & 0.824 & 0.495 & 0.01 & 0.13 & 0.86\\
+\bottomrule
+\end{tabular}
+\caption{1 世代目の自然スピンを Beta(0.69, 2.28) としたときの割合($\mu=0.71\times10^{-12}\eV$)。}
+\label{tab:e12zone}
+\end{table}
+
+322 が 1 個の量子から自由に飽和できるのは、自己相互作用の二つの吸い込みが、飽和の量 $\varepsilon'_\mathrm{max}=(\chi_0-\chi_c^{(322)})/2$ に届くまで効かないときだけである。
+\begin{itemize}
+\item $322\times322\to544\times\mathrm{BH}$ の行き過ぎ $\varepsilon'_\mathrm{th}=\sqrt{2\gamma_{322}\ln(GM^2)/\gamma'_\mathrm{BH}}$。$\gamma'_\mathrm{BH}=1.9\times10^{-9}\alpha^{11}(\Mpl/f)^4\tilde r_+\mu$(BGLS Table V)。
+\item 吸収される 211 が $322\times322\to211\times\infty$ で補充され始める占有数 $\sqrt{|\gamma_{211}|/\gamma_\infty}$。
+\end{itemize}
+どちらも $f^2$ に比例する。E11 の $f\ge10^{16}\GeV$ という一律の線をこの二つの判定に置き換えると、$45\Msun$($\chi_0=0.7$)でも $20\Msun$($\chi_0=0.3$)でも、自由場になるのは $f$ が $10^{17}$ と $3\times10^{17}\GeV$ のあいだからだった。それより小さい $f$ では $\chi_0$ を返して印 3 とする。窓の $f$ ではおそらく良い近似だが、$f\gtrsim10^{14}\GeV$ では自己相互作用のもとで回転を失いうるので、悪い近似である。Beta(0.69, 2.28) の 1 世代目($8$--$50\Msun$ で一様、6 Gyr)では、$f\le10^{16}\GeV$ で標本の 19\% が印 3 になる。
+
+\subsection{訂正 4: 印と範囲}
+
+\begin{itemize}
+\item \textbf{二準位の範囲}: 準平衡で $0.15<\alpha\le0.30$ の点を、新しい印 4 にした(値は計算して返す)。433 は $\alpha\gtrsim0.15$ で育ち(\arxiv{2412.03655})、411 は $\alpha\gtrsim0.2$ で育つ(BGLS IV C)。$\mu=0.71\times10^{-12}\eV$ では $28$--$56\Msun$ にあたる。
+\item \textbf{大きい $\alpha$}: 臨界の式 $4m\alpha_E/(m^2+4\alpha_E^2)$ は $\alpha_E/m\ge1/2$ で意味を失う。E11 の関数は $\alpha=0.65$、$\chi_0=0.99$ で「超放射しない」(印 0)を返していた。$\alpha_E/m\ge1/2$ ではその準位は超放射しないとし、$\alpha>0.5$ は印 3 にした。
+\item \textbf{質量の減少の解き方}: 飽和したあとの BH の質量を、固定回数の反復(\texttt{chisr} で 5 回、\texttt{sr.chi\_threshold} で 4 回)でなく、収束まで解くようにした。
+\item \textbf{入力の検査}: $0\le\chi_0<1$、正の $M$、$\mu$、$f$、0 以上の $T$ でなければ止める。
+\item \textbf{表の範囲}: $\alpha$ の下端を 0.02 から 0.01 に下げた。
+\end{itemize}
+
+\subsection{結果の読み方についての指摘}
+
+\paragraph{$f$ と年齢は縮退している}
+準平衡では $\chi_\mathrm{SR}$ は $\tau=\mu(f/\Mpl)^2T$ だけで決まるので、窓の上限は $f\sqrt{T_2}$ の上限である。E9・E10 の「現実的な」$T_2=5\times10^7\yr$ は、Baibhav+ \arxiv{2004.00650} Fig.~2 の $(50+50)\Msun$ の最小値で、$(10+10)\Msun$ では $3\times10^8\yr$ になる(\texttt{Refs/notes/astro\_inputs.md})。GW241011 の主星の親は軽いので、現実的な仮定としては短すぎた。
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{rccccc}
+\toprule
+$T_2\ [\yr]$ & 生まれたスピン & $f$ の上限 $[\GeV]$ & \multicolumn{2}{c}{1 世代目の最小質量 $[\Msun]$($\delta=0.02/0.05$)}\\
+ & & & $\chi_0=0.7$ & $\chi_0=0.5$\\
+\midrule
+$5\times10^7$ & 0.78 & $1.85\times10^{12}$ & 13.4/12.0 & 13.1/11.5\\
+ & 0.72 & $1.12\times10^{12}$ & 16.2/14.5 & 15.7/13.8\\
+$10^8$ & 0.78 & $1.31\times10^{12}$ & 15.3/13.7 & 14.8/13.1\\
+ & 0.72 & $7.93\times10^{11}$ & 18.4/16.5 & 17.6/15.5\\
+$3\times10^8$ & 0.78 & $7.55\times10^{11}$ & 18.8/16.8 & 17.9/15.7\\
+ & 0.72 & $4.58\times10^{11}$ & 22.4/20.1 & 20.8/18.2\\
+\bottomrule
+\end{tabular}
+\caption{窓の年齢依存($\mu=0.71\times10^{-12}\eV$、主要項の $\gamma_\mathrm{BH}$)。GW241011 の主星は 0.69 を下回らないとする。1 世代目の年齢は 6 Gyr。}
+\label{tab:e12age}
+\end{table}
+
+\paragraph{判定の幅 $\delta$ は 0 にできない}
+準平衡では $x=\chi-\chi_c$ が $x(t)=[x_0^{-1/2}+Kt/2]^{-2}$ で臨界に近づき、有限の時間では届かない。そのため 1 世代目の下限は $f_\mathrm{low}\propto\delta^{-1/4}$ で増える。$15\Msun$、6 Gyr では表~\ref{tab:e12delta} のとおりで、$\delta\to0$ では下限が GW241011 の上限を超え、窓は定義から閉じる。$\delta$ が小さいと $\chi_0$ はほとんど効かない。集団解析では $\delta$ を置かず、$\chi_\mathrm{SR}$ が予言する臨界からのずれ($x\approx4/(KT)^2\propto\alpha^{-10}f^{-4}T^{-2}$)をそのまま測定と比べる。$\delta=0.18$ を外すこと自体は正しい(0.18 は自由場の当てはめの幅で、自己相互作用の解析に入れる理由がない)が、目標を 211 の臨界そのものにする判定は、この理由で使えない。
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{rccccc}
+\toprule
+ & $\delta=0.18$ & 0.05 & 0.02 & 0.01 & 0.001\\
+\midrule
+$\chi_0=0.5$ & 0.15 & 0.87 & 1.27 & 1.60 & 3.07\\
+$\chi_0=0.7$ & 0.56 & 1.03 & 1.38 & 1.69 & 3.12\\
+$\chi_0=0.9$ & 0.68 & 1.10 & 1.43 & 1.73 & 3.15\\
+\bottomrule
+\end{tabular}
+\caption{$15\Msun$ の 1 世代目を 6 Gyr のうちに 211 の臨界 $+\delta$ まで落とすのに要る $f$($10^{12}\GeV$ 単位、$\mu=0.71\times10^{-12}\eV$)。}
+\label{tab:e12delta}
+\end{table}
+
+\paragraph{1 世代目の自然スピン}
+Beta(0.69, 2.28) では、$10$、$15$、$20\Msun$ の 1 世代目のうち 211 の臨界より上で生まれるのは 43、30、20\% だけである(表~\ref{tab:e12zone})。窓の判定で使った $\chi_0=0.7$ は楽観的で、多くの 1 世代目はそもそも 211 の信号を持たない。
+
+\paragraph{$\gamma_\mathrm{BH}$ の相対論的な補正}
+E7 の $C_\mathrm{BH}$ を入れると、GW241011 の主星の上限(0.72、$5\times10^7\yr$)は $1.12\to1.83\times10^{12}\GeV$(1.63 倍)、1 世代目の最小質量($\chi_0=0.7$、$\delta=0.02/0.05$)は $16.2/14.5\to15.2/13.2\Msun$ になる。窓のある $\alpha\approx0.05$--$0.16$ で $C_\mathrm{BH}$ が質量とともに変わるので、上限と下限は同じ割合では動かない。
+
+\paragraph{その他}
+\begin{itemize}
+\item GW241011 は 1 事象で、2 世代目かどうかも解釈である。集団解析では、事象ごとの尤度と 2 世代目である確率を入れ、この事象を除いた場合も示す。
+\item 論文の構成案(\texttt{paper/outline.md})と図のキャプション案に、D8 より前の主張(X 線連星で窓が閉じる、Cyg X-1 の予言、$\gtrsim20\Msun$)が残っていたので直した。
+\item GW のスピンだけの上限は、このノートの模型で計算した GRS 1915+105 の上限(E8)と同じ桁で、独立だが強くはない。新しさは、集団の $(\mu,f)$ を自己相互作用込みで走査すること自体にある。
+\end{itemize}
+
+\subsection{勉強ノートの訂正}
+
+\begin{itemize}
+\item 322 と 211 の率の比: $\alpha=0.1$ で $10^{-4}$ と書いていたが、$\alpha^4$ のほかに係数の比 $C_{32}/C_{21}=2.2\times10^{-4}$ が掛かり、$4$--$7\times10^{-7}$ である(E4 の相対論的な率)。
+\item $\Mpl$ を換算 Planck 質量と取り違えたときのずれ: $(\Mpl/f)^4$ で 35 倍と書いていたが、$(8\pi)^2\approx630$ 倍($f$ にして 5 倍)。\texttt{Refs/notes/theory\_rates.md} の同じ記述も直した。
+\item 閉じた解の注意、$\sqrt{-g}$ の扱い、322 の寄与の比($4\times10^{-8}$)、放出が角運動量を減らすことの書き足し。
+\item 訂正 1 の固定点と 211 の臨界より下への降下を、第 7 節に書き足した。
+\end{itemize}
+
+\begin{caveat}
+\begin{itemize}
+\item \textbf{$f>10^{17}\GeV$ の 322 の時期}: 確かめていない。ODE の解法を直して表にする必要がある。
+\item \textbf{322 から育つ BH(印 3)}: 211・322・544 の運動論(1 個の量子からの湧き出しつき)が要る。固定点はやはり $\mu(f/\Mpl)^2$ に比例するので、表の方法は使えるはずである。
+\item \textbf{$\alpha>0.15$}(印 4): $n\le5$ の準位と $C_\mathrm{BH}$。\arxiv{2412.03655} の公開コードと照合する。
+\item \textbf{質量の減少}: 準平衡の側では BH の質量を固定し、自由場の側では雲のエネルギーをすべて引いている。領域 B・C では 2/3 が BH に戻る(BGLS 式 37)。
+\end{itemize}
+\end{caveat}

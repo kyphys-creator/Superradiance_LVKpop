@@ -1,0 +1,14 @@
+% E12: 322 の超放射を入れた固定点で直した chi_SR の f 依存(mu = 0.71e-12 eV)。データは calc/e12_review.py、e11_chisr.py
+\begin{tikzpicture}
+\begin{axis}[note, width=0.72\linewidth, height=0.42\linewidth, xmode=log, xmin=1e10, xmax=1e19, ymin=0.12, ymax=0.82,
+  xlabel={$f\ [\mathrm{GeV}]$}, ylabel={年齢 $T=10^9$ 年のあとのスピン},
+  legend style={font=\scriptsize, at={(0.33,0.98)}, anchor=north west, fill=white, fill opacity=0.85, text opacity=1, draw=none}, legend cell align=left]
+  \fill[cM!12] (axis cs:1e17,0.12) rectangle (axis cs:1e19,0.82);
+  \node[font=\scriptsize, color=ink2, anchor=north] at (axis cs:1e18,0.81) {ODE で未確認};
+  \addplot[ink2, line width=0.8pt, dashed] table[x=f, y=chi_GW241011_T9] {figs/data/e11_scan.dat}; \addlegendentry{E11 の関数(GW241011 の主星)}
+  \addplot[cA, line width=1.0pt] table[x=f, y=chi_GW241011_T9] {figs/data/e12_scan.dat}; \addlegendentry{E12 の関数(GW241011 の主星、$\chi_0=0.78$)}
+  \addplot[only marks, mark=o, mark size=1.6pt, cB] table[x=f, y=chi_T9] {figs/data/e12_ode.dat}; \addlegendentry{E5 の ODE(GW241011 の主星)}
+  \addplot[cC, line width=1.0pt] table[x=f, y=chi_M15_T9] {figs/data/e12_scan.dat}; \addlegendentry{$15\Msun$、$\chi_0=0.7$}
+  \addplot[cD, line width=1.0pt] table[x=f, y=chi_M30_T9] {figs/data/e12_scan.dat}; \addlegendentry{$30\Msun$、$\chi_0=0.8$(印 4)}
+\end{axis}
+\end{tikzpicture}

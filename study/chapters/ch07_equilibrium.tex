@@ -5,7 +5,7 @@
 
 \subsection{準平衡の占有数}
 
-$\varepsilon$ の単位の率の方程式(\S\ref{sec:selfint})で、$|322\rangle$ の超放射 $\gamma_{322}$ は非常に小さいので落とす(研究ノート E3 で $10^{-8}$ 程度と確認)。
+$\varepsilon$ の単位の率の方程式(\S\ref{sec:selfint})で、$|322\rangle$ の超放射 $\gamma_{322}$ は非常に小さいので落とす(211 の臨界より上ではこれでよい。臨界より下では $\gamma_{322}$ が主役になる。\S\ref{sec:below211})。スピンの変化への寄与の比 $2\gamma_{322}\varepsilon_{322}/(\gamma_{211}\varepsilon_{211})$ は、GW241011 の主星の例で $4\times10^{-8}$ ほどである(研究ノート E3)。
 \begin{align}
 \dot\varepsilon_{211}&=\gamma_\mathrm{SR}\varepsilon_{211}-2\gamma_\mathrm{BH}\varepsilon_{211}^2\varepsilon_{322}+\gamma_\infty\varepsilon_{211}\varepsilon_{322}^2,\\
 \dot\varepsilon_{322}&=\gamma_\mathrm{BH}\varepsilon_{211}^2\varepsilon_{322}-2\gamma_\infty\varepsilon_{211}\varepsilon_{322}^2.
@@ -128,6 +128,9 @@ t(x_i\to x_f)=\frac{2}{K}\Bigl(x_f^{-1/2}-x_i^{-1/2}\Bigr)\;}
 \item 長い時間では $x\simeq4/(Kt)^2$ で、スピンは臨界値に $t^{-2}$ でしか近づかない。自由場のように臨界値で止まるのではなく、年齢に応じて臨界値の少し上に散らばる。
 \item $K\propto\alpha^5$ なので、重い BH ほど速く回転を失う。
 \end{itemize}
+\begin{caution}
+この閉じた解は二つの近似で、数十 \% ずれる。$\rp$ を一定とした($\dd x/\dd\chi=1+2\alpha\chi/\sqrt{1-\chi^2}$ は GW241011 の主星で 1.26)ことと、$g_{11}=1$ とした(実際は 0.6 ほど)ことである。研究のコードは $H(\alpha,\chi)$ をそのまま使っている。閉じた解は、$t^{-2}$ の近づき方と $f^2$ の依存を見るためのものである。
+\end{caution}
 
 \begin{figure}[H]
 \centering
@@ -169,6 +172,72 @@ I(\alpha,\chi_T)=I(\alpha,\chi_0)+\tau,\qquad \tau\equiv\mu\Bigl(\frac{f}{\Mpl}\
 \end{equation}
 質量を固定した式より $(1-2\chi\alpha/3)$ 倍遅い。雲の大きさによらない補正で、GW241011 の主星では 5.4\%(研究ノート E9)。
 
+\subsection{211 の臨界より下: $\gamma_{322}$ を残した固定点}\label{sec:below211}
+
+ここまでの式では、$\gamma_\mathrm{SR}\to0$ でスピンの減少が止まり、BH は 211 の臨界 $\chi_c^{(211)}$ にとどまる。しかし $\gamma_{322}>0$ である限り、BH は 322 の臨界 $\chi_c^{(322)}$ まで回転を失いうる。研究ノート E12 で、この降下が $f\gtrsim10^{14}$--$10^{15}\GeV$ で効くことがわかったので、$\gamma_{322}$ を残して解き直す。$\varepsilon_1\equiv\varepsilon_{211}$、$\varepsilon_2\equiv\varepsilon_{322}$、$\gamma_1\equiv\gamma_{211}$、$\gamma_2\equiv\gamma_{322}$ と書く。
+\begin{align}
+\dot\varepsilon_1&=\gamma_1\varepsilon_1-2\gamma_\mathrm{BH}\varepsilon_1^2\varepsilon_2+\gamma_\infty\varepsilon_1\varepsilon_2^2,\\
+\dot\varepsilon_2&=\gamma_2\varepsilon_2+\gamma_\mathrm{BH}\varepsilon_1^2\varepsilon_2-2\gamma_\infty\varepsilon_1\varepsilon_2^2,\\
+\dot\chi&=-\gamma_1\varepsilon_1-2\gamma_2\varepsilon_2.
+\end{align}
+
+\paragraph{手順 1: 固定点でのスピンの変化}
+$\dot\varepsilon_1=\dot\varepsilon_2=0$ から
+\begin{equation}
+\gamma_1\varepsilon_1=2\gamma_\mathrm{BH}\varepsilon_1^2\varepsilon_2-\gamma_\infty\varepsilon_1\varepsilon_2^2,\qquad
+\gamma_2\varepsilon_2=-\gamma_\mathrm{BH}\varepsilon_1^2\varepsilon_2+2\gamma_\infty\varepsilon_1\varepsilon_2^2 .
+\end{equation}
+これを $\dot\chi$ に入れると、$\gamma_\mathrm{BH}$ の項が消えて
+\begin{equation}
+\dot\chi=-(2\gamma_\mathrm{BH}\varepsilon_1^2\varepsilon_2-\gamma_\infty\varepsilon_1\varepsilon_2^2)-2(-\gamma_\mathrm{BH}\varepsilon_1^2\varepsilon_2+2\gamma_\infty\varepsilon_1\varepsilon_2^2)
+=-3\gamma_\infty\varepsilon_1\varepsilon_2^2 .
+\label{eq:chidot_fp}
+\end{equation}
+$322\times322\to211\times\infty$ が 1 回起きるたびに、$m=2+2-1=3$ の角運動量が外へ出る(上の流れの図と同じ)。
+
+\paragraph{手順 2: 固定点を解く}
+$|322\rangle$ の式を $\varepsilon_2$ で割ると $\gamma_2+\gamma_\mathrm{BH}\varepsilon_1^2-2\gamma_\infty\varepsilon_1\varepsilon_2=0$ なので、$u\equiv\gamma_\mathrm{BH}\varepsilon_1^2$ とおいて
+\begin{equation}
+\varepsilon_2=\frac{\gamma_2+u}{2\gamma_\infty\varepsilon_1}.
+\end{equation}
+$|211\rangle$ の式を $\varepsilon_1$ で割った $\gamma_1-2\gamma_\mathrm{BH}\varepsilon_1\varepsilon_2+\gamma_\infty\varepsilon_2^2=0$ に入れる。$\gamma_\mathrm{BH}\varepsilon_1\varepsilon_2=\gamma_\mathrm{BH}(\gamma_2+u)/(2\gamma_\infty)$、$\gamma_\infty\varepsilon_2^2=(\gamma_2+u)^2/(4\gamma_\infty\varepsilon_1^2)=\gamma_\mathrm{BH}(\gamma_2+u)^2/(4\gamma_\infty u)$ なので
+\begin{equation}
+\gamma_1-\frac{\gamma_\mathrm{BH}(\gamma_2+u)}{\gamma_\infty}+\frac{\gamma_\mathrm{BH}(\gamma_2+u)^2}{4\gamma_\infty u}=0 .
+\end{equation}
+両辺に $4\gamma_\infty u/\gamma_\mathrm{BH}$ を掛けて整理すると
+\begin{equation}
+3u^2+\Bigl(2\gamma_2-\frac{4\gamma_\infty\gamma_1}{\gamma_\mathrm{BH}}\Bigr)u-\gamma_2^2=0 .
+\label{eq:fp_quad}
+\end{equation}
+二つの根の積は $-\gamma_2^2/3<0$ なので、正の根はちょうど一つある。
+
+\paragraph{手順 3: 確かめ($\gamma_2\to0$)}
+式 \eqref{eq:fp_quad} は $u=4\gamma_\infty\gamma_1/(3\gamma_\mathrm{BH})$ になり、$\varepsilon_1^2=u/\gamma_\mathrm{BH}=4\gamma_1\gamma_\infty/(3\gamma_\mathrm{BH}^2)$。式 \eqref{eq:eq_occ} に戻る。
+
+\paragraph{手順 4: 211 の臨界より下($\gamma_1<0$)}
+$\gamma_1=-|\gamma_1|$ とする。臨界のごく近く(下の注意)を除けば $|\gamma_1|\gamma_\infty/\gamma_\mathrm{BH}\gg\gamma_2$ なので、式 \eqref{eq:fp_quad} の小さい正の根は
+\begin{equation}
+u\simeq\frac{\gamma_2^2\gamma_\mathrm{BH}}{4|\gamma_1|\gamma_\infty},\qquad
+\varepsilon_1=\sqrt{\frac{u}{\gamma_\mathrm{BH}}}=\frac{\gamma_2}{2\sqrt{|\gamma_1|\gamma_\infty}},\qquad
+\varepsilon_2\simeq\frac{\gamma_2}{2\gamma_\infty\varepsilon_1}=\sqrt{\frac{|\gamma_1|}{\gamma_\infty}} .
+\end{equation}
+$\varepsilon_2$ は、$322\times322\to211\times\infty$ による $|211\rangle$ の補充($\gamma_\infty\varepsilon_2^2$)が、$|211\rangle$ の吸収 $|\gamma_1|$ とつり合う値である。式 \eqref{eq:chidot_fp} に入れて
+\begin{equation}
+\dot\chi\simeq-3\gamma_\infty\cdot\frac{\gamma_2}{2\sqrt{|\gamma_1|\gamma_\infty}}\cdot\frac{|\gamma_1|}{\gamma_\infty}=-\frac32\,\gamma_2\sqrt{\frac{|\gamma_1|}{\gamma_\infty}} .
+\end{equation}
+\begin{itemize}
+\item $\gamma_\infty\propto(\Mpl/f)^4$ なので $\sqrt{1/\gamma_\infty}\propto(f/\Mpl)^2$。この速さも $\mu(f/\Mpl)^2$ に比例し、$\gamma_\mathrm{BH}$ によらない。
+\item そのため、前の小節の $I(\alpha,\chi)$ の方法はそのまま使え、表を $\chi_c^{(322)}$ まで延ばせばよい。$\gamma_2\to0$ の $\chi_c^{(322)}$ で $\dot\chi\to0$ となり、BH はそこで止まる。
+\end{itemize}
+
+\begin{caution}
+回転を失う速さが最も遅いのは、211 の臨界のすぐ上と下、$|\gamma_1|\sim\gamma_2\gamma_\mathrm{BH}/\gamma_\infty$ の狭い範囲(スピンにして $10^{-8}$ ほど)である。数値で積分するときは、ここを細かく刻まないと時間を短く見積もる。
+\end{caution}
+
+\begin{numcheck}
+GW241011 の主星($\mu=0.71\times10^{-12}\eV$、$\chi_0=0.78$、$\chi_c^{(211)}=0.399$、$\chi_c^{(322)}=0.206$)で、$f=10^{16}\GeV$ では $10^9$ 年後のスピンは 0.220。運動論の ODE は 0.219 である。$f\le10^{13}\GeV$ では $10^{10}$ 年たっても 211 の臨界より下に行かない(研究ノート E12)。
+\end{numcheck}
+
 \subsection{いつ準平衡が成り立つか}
 
 \begin{itemize}
@@ -183,9 +252,10 @@ I(\alpha,\chi_T)=I(\alpha,\chi_0)+\tau,\qquad \tau\equiv\mu\Bigl(\frac{f}{\Mpl}\
 \item 取り出した角運動量はすべて $m=3$ の波で外へ出る。エネルギーは 2/3 が BH に戻る。
 \item 回転を失う速さ $\dot\chi=\mu(f/\Mpl)^2H(\alpha,\chi)\propto f^2$。主要項では $x(t)=(x_0^{-1/2}+Kt/2)^{-2}$。
 \item 年齢の比は $f$ によらず、$f$ の上限は $f_\mathrm{max}=f_\mathrm{ref}\sqrt{t_\mathrm{ref}/T}$、スピンは $(\alpha,\chi_0,\tau)$ で決まる。
+\item $\gamma_{322}$ を残すと、211 の臨界より下でも $\dot\chi\simeq-\tfrac32\gamma_{322}\sqrt{|\gamma_{211}|/\gamma_\infty}\propto f^2$ で 322 の臨界まで下がる。
 \end{itemize}
 \end{summary}
 
 \begin{tocode}
-コード: \texttt{si.eps\_eq} が式 \eqref{eq:eq_occ}、\texttt{si.chidot} が式 \eqref{eq:chidot}(\texttt{MASS\_CORR} で質量の補正)、\texttt{si.t\_spindown} が時間の積分、\texttt{chisr.H}・\texttt{chisr.chi\_after} が式 \eqref{eq:chidot_H} と $I$ の表。
+コード: \texttt{si.eps\_eq} が式 \eqref{eq:eq_occ}、\texttt{si.chidot} が式 \eqref{eq:chidot}(\texttt{MASS\_CORR} で質量の補正)、\texttt{si.t\_spindown} が時間の積分、\texttt{chisr.H} が式 \eqref{eq:fp_quad}・\eqref{eq:chidot_fp} の固定点(\S\ref{sec:below211})、\texttt{chisr.chi\_after} が $I$ の表。
 \end{tocode}
