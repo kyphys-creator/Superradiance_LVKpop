@@ -11,9 +11,10 @@ regime(印):
         下がりうる。三準位の外の準位(411、433 など)は年齢のうちに育たない
     2 = 自由場(211 が 1 個の量子から飽和して臨界へ。そのあと f <= 1e17 GeV は固定点の降下、それより上は 322 を
         1 個の量子から)、または 322 から育つ BH で自己相互作用が飽和までに効かない場合(どちらも BH の質量の減少を入れる)
-    3 = この模型の外。chi0 を返す: 固定点で alpha < 0.01 または > 0.30、alpha > 0.5
-    4 = 固定点だが、三準位の外の準位(411、433、211 の臨界より上の 544)が年齢のうちに育ちうる(有限 alpha の補正
-        込みで判定)。値は三準位で計算して返すが、近似は粗い
+    3 = この模型の外。chi0 を返す: 固定点で alpha < 0.01 または > 0.30、alpha > 0.5、
+        211・322 は超放射しないが 433(m = 3)が年齢のうちに飽和しうる
+    4 = 値は計算して返すが、模型の外の準位が年齢のうちに育ちうるので近似は粗い: 固定点で 411、433、211 の臨界より上の
+        544 が育ちうる(有限 alpha の補正込みで判定)、または自由場で止まったスピンから 433 が飽和しうる
 
 模型の要点(詳しくは README.md):
   固定点は Baryakhtar+ 2011.11646 の式 34--36 に 544 を加えた三準位(Table V・VI の率)。211 の臨界より上は (211, 322)、
@@ -23,8 +24,8 @@ regime(印):
   臨界スピンは、相対論的な率が 0 になるスピンの表(alpha 0.003--0.6)をどこでも使う。
   領域の判定: 準平衡の占有数 eps_eq と行き過ぎの占有数 eps_th が、どちらも自由場で飽和する量 chi0 - chi_c より小さければ準平衡。
   準平衡では、1 個の量子から eps_eq まで育つ時間 t_grow を年齢から引き、行き過ぎで失う eps_th を初期スピンから引く。
-超放射の率は Kerr 時空の連分数法(Dolan 0705.2880)の表(211: alpha >= 0.03、322: 0.1 <= alpha <= 0.52、433: 0.30--0.40)、
-範囲の外は解析式(Baumann+ 1908.10370 の式 2.32--2.34)。自己相互作用の率は主要項(相対論的な補正なし)。
+超放射の率は Kerr 時空の連分数法(Dolan 0705.2880)の表(211: alpha >= 0.03、322: 0.1 <= alpha <= 0.52)、
+範囲の外と 433 は解析式(Baumann+ 1908.10370 の式 2.32--2.34)。自己相互作用の率は主要項(相対論的な補正なし)。
 """
 from math import factorial
 
@@ -44,10 +45,10 @@ class ChiSR:
         self.lnI = z["lnI"]
         self.J = z["J"]
         self.thr_alpha = z["thr_alpha"]
-        self.thr = {1: z["thr1"], 2: z["thr2"]}
+        self.thr = {1: z["thr1"], 2: z["thr2"], 3: z["thr3"]}
         self._rel = {}
         self._range = {}
-        for key, l in [("211", 1), ("322", 2), ("433", 3)]:
+        for key, l in [("211", 1), ("322", 2)]:
             self._rel[key] = RegularGridInterpolator((np.log(z[f"rel{key}_alpha"]), z[f"rel{key}_chi"]), z[f"rel{key}_F"],
                                                      method="cubic", bounds_error=False, fill_value=None)
             self._range[key] = tuple(z[f"rel{key}_range"])
@@ -82,7 +83,7 @@ class ChiSR:
         n, l, m = {"211": (2, 1, 1), "322": (3, 2, 2), "433": (4, 3, 3)}[level]
         a, chi = np.broadcast_arrays(np.asarray(a, float), np.asarray(chi, float))
         out = np.array(self._gamma_analytic(a, chi, n, l, m), float)
-        lo, hi = self._range[level]
+        lo, hi = self._range.get(level, (np.inf, -np.inf))      # 433 は表を使わず解析式
         inr = (a >= lo) & (a <= hi)
         if inr.any():
             F = self._rel[level](np.stack([np.log(a[inr]), chi[inr]], -1))
@@ -90,7 +91,7 @@ class ChiSR:
         return out
 
     def chic(self, a, m):
-        """臨界スピン。相対論的な率の 0 の表(alpha 0.003--0.6)を補間。下は水素原子の主要項、上は 1(超放射しない)。"""
+        """臨界スピン(m = 1, 2, 3)。率の 0 の表(alpha 0.003--0.6)を補間。下は水素原子の主要項、上は 1(超放射しない)。"""
         a = np.asarray(a, float)
         n = m + 1
         ap = a * (1 - a ** 2 / (2 * n ** 2))
@@ -304,4 +305,13 @@ class ChiSR:
                 rg[free] = 2
             out[i3] = res
             reg[i3] = rg
+        # m = 3(433)の超放射: 返すスピンから 433 が年齢のうちに飽和しうるなら、印 0 -> 3、印 2 -> 4(値は変えない)
+        c3 = self.chic(a, 3)
+        cand = ((reg == 0) | (reg == 2)) & (out > c3) & ~big
+        if cand.any():
+            i4 = np.flatnonzero(cand)
+            g433 = self.g(a[i4], np.minimum(out[i4], 0.995), "433") * mu_s[i4]
+            lnN3 = np.log(np.maximum((out[i4] - c3[i4]) / 3, 1e-300)) + lnGM2[i4]
+            grows = (g433 > 0) & (g433 * T[i4] > lnN3)
+            reg[i4[grows]] = np.where(reg[i4[grows]] == 0, 3, 4)
         return out.reshape(shape), reg.reshape(shape)

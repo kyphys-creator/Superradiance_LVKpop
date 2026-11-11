@@ -40,7 +40,7 @@ U = W                                 # 旧名(E10 の e10_gwonly.py が参照�
 def g_vec(alpha, chi, n, l, m):
     """超放射の率 / mu(占有数の率)を配列で。連分数法の表の範囲は表、外は解析式(sr.gamma_rel_over_mu と同じ規則)。"""
     alpha, chi = np.broadcast_arrays(np.asarray(alpha, float), np.asarray(chi, float))
-    lo, hi = sr._REL_RANGE[(n, l, m)]
+    lo, hi = sr._REL_RANGE.get((n, l, m), (np.inf, -np.inf))       # 表のない準位(433 など)は解析式
     out = np.array(sr.gamma_over_mu(alpha, chi, n, l, m, sr.NORM_N), float)
     inr = (alpha >= lo) & (alpha <= hi)
     if inr.any():
@@ -100,12 +100,15 @@ def extra_growth(alpha, chi):
 
 # ---------- 臨界スピン ----------
 def _zero(alpha, n, l, m):
-    """準位 (n, l, m) の率が 0 になるスピン(質量固定、相対論的な率の表と同じもの)。どのスピンでも超放射しなければ 1。"""
-    if float(g_vec(alpha, 0.9999, n, l, m)) <= 0:
-        return 1.0
-    if float(g_vec(alpha, 1e-4, n, l, m)) > 0:
-        return 1e-4
-    return brentq(lambda c: float(g_vec(alpha, c, n, l, m)), 1e-4, 0.9999, xtol=1e-14)
+    """準位 (n, l, m) の率が 0 になるスピン(質量固定、相対論的な率の表と同じもの)。どのスピンでも超放射しなければ 1。
+    率の表のスピンは 0.995(CHI_TOP)までなので、まず表の中で 0 を探す。表の端より上は 3 次の外挿になり、
+    alpha = 0.30 の 433 のように符号を誤ることがある(E17)。臨界が表の端より上のとき(alpha ~ 0.45 以上の 211)だけ外挿で探す。"""
+    g = lambda c: float(g_vec(alpha, c, n, l, m))   # noqa: E731
+    if g(CHI_TOP) > 0:
+        return 1e-4 if g(1e-4) > 0 else brentq(g, 1e-4, CHI_TOP, xtol=1e-14)
+    if g(0.9999) > 0:
+        return brentq(g, CHI_TOP, 0.9999, xtol=1e-14)
+    return 1.0
 
 
 def chic_vec(alpha, m, n=None, tab=None):
@@ -116,9 +119,9 @@ def chic_vec(alpha, m, n=None, tab=None):
     n = m + 1 if n is None else n
     ap = alpha * (1 - alpha ** 2 / (2 * n ** 2))          # alpha E/mu
     out = np.where(ap / m < 0.5, 4 * m * ap / (m ** 2 + 4 * ap ** 2), 1.0)
-    if tab is not None and m in (1, 2):
+    if tab is not None and m in (1, 2, 3):
         ta = tab["thr_alpha"]
-        thr = tab["thr1"] if m == 1 else tab["thr2"]
+        thr = tab[f"thr{m}"]
         inside = np.interp(np.log(np.clip(alpha, ta[0], ta[-1])), np.log(ta), thr)
         out = np.where(alpha < ta[0], out, np.where(alpha > ta[-1], 1.0, inside))
     return out
@@ -138,7 +141,7 @@ def build(cbh=False, mass_corr=False):
     """表を作る。
     lnI[alpha, w]: ln I、chi = chi_of_w(w, chic, chic2)(節の alpha での臨界)。
     J[alpha, w]: 三準位の外の準位が、chi(w) から CHI_TOP までの降下のあいだに育つ e-fold の数 x (f/M_pl)^2(E15)。
-    chic, chic2: 節の alpha での 211 と 322 の臨界。thr_alpha, thr1, thr2: 臨界スピンの細かい表(E16)。
+    chic, chic2: 節の alpha での 211 と 322 の臨界。thr_alpha, thr1, thr2, thr3: 211・322・433 の臨界スピンの細かい表(E16、E17)。
     """
     nA = len(ALPHAS)
     lnI = np.empty((nA, len(W)))
@@ -156,7 +159,9 @@ def build(cbh=False, mass_corr=False):
         J[i] = -cumulative_trapezoid((lam * invH)[::-1], chis[::-1], initial=0.0)[::-1]
     thr1 = np.array([_zero(a, 2, 1, 1) for a in THR_ALPHAS])
     thr2 = np.array([_zero(a, 3, 2, 2) for a in THR_ALPHAS])
-    return {"lnI": lnI, "J": J, "chic": c1s, "chic2": c2s, "thr_alpha": THR_ALPHAS, "thr1": thr1, "thr2": thr2}
+    thr3 = np.array([_zero(a, 4, 3, 3) for a in THR_ALPHAS])
+    return {"lnI": lnI, "J": J, "chic": c1s, "chic2": c2s, "thr_alpha": THR_ALPHAS, "thr1": thr1, "thr2": thr2,
+            "thr3": thr3}
 
 
 def _alpha_nodes(alpha):
@@ -328,9 +333,11 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
             下がりうる。三準位の外の準位(411、433 など)は年齢のうちに育たない
         2 = 自由場(211 が飽和して臨界へ。そのあと f <= 1e17 GeV は固定点の降下、それより上は 322 を 1 個の量子から)、
             または 322 から育つ BH で自己相互作用が飽和までに効かず、322 が飽和して 322 の臨界へ(どちらも BH の質量の減少を入れる)
-        3 = この模型の外。chi0 を返す: 固定点で alpha が表の外(alpha < 0.01 または > 0.30)、alpha > 0.5
-        4 = 固定点だが、三準位の外の準位(411、433、211 の臨界より上の 544)が年齢のうちに育ちうる(有限 alpha の
-            補正込みで判定、E15)。値は三準位で計算して返すが、近似は粗い
+        3 = この模型の外。chi0 を返す: 固定点で alpha が表の外(alpha < 0.01 または > 0.30)、alpha > 0.5、
+            211・322 は超放射しないが 433(m = 3)が年齢のうちに飽和しうる(E17)
+        4 = 値は計算して返すが、模型の外の準位が年齢のうちに育ちうるので近似は粗い: 固定点で 411、433、211 の臨界
+            より上の 544 が育ちうる(有限 alpha の補正込みで判定、E15)、または自由場で止まったスピンから 433 が
+            飽和しうる(E17)
     領域の判定(BGLS の B|C の境界、式 53・56): 準平衡の占有数 eps_eq と行き過ぎの占有数 eps_th が、
     どちらも自由場で飽和する量 eps_max = chi0 - chi_c より小さければ準平衡。
     準平衡では、1 個の量子から eps_eq まで育つ時間 t_grow を年齢から引き、行き過ぎで失う eps_th を初期スピンから引く。
@@ -417,4 +424,16 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
             rg[free] = 2
         out[i3] = res
         reg[i3] = rg
+
+    # ---- m = 3(433)の超放射(模型に入っていない)、E17 ----
+    # 返すスピンが 433 の臨界より上で、433 が 1 個の量子から(自由場で)年齢のうちに飽和しうる点に印をつける。
+    # 印 0(超放射しない、chi0 を返す)は印 3 に、印 2(自由場、322 の臨界などで止まる)は印 4 に変える。値は変えない。
+    c3 = chic_vec(a, 3, tab=tab)
+    cand = ((reg == 0) | (reg == 2)) & (out > c3) & ~big
+    if cand.any():
+        i4 = np.flatnonzero(cand)
+        g433 = g_vec(a[i4], np.minimum(out[i4], 0.995), 4, 3, 3) * mu_s[i4]
+        lnN3 = np.log(np.maximum((out[i4] - c3[i4]) / 3, 1e-300)) + lnGM2[i4]
+        grows = (g433 > 0) & (g433 * T[i4] > lnN3)
+        reg[i4[grows]] = np.where(reg[i4[grows]] == 0, 3, 4)
     return out.reshape(shape), reg.reshape(shape)

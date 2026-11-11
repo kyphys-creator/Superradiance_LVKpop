@@ -2,8 +2,8 @@
 
 確かめること(E16 で 2--5 を加えた。どれかが外れたら AssertionError で止まる):
   1. 無作為な 20 万個の標本で、単体版とプロジェクト版(chisr.chi_sr)が値も印も一致する。
-  2. 臨界のすぐ上と下(alpha 0.02--0.48、211 と 322)で、両者が一致し、印 0(超放射しない)の点では
-     211 と 322 の率がどちらも 0 以下である(臨界の定義の食い違いがない)。
+  2. 臨界のすぐ上と下(alpha 0.02--0.48、211・322・433)で、両者が一致し、印 0(超放射しない)の点では
+     211 と 322 の率がどちらも 0 以下で、433 も年齢のうちに飽和しない(E17)。m = 3 の印の例も確かめる。
   3. tau -> 0 で chi_after が chi0 を返す(表の引き方が厳密な逆になっている)。
   4. 322 から育つ BH が自由場で飽和したときのスピンが、BH の質量の減少を入れた _sat_state と一致する。
   5. 三準位の ODE(fp3.evolve3)と、固定点の領域の 3 例で 0.002 以内。
@@ -57,9 +57,9 @@ def checks(tab, model):
     mu0 = 1e-12
     pts, err = [], 0.0
     for a in [0.02, 0.03, 0.05, 0.1, 0.2, 0.3, 0.35, 0.42, 0.48]:
-        for m in (1, 2):
+        for m in (1, 2, 3):
             c = float(chisr.chic_vec(a, m, tab=tab))
-            z = chisr._zero(a, 2, 1, 1) if m == 1 else chisr._zero(a, 3, 2, 2)
+            z = chisr._zero(a, *{1: (2, 1, 1), 2: (3, 2, 2), 3: (4, 3, 3)}[m])
             err = max(err, abs(c - z))
             if c < 0.999:
                 pts += [(a, c - 2e-5), (a, c + 2e-5)]
@@ -75,9 +75,19 @@ def checks(tab, model):
         assert np.max(np.abs(cr - cp)) == 0 and np.all(rr == rp), ("threshold band mismatch", f)
         zero = rr == 0
         bad += int(np.sum(zero & ((chisr.g_vec(A, X, 2, 1, 1) > 0) | (chisr.g_vec(A, X, 3, 2, 2) > 0))))
+        # 印 0 の点で 433(m = 3)が年齢(1e10 年)のうちに飽和しうるものがない(E17)
+        g3 = chisr.g_vec(A, np.minimum(X, 0.995), 4, 3, 3) * mu0 / sr.HBAR_EVS
+        c3 = chisr.chic_vec(A, 3, tab=tab)
+        lnN3 = np.log(np.maximum((X - c3) / 3, 1e-300)) + np.log(sr.N0 * Mb ** 2)
+        bad += int(np.sum(zero & (X > c3) & (g3 * 1e10 * sr.YR > lnN3)))
     rep["threshold_points"] = len(pts)
     rep["regime0_but_superradiant"] = bad
     assert bad == 0, rep
+
+    # 2b. m = 3 の印の例(E17): 50 Msun、chi0 = 0.485(433 の臨界 0.343 と 322 の臨界 0.495 のあいだ)、6 Gyr
+    cm3, rm3 = model(np.array([50.0, 45.0]), np.array([0.485, 0.381]), 6e9, 0.71e-12, 1e12)
+    rep["m3_flag_examples"] = [int(v) for v in rm3]
+    assert list(rm3) == [3, 0], rep
 
     # 3. tau -> 0
     worst = 0.0
@@ -110,14 +120,12 @@ def main():
     tab = chisr.build()
     a211, c211, F211 = rel_F(2, 1, 1)
     a322, c322, F322 = rel_F(3, 2, 2)
-    a433, c433, F433 = rel_F(4, 3, 3)
     os.makedirs(PKG, exist_ok=True)
     np.savez(os.path.join(PKG, "chi_sr_tables.npz"),
              ALPHAS=chisr.ALPHAS, W=chisr.W, CHI_TOP=chisr.CHI_TOP, lnI=tab["lnI"], J=tab["J"],
-             thr_alpha=tab["thr_alpha"], thr1=tab["thr1"], thr2=tab["thr2"],
+             thr_alpha=tab["thr_alpha"], thr1=tab["thr1"], thr2=tab["thr2"], thr3=tab["thr3"],
              rel211_alpha=a211, rel211_chi=c211, rel211_F=F211, rel211_range=np.array(sr._REL_RANGE[(2, 1, 1)]),
              rel322_alpha=a322, rel322_chi=c322, rel322_F=F322, rel322_range=np.array(sr._REL_RANGE[(3, 2, 2)]),
-             rel433_alpha=a433, rel433_chi=c433, rel433_F=F433, rel433_range=np.array(sr._REL_RANGE[(4, 3, 3)]),
              HBAR_EVS=sr.HBAR_EVS, TSUN=sr.TSUN, N0=sr.N0, YR=sr.YR,
              MPL_GEV=si.MPL_GEV, KAPPA_BH=si.KAPPA_BH, KAPPA_INF=si.KAPPA_INF, K_C=fp3.K_C, K_D=fp3.K_D,
              ALPHA_MAX=chisr.ALPHA_MAX, F_FP_MAX=chisr.F_FP_MAX)
