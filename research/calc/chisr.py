@@ -99,16 +99,14 @@ def extra_growth(alpha, chi):
     BH が吸収する過程すべてに E7 の有限 alpha の補正 C_BH を掛けて評価する(BGLS: 補正は地平線の近くで決まるので、
     BH が吸収する過程どうしの比はあまり変えない)。補正なしでは 411 は alpha < 0.33 で育たず、BGLS の「411 は
     alpha >~ 0.2 で育つ」は補正込みで再現する(E15)。印 4 の判定を控えめ(多めに印をつける側)にするための選択。
-    411 の超放射は解析式に 211 の相対論的な補正の比を掛けたもの(fp3.extra_growth と同じ)。
+    411 の超放射は Leaver の連分数法の表(E15、out/rates_411.npz)。
     """
     alpha, chi = np.broadcast_arrays(np.asarray(alpha, float), np.asarray(chi, float))
     C = np.interp(alpha, si.CBH_ALPHA, si.CBH_VALUE)
     g1 = g_vec(alpha, chi, 2, 1, 1)
     g2 = g_vec(alpha, chi, 3, 2, 2)
     g3 = np.array(sr.gamma_over_mu(alpha, chi, 5, 4, 4, sr.NORM_N), float)
-    with np.errstate(divide="ignore", invalid="ignore"):
-        g411 = (np.array(sr.gamma_over_mu(alpha, chi, 4, 1, 1, sr.NORM_N), float)
-                * g1 / np.array(sr.gamma_over_mu(alpha, chi, 2, 1, 1, sr.NORM_N), float))
+    g411 = g_vec(alpha, chi, 4, 1, 1)            # Leaver の連分数法の表(E15)
     g433 = g_vec(alpha, chi, 4, 3, 3)
     rpc = sr.rplus(chi) * C
     a11, a8 = alpha ** 11, alpha ** 8

@@ -207,10 +207,7 @@ def extra_growth(alpha, chi, x, cbh=1.0):
     411: g411 - (p1 + q1) e1 e2(BGLS 式 n11evol)。433: g433 + (g - e2) e1 e2 - h e1 e3 - k1 e2 e3 - k2 e1 e3(BGLS n33 の式に 544 の項)。"""
     rp = sr.rplus(chi) * cbh                     # BH が吸収する過程に有限 alpha の補正を掛ける
     e1, e2, e3 = x
-    # 411 の相対論的な率の表はないので、解析式に 211 の相対論的な補正の比を掛ける(Leaver で 411 を解いて比べると、
-    # alpha = 0.1--0.3 で 211 の比との違いは 12% 以内。E15)
-    g411 = sr.gamma_over_mu(alpha, chi, 4, 1, 1, sr.NORM_N) * (g_rel(alpha, chi, 2, 1, 1)
-                                                            / sr.gamma_over_mu(alpha, chi, 2, 1, 1, sr.NORM_N))
+    g411 = g_rel(alpha, chi, 4, 1, 1)            # Leaver の連分数法の表(E15、out/rates_411.npz)
     g433 = g_rel(alpha, chi, 4, 3, 3)
     l411 = g411 - (K_P1 * alpha ** 11 * rp + K_Q1 * alpha ** 8) * e1 * e2
     l433 = (g433 + (K_G * alpha ** 11 * rp - K_E2 * alpha ** 8) * e1 * e2
@@ -228,9 +225,7 @@ PROC5 = [(0, 0, 1, K_A, True), (1, 1, 0, K_B, False), (1, 1, 4, K_C, True), (4, 
 
 
 def sr_rates5(alpha, chi):
-    g211 = g_rel(alpha, chi, 2, 1, 1)
-    ratio = g211 / sr.gamma_over_mu(alpha, chi, 2, 1, 1, sr.NORM_N)
-    return np.array([g211, g_rel(alpha, chi, 3, 2, 2), sr.gamma_over_mu(alpha, chi, 4, 1, 1, sr.NORM_N) * ratio,
+    return np.array([g_rel(alpha, chi, 2, 1, 1), g_rel(alpha, chi, 3, 2, 2), g_rel(alpha, chi, 4, 1, 1),
                      g_rel(alpha, chi, 4, 3, 3), sr.gamma_over_mu(alpha, chi, 5, 4, 4, sr.NORM_N)])
 
 

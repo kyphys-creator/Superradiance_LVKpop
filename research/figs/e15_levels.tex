@@ -1,0 +1,50 @@
+% E15: (a) 固定点の型と、三準位の外の準位が育つ場所、(b)(c) 五準位の ODE(alpha = 0.22)。データは calc/e15_extra_levels.py
+\begin{tikzpicture}
+\begin{axis}[note, width=0.58\linewidth, height=0.44\linewidth, xmin=0.10, xmax=0.30, ymin=0.15, ymax=1.0,
+  xlabel={$\alpha$}, ylabel={BH のスピン $\chi$}, title={\small (a) 固定点の型と、育つ準位}, title style={yshift=14pt},
+  legend style={font=\scriptsize, at={(1.03,1.0)}, anchor=north west, fill=white, draw=none},
+  legend cell align=left]
+  \addplot[fill=cB!20, draw=none, forget plot] table[x=x, y=y] {figs/data/e15_reg_cbh.dat} -- cycle;
+  \addplot[fill=cB!45, draw=none, forget plot] table[x=x, y=y] {figs/data/e15_reg411.dat} -- cycle;
+  \addplot[cD, line width=0.9pt, densely dashed, forget plot] table[x=x, y=y] {figs/data/e15_reg_lead.dat} -- cycle;
+  \addlegendimage{area legend, fill=cB!20, draw=none}\addlegendentry{433・544 が育つ($C_\mathrm{BH}$ 込み)}
+  \addlegendimage{area legend, fill=cB!45, draw=none}\addlegendentry{411 も育つ($C_\mathrm{BH}$ 込み)}
+  \addlegendimage{cD, line width=0.9pt, densely dashed}\addlegendentry{433 が育つ(主要項)}
+  \addplot[ink, line width=1.0pt] table[x=alpha, y=c211] {figs/data/e15_map.dat}; \addlegendentry{211 の臨界}
+  \addplot[ink, line width=1.0pt, dashed] table[x=alpha, y=c322] {figs/data/e15_map.dat}; \addlegendentry{322 の臨界}
+  \node[font=\scriptsize, color=ink2] at (axis cs:0.125,0.62) {(211, 322)};
+  \node[font=\scriptsize, color=ink2] at (axis cs:0.140,0.37) {(322, 544)};
+  \node[font=\scriptsize, color=ink2] at (axis cs:0.235,0.25) {超放射しない($m\le2$)};
+\end{axis}
+\begin{axis}[note, width=0.58\linewidth, height=0.44\linewidth, xmin=0.10, xmax=0.30, ymin=0.15, ymax=1.0,
+  axis x line*=top, axis y line=none, grid=none,
+  xtick={0.10626,0.15939,0.21252,0.26565}, xticklabels={20,30,40,50},
+  xlabel={$M\ [M_\odot]$($\mu=0.71\times10^{-12}\,\mathrm{eV}$)}, xlabel style={font=\scriptsize, color=ink2}]
+\end{axis}
+\end{tikzpicture}
+
+\vspace{2mm}
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1, horizontal sep=17mm}, width=0.46\linewidth, height=0.40\linewidth, note,
+  xmode=log, xmin=1e-2, xmax=1e3, xlabel={時間 [年]}]
+\nextgroupplot[ymin=0.72, ymax=0.91, ylabel={BH のスピン $\chi$},
+  title={\small (b) $\alpha=0.22$、$\chi_0=0.9$ のスピン},
+  legend style={font=\scriptsize, at={(0.02,0.03)}, anchor=south west, fill=white, fill opacity=0.85, text opacity=1, draw=none},
+  legend cell align=left]
+  \addplot[cB, line width=1.0pt] table[x=t, y=chi5c] {figs/data/e15_ode5_chi.dat}; \addlegendentry{五準位、$C_\mathrm{BH}$ 込み}
+  \addplot[cB, line width=1.0pt, dashed] table[x=t, y=chi3c] {figs/data/e15_ode5_chi.dat}; \addlegendentry{三準位、$C_\mathrm{BH}$ 込み}
+  \addplot[cA, line width=1.0pt] table[x=t, y=chi5n] {figs/data/e15_ode5_chi.dat}; \addlegendentry{五準位、主要項}
+  \addplot[only marks, mark=o, mark size=1.4pt, cA, each nth point=4] table[x=t, y=chisr] {figs/data/e15_ode5_chi.dat}; \addlegendentry{$\chi_\mathrm{SR}$(三準位、主要項)}
+  \draw[ink2, densely dotted] (axis cs:1e-2,0.7341) -- (axis cs:1e3,0.7341);
+  \node[font=\scriptsize, color=ink2, anchor=south east] at (axis cs:8e2,0.7341) {211 の臨界};
+\nextgroupplot[ymin=-12, ymax=-4, ylabel={$\log_{10}\varepsilon$},
+  title={\small (c) 五準位、$C_\mathrm{BH}$ 込みの占有数},
+  legend style={font=\scriptsize, at={(0.02,0.03)}, anchor=south west, fill=white, fill opacity=0.85, text opacity=1, draw=none},
+  legend columns=3, legend cell align=left]
+  \addplot[cA, line width=1.0pt] table[x=t, y=e211] {figs/data/e15_ode5_eps.dat}; \addlegendentry{211}
+  \addplot[cC, line width=1.0pt] table[x=t, y=e322] {figs/data/e15_ode5_eps.dat}; \addlegendentry{322}
+  \addplot[cB, line width=1.0pt] table[x=t, y=e411] {figs/data/e15_ode5_eps.dat}; \addlegendentry{411}
+  \addplot[cD, line width=1.0pt] table[x=t, y=e433] {figs/data/e15_ode5_eps.dat}; \addlegendentry{433}
+  \addplot[cM, line width=1.0pt] table[x=t, y=e544] {figs/data/e15_ode5_eps.dat}; \addlegendentry{544}
+\end{groupplot}
+\end{tikzpicture}
