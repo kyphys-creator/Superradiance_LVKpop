@@ -235,7 +235,50 @@ $\varepsilon_2$ は、$322\times322\to211\times\infty$ による $|211\rangle$ �
 \end{caution}
 
 \begin{numcheck}
-GW241011 の主星($\mu=0.71\times10^{-12}\eV$、$\chi_0=0.78$、$\chi_c^{(211)}=0.399$、$\chi_c^{(322)}=0.206$)で、$f=10^{16}\GeV$ では $10^9$ 年後のスピンは 0.220。運動論の ODE は 0.219 である。$f\le10^{13}\GeV$ では $10^{10}$ 年たっても 211 の臨界より下に行かない(研究ノート E12)。
+GW241011 の主星($\mu=0.71\times10^{-12}\eV$、$\chi_0=0.78$、$\chi_c^{(211)}=0.399$、$\chi_c^{(322)}=0.206$)で、$f=10^{16}\GeV$ では $10^9$ 年後のスピンは 0.220。二準位の運動論の ODE は 0.219 である(研究ノート E12)。ただし次の小節のとおり、544 を入れると降下はずっと遅くなる。
+\end{numcheck}
+
+\subsection{544 を入れる: 211 の臨界より下と、322 から育つ BH}\label{sec:three_level}
+
+211 の臨界より下で $|322\rangle$ が占有されると、$322\times322\to544\times\mathrm{BH}$ が $|544\rangle$ を育てる。これは $211\times211\to322\times\mathrm{BH}$ と同じ形の過程で、$|322\rangle$ にとっての「吸い込み」になる。BGLS の Table V・VI から、$|544\rangle$ が関わる主な過程を加える($\varepsilon_3\equiv\varepsilon_{544}$)。
+\begin{center}\small
+\begin{tabular}{llc}
+\toprule
+ & 過程 & 率 $/\mu$ \\
+\midrule
+$c$ & $322\times322\to544\times\mathrm{BH}$ & $1.9\times10^{-9}\alpha^{11}(\Mpl/f)^4\tilde r_+$ \\
+$d$ & $544\times544\to322\times\infty$ & $4.4\times10^{-11}\alpha^{8}(\Mpl/f)^4$ \\
+$e$ & $322\times544\to211\times\infty$ & $6.1\times10^{-11}\alpha^{8}(\Mpl/f)^4$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{手順 1: $|211\rangle$ が空の固定点}
+$\varepsilon_1=0$ とすると、$|322\rangle$ と $|544\rangle$ の式は
+\begin{equation}
+\dot\varepsilon_2=\gamma_2\varepsilon_2-2c\varepsilon_2^2\varepsilon_3+d\varepsilon_2\varepsilon_3^2,\qquad
+\dot\varepsilon_3=c\varepsilon_2^2\varepsilon_3-2d\varepsilon_2\varepsilon_3^2
+\end{equation}
+($|544\rangle$ の超放射は $\alpha^{20}$ で小さいので落とした)。これは \S\ref{sec:equilibrium} の 211--322 の式で $\gamma_1\to\gamma_2$、$\gamma_\mathrm{BH}\to c$、$\gamma_\infty\to d$ と置き換えたものと同じ形なので、同じ手順で
+\begin{equation}
+\varepsilon_2=\frac{2}{\sqrt3}\frac{\sqrt{\gamma_2d}}{c},\qquad \varepsilon_3=\frac{c}{2d}\varepsilon_2,\qquad
+\dot\chi=-2\gamma_2\varepsilon_2=-\frac{4}{\sqrt3}\frac{\gamma_2^{3/2}\sqrt d}{c}.
+\end{equation}
+係数 2 は $|322\rangle$ の 1 粒子が $m=2$ を持ち去るためである。$c,d\propto(\Mpl/f)^4$ なので、やはり $\dot\chi\propto\mu(f/\Mpl)^2$。
+
+\paragraph{手順 2: どちらの固定点が選ばれるか}
+空の準位の方向の増加率を調べる。
+\begin{itemize}
+\item \textbf{(211, 322) の固定点で $|544\rangle$ の方向}: 増加率は $c\varepsilon_2^2-e\varepsilon_1\varepsilon_2$。211 の臨界より上では $\varepsilon_1\gg\varepsilon_2$ なので $e$ の項が勝ち、$|544\rangle$ は育たない。臨界より下では $\varepsilon_1$ が小さくなり(\S\ref{sec:below211} の手順 4)、$|544\rangle$ が育つ。
+\item \textbf{(322, 544) の固定点で $|211\rangle$ の方向}: 増加率は $\gamma_1+b\varepsilon_2^2+\dots$。臨界から十分下で $|\gamma_1|$ が大きくなると負になり、$|211\rangle$ は空のままである。
+\end{itemize}
+したがって 211 の臨界より上では (211, 322)、下では (322, 544) の固定点で回転を失う。あいだの幅 $10^{-3}$ ほどではどちらも安定でないが、降下の時間への寄与は 0.2\% 以下である(研究ノート E14)。
+
+\paragraph{手順 3: 322 から育つ BH}
+生まれたスピンが $\chi_c^{(322)}<\chi_0\le\chi_c^{(211)}$ の BH では、$|211\rangle$ は最初から吸収され、$|322\rangle$ が 1 個の量子から育つ。育つと $|544\rangle$ が育ち、手順 1 の固定点に入る。211 から育つ BH の臨界より下と同じ式で回転を失うので、同じ表で計算できる。
+
+\begin{numcheck}
+GW241011 の主星($f=10^{16}\GeV$、$10^9$ 年)は、544 を入れると 0.341(二準位では 0.220)。三準位の ODE も 0.341。322 の臨界 + 0.01 まで下がる時間は、二準位より 15 倍(GW241011 の主星)から 51 倍($45\Msun$)長い。322 から育つ $45\Msun$($\chi_0=0.7$、$\chi_c^{(322)}=0.451$)は、$f=10^{14}\GeV$ で $10^{10}$ 年後に 0.470(ODE 0.469)(研究ノート E14)。
 \end{numcheck}
 
 \subsection{いつ準平衡が成り立つか}
@@ -252,10 +295,10 @@ GW241011 の主星($\mu=0.71\times10^{-12}\eV$、$\chi_0=0.78$、$\chi_c^{(211)}
 \item 取り出した角運動量はすべて $m=3$ の波で外へ出る。エネルギーは 2/3 が BH に戻る。
 \item 回転を失う速さ $\dot\chi=\mu(f/\Mpl)^2H(\alpha,\chi)\propto f^2$。主要項では $x(t)=(x_0^{-1/2}+Kt/2)^{-2}$。
 \item 年齢の比は $f$ によらず、$f$ の上限は $f_\mathrm{max}=f_\mathrm{ref}\sqrt{t_\mathrm{ref}/T}$、スピンは $(\alpha,\chi_0,\tau)$ で決まる。
-\item $\gamma_{322}$ を残すと、211 の臨界より下でも $\dot\chi\simeq-\tfrac32\gamma_{322}\sqrt{|\gamma_{211}|/\gamma_\infty}\propto f^2$ で 322 の臨界まで下がる。
+\item 211 の臨界より下では、544 が $|322\rangle$ の吸い込みになり、211 が空の (322, 544) の固定点で $\dot\chi=-2\gamma_{322}\varepsilon_{322}\propto f^2$ で 322 の臨界まで下がる。322 から育つ BH も同じ固定点に入る。
 \end{itemize}
 \end{summary}
 
 \begin{tocode}
-コード: \texttt{si.eps\_eq} が式 \eqref{eq:eq_occ}、\texttt{si.chidot} が式 \eqref{eq:chidot}(\texttt{MASS\_CORR} で質量の補正)、\texttt{si.t\_spindown} が時間の積分、\texttt{chisr.H} が式 \eqref{eq:fp_quad}・\eqref{eq:chidot_fp} の固定点(\S\ref{sec:below211})、\texttt{chisr.chi\_after} が $I$ の表。
+コード: \texttt{si.eps\_eq} が式 \eqref{eq:eq_occ}、\texttt{si.chidot} が式 \eqref{eq:chidot}(\texttt{MASS\_CORR} で質量の補正)、\texttt{si.t\_spindown} が時間の積分、\texttt{chisr.H} が三準位の安定な固定点(\S\ref{sec:below211}、\S\ref{sec:three_level})、\texttt{fp3.py} が三準位の式と照合用の ODE、\texttt{chisr.chi\_after} が $I$ の表。
 \end{tocode}

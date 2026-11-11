@@ -10,6 +10,9 @@ g322 -> 0 で E3 の式(BGLS 式 55)に戻る。E12 で 322 の超放射を入�
 で、gamma_BH によらない。どちらの側でも dchi/dt = mu (f/M_pl)^2 H(alpha, chi) で、f と mu は前の因子にしか入らないので、
   I(alpha, chi) = int_chi^{CHI_TOP} dchi' / |H(alpha, chi')|
 を一度表にすれば、年齢 T のあとのスピンは I(alpha, chi_T) = I(alpha, chi_0) + tau(tau = mu (f/M_pl)^2 T)を解くだけで決まる。
+E14 で 544 を加えた三準位(211・322・544、fp3.py)にした。211 の臨界より下では (211, 322) の固定点は 544 が育つので
+不安定で、安定なのは 211 が空の (322, 544) の固定点(e322 = (2/sqrt3) sqrt(g322 d)/c、dchi/dt = -2 g322 e322)。
+降下は E12 の二準位より 15--50 倍遅い。211 から先に育たず 322 から育つ BH も、同じ固定点で降下する。
 表は alpha と w の格子で ln I を持つ。w は 322 の臨界(w = 0)、211 の臨界(w = 1)、CHI_TOP(w = 2)を結ぶ区分的な座標。
 211 の臨界のすぐ上と下(幅 1e-8 ほど)に、回転を失う速さが最も遅い「ボトルネック」があるので、w は両側に対数で詰める。
 """
@@ -18,15 +21,16 @@ from scipy.integrate import cumulative_trapezoid
 from scipy.interpolate import RegularGridInterpolator
 from scipy.optimize import brentq
 
+import fp3
 import si
 import sr
 
 CHI_TOP = 0.995                       # E4 の表の上端
 ALPHAS = np.geomspace(0.01, 0.30, 161)
-ALPHA_2LEVEL = 0.15                   # これより上の準平衡は印 4(433・411 が育つ: WM 2412.03655、BGLS IV C)
+ALPHA_2LEVEL = 0.15                   # これより上の固定点は印 4(433・411 が育つ: WM 2412.03655、BGLS IV C)
 ALPHA_MAX = 0.5                       # これより上は印 3(211 は超放射できず、m >= 3 が効く)
 F_FP_MAX = 1e17                       # 自由場の側で、211 の飽和のあと固定点の降下を使う f の上限 [GeV](E12)
-KAPPA_BH_544 = 1.9e-9                 # BGLS Table V: Gamma^{544 x BH}_{322 x 322} / (alpha^11 (M_pl/f)^4 r+ mu)
+KAPPA_BH_544 = fp3.K_C               # BGLS Table V: Gamma^{544 x BH}_{322 x 322} / (alpha^11 (M_pl/f)^4 r+ mu)
 
 _E = np.geomspace(1e-13, 1e-2, 110, endpoint=False)
 W_LO = np.concatenate([_E, np.linspace(1e-2, 1 - 1e-2, 300, endpoint=False), 1 - _E[::-1]])   # (0, 1): 322 の臨界から 211 の臨界
@@ -49,22 +53,44 @@ def g_vec(alpha, chi, n, l, m):
 
 
 def H(alpha, chi, cbh=False, mass_corr=False):
-    """dchi/dt / (mu (f/M_pl)^2)(負、配列で渡せる)。二準位の固定点で、322 の超放射を含む(E12)。"""
+    """dchi/dt / (mu (f/M_pl)^2)(負、配列で渡せる)。三準位(211・322・544)の安定な固定点(E14、fp3.py)。
+    P3 = (211, 322)(E12): 211 の臨界より上、または 544 の方向に安定なとき。
+    P2 = (322, 544): 211 の臨界より下で、211 の方向に安定なとき。
+    どちらも安定でない幅(211 の臨界の下 1e-3 ほど)では遅いほう(降下の時間への寄与は 0.2% 以下)。
+    544 の超放射は alpha^20 で小さいので、固定点の式では落とす(速さには入れる)。
+    """
     alpha, chi = np.broadcast_arrays(np.asarray(alpha, float), np.asarray(chi, float))
     g1 = g_vec(alpha, chi, 2, 1, 1)
     g2 = g_vec(alpha, chi, 3, 2, 2)
+    g3 = np.array(sr.gamma_over_mu(alpha, chi, 5, 4, 4, sr.NORM_N), float)
     c = np.interp(alpha, si.CBH_ALPHA, si.CBH_VALUE) if cbh else 1.0
-    kb = si.KAPPA_BH * alpha ** 11 * sr.rplus(chi) * c         # gamma_BH / (mu (M_pl/f)^4)
-    ki = si.KAPPA_INF * alpha ** 8                              # gamma_inf / (mu (M_pl/f)^4)
-    B = 2 * g2 - 4 * ki * g1 / kb
-    D = np.sqrt(B * B + 12 * g2 * g2)
+    rp = sr.rplus(chi)
+    ka = si.KAPPA_BH * alpha ** 11 * rp * c                     # 211 x 211 -> 322 x BH
+    kb = si.KAPPA_INF * alpha ** 8                              # 322 x 322 -> 211 x inf
+    kc = fp3.K_C * alpha ** 11 * rp                             # 322 x 322 -> 544 x BH
+    kd = fp3.K_D * alpha ** 8                                   # 544 x 544 -> 322 x inf
+    ke = fp3.K_E * alpha ** 8                                   # 322 x 544 -> 211 x inf
+    kf = fp3.K_F * alpha ** 8                                   # 544 x 544 -> 211 x inf
     with np.errstate(divide="ignore", invalid="ignore"):
-        u = np.where(B > 0, 2 * g2 * g2 / (B + D), (D - B) / 6)   # 桁落ちしない形の正の根
-        e1 = np.sqrt(u / kb)                                      # eps211 / (f/M_pl)^2
-        h = -3 * (g2 + u) ** 2 / (4 * ki * e1)
-    h = np.where((g2 > 0) & (u > 0), h, 0.0)
-    if mass_corr:
-        h = h * (1 - 2 * chi * alpha / 3)
+        # P3
+        B = 2 * g2 - 4 * kb * g1 / ka
+        D = np.sqrt(B * B + 12 * g2 * g2)
+        u = np.where(B > 0, 2 * g2 * g2 / (B + D), (D - B) / 6)
+        e1 = np.sqrt(u / ka)
+        e2 = (u + g2) / (2 * kb * e1)
+        h3 = -(g1 * e1 + 2 * g2 * e2)
+        lam3 = g3 + kc * e2 ** 2 - ke * e1 * e2                 # 544 の方向
+        # P2
+        f2 = 2 / np.sqrt(3) * np.sqrt(np.maximum(g2, 0) * kd) / kc
+        f3 = kc * f2 / (2 * kd)
+        h2 = -(2 * g2 * f2 + 4 * g3 * f3)
+        lam1 = g1 + kb * f2 ** 2 + ke * f2 * f3 + kf * f3 ** 2  # 211 の方向
+    use3 = (g1 >= 0) | (lam3 < 0)
+    use2 = (~use3) & (lam1 < 0)
+    h = np.where(use3, h3, np.where(use2, h2, np.maximum(h2, h3)))
+    h = np.where((g2 > 0) & np.isfinite(h), h, 0.0)
+    if mass_corr:   # 放出 1 回あたり、P3 は m = 3 に対しエネルギー mu、P2 は m = 6 に対し mu を失う
+        h = h * np.where(use3, 1 - 2 * chi * alpha / 3, 1 - chi * alpha / 3)
     return h
 
 
@@ -232,12 +258,12 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
     """年齢 T のあとの BH のスピンと、どの領域で計算したかの印(配列で渡せる)。
 
     印: 0 = 超放射しない(chi0 が 211 と 322 の臨界以下。m >= 3 は入れていない)
-        1 = 自己相互作用の準平衡(二準位の固定点、alpha <= 0.15)。322 の臨界まで下がりうる
-        2 = 自由場(211 が飽和して臨界へ。そのあと f <= 1e17 GeV は固定点の降下、それより上は 322 を 1 個の量子から)
-            または 322 から先に育つ BH で、自己相互作用が飽和までに効かない場合
-        3 = この模型の外。chi0 を返す: 322 から先に育ち(chi_c322 < chi0 <= chi_c211)自己相互作用が効く BH、
-            準平衡で alpha が表の外(alpha < 0.01 または > 0.30)、alpha > 0.5
-        4 = 準平衡だが 0.15 < alpha <= 0.30。433・411 などが育つので二準位の近似は粗い。値は計算して返す
+        1 = 自己相互作用の固定点(三準位 211・322・544、alpha <= 0.15)。211 から育つ BH も 322 から育つ BH も、
+            322 の臨界まで下がりうる
+        2 = 自由場(211 が飽和して臨界へ。そのあと f <= 1e17 GeV は固定点の降下、それより上は 322 を 1 個の量子から)、
+            または 322 から育つ BH で自己相互作用が飽和までに効かず、322 が飽和して 322 の臨界へ
+        3 = この模型の外。chi0 を返す: 固定点で alpha が表の外(alpha < 0.01 または > 0.30)、alpha > 0.5
+        4 = 固定点だが 0.15 < alpha <= 0.30。433・411 などが育つので近似は粗い。値は計算して返す
     領域の判定(BGLS の B|C の境界、式 53・56): 準平衡の占有数 eps_eq と行き過ぎの占有数 eps_th が、
     どちらも自由場で飽和する量 eps_max = chi0 - chi_c より小さければ準平衡。
     準平衡では、1 個の量子から eps_eq まで育つ時間 t_grow を年齢から引き、行き過ぎで失う eps_th を初期スピンから引く。
@@ -282,23 +308,39 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
         out[fr] = _free_branch(tab, M[fr], chi0[fr], a[fr], mu_eV[fr], mu_s[fr], T[fr], f_gev[fr], g1[fr])
         reg[fr] = 2
 
-    # ---- 211 は超放射しないが 322 はする BH(chi_c322 < chi0 <= chi_c211) ----
-    # 322 が 1 個の量子から自由に飽和するのは、自己相互作用の二つの吸い込みが、飽和の量 eps_max' = (chi0 - chi_c322)/2
-    # に届くまで効かないとき: 322 x 322 -> 544 x BH の行き過ぎ eps_th' = sqrt(2 g322 ln GM^2 / g_BH') と、
-    # 吸収される 211 が 322 x 322 -> 211 x inf で補充され始める占有数 sqrt(|g211| / g_inf)(E12)。
+    # ---- 211 は超放射しないが 322 はする BH(chi_c322 < chi0 <= chi_c211)、E14 ----
+    # 322 が 1 個の量子から育ち、322 x 322 -> 544 x BH と 544 x 544 -> 322 x inf の (322, 544) の固定点に入る(211 は空のまま)。
+    # 判定は 211 の場合と同じ形: 固定点の占有数 eps_eq' = (2/sqrt3) sqrt(g322 g_d)/g_c と行き過ぎ eps_th' = sqrt(2 g322 ln GM^2/g_c)
+    # が、どちらも飽和の量 eps_max' = (chi0 - chi_c322)/2 より小さければ固定点。そのときは育つ時間を年齢から引き、
+    # 行き過ぎで失う 2 eps_th' を初期スピンから引いて、同じ表で降下させる。そうでなければ自由場(322 が飽和して 322 の臨界へ)。
     only322 = (~sr211) & (chi0 > c2) & ~big
     if only322.any():
         i3 = np.flatnonzero(only322)
-        c0 = np.minimum(chi0[i3], 0.995)
-        g2 = g_vec(a[i3], c0, 3, 2, 2) * mu_s[i3]
-        g1d = np.abs(g_vec(a[i3], c0, 2, 1, 1)) * mu_s[i3]
-        gbh2 = KAPPA_BH_544 * a[i3] ** 11 * (si.MPL_GEV / f_gev[i3]) ** 4 * sr.rplus(c0) * mu_s[i3]
-        emax2 = (chi0[i3] - c2[i3]) / 2
+        a3, x0, T3, f3, m3 = a[i3], chi0[i3], T[i3], f_gev[i3], mu_s[i3]
+        c0 = np.minimum(x0, 0.995)
+        g2 = g_vec(a3, c0, 3, 2, 2) * m3
+        s4 = (si.MPL_GEV / f3) ** 4 * m3
+        gc = fp3.K_C * a3 ** 11 * sr.rplus(c0) * s4
+        gd = fp3.K_D * a3 ** 8 * s4
+        emax2 = (x0 - c2[i3]) / 2
         with np.errstate(divide="ignore", invalid="ignore"):
-            eth2 = np.sqrt(2 * g2 * lnGM2[i3] / gbh2)
-            epump = np.sqrt(g1d / ginf[i3])
+            eeq2 = 2 / np.sqrt(3) * np.sqrt(np.maximum(g2, 0) * gd) / gc
+            eth2 = np.sqrt(2 * np.maximum(g2, 0) * lnGM2[i3] / gc)
+            tgrow2 = (np.log(np.maximum(eeq2, 1e-300)) + lnGM2[i3]) / g2
             tsat2 = (np.log(np.maximum(emax2, 1e-300)) + lnGM2[i3]) / g2
-        free2 = (g2 > 0) & (eth2 >= emax2) & (epump >= emax2)
-        out[i3] = np.where(free2 & (T[i3] >= tsat2), c2[i3], chi0[i3])
-        reg[i3] = np.where(free2, 2, 3)
+        fpq = (g2 > 0) & (eeq2 < emax2) & (eth2 < emax2)
+        ok = fpq & (a3 >= ALPHAS[0]) & (a3 <= ALPHAS[-1])
+        res = x0.copy()
+        rg = np.where(g2 > 0, 3, 0)
+        if ok.any():
+            Teff = np.maximum(T3[ok] - tgrow2[ok], 0.0)
+            tau = m3[ok] * (f3[ok] / si.MPL_GEV) ** 2 * Teff
+            c0eff = np.maximum(x0[ok] - 2 * eth2[ok], c2[i3][ok] + 1e-12)
+            res[ok] = np.where(Teff > 0, chi_after(tab, a3[ok], c0eff, tau), x0[ok])
+            rg[ok] = np.where(a3[ok] > ALPHA_2LEVEL, 4, 1)
+        free = (g2 > 0) & ~fpq
+        res[free] = np.where(T3[free] >= tsat2[free], c2[i3][free], x0[free])
+        rg[free] = 2
+        out[i3] = res
+        reg[i3] = rg
     return out.reshape(shape), reg.reshape(shape)

@@ -1,0 +1,76 @@
+% エントリ 14(2026-11-10): 211・322・544 の三準位
+\section{[E14, 2026-11-10] 211・322・544 の三準位: 322 から育つ BH と、211 の臨界より下への降下}\label{sec:e14}
+
+E12 で残った最大の穴は、211 が超放射せず 322 から育つ BH($\chi_c^{(322)}<\chi_0\le\chi_c^{(211)}$、1 世代目の 1--2 割)だった(ユーザー指示「322 の運動論」)。BGLS は、322 が最初に育つなら次に育つのは 544 だと述べている(Sec.~II の終わり)。そこで 544 を加えた三準位の運動論を作った。その結果、E12 の「211 の臨界より下への降下」も直す必要があるとわかった。計算は \texttt{calc/fp3.py}(固定点と照合用の ODE)、\texttt{calc/e14\_three\_level.py}、出力は \texttt{calc/out/e14.json}。$\chi_\mathrm{SR}$ の関数(\texttt{calc/chisr.py}、単体版 \texttt{share/chi\_sr/})も直した。
+
+\subsection{三準位の式}
+
+率は BGLS の Table V・VI(占有数の率 $/\mu$、$(\Mpl/f)^4$ を掛ける。BH が吸収する過程には $\tilde r_+$ も掛ける)。
+\begin{center}\small
+\begin{tabular}{llc}
+\toprule
+ & 過程 & 率 \\
+\midrule
+$a$ & $211\times211\to322\times\mathrm{BH}$ & $4.3\times10^{-7}\alpha^{11}$ \\
+$b$ & $322\times322\to211\times\infty$ & $1.1\times10^{-8}\alpha^8$ \\
+$c$ & $322\times322\to544\times\mathrm{BH}$ & $1.9\times10^{-9}\alpha^{11}$ \\
+$d$ & $544\times544\to322\times\infty$ & $4.4\times10^{-11}\alpha^8$ \\
+$e$ & $322\times544\to211\times\infty$ & $6.1\times10^{-11}\alpha^8$ \\
+$f$ & $544\times544\to211\times\infty$ & $4.2\times10^{-13}\alpha^8$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{align}
+\dot\varepsilon_1&=\gamma_1\varepsilon_1-2a\varepsilon_1^2\varepsilon_2+b\varepsilon_1\varepsilon_2^2+e\varepsilon_1\varepsilon_2\varepsilon_3+f\varepsilon_1\varepsilon_3^2,\\
+\dot\varepsilon_2&=\gamma_2\varepsilon_2+a\varepsilon_1^2\varepsilon_2-2b\varepsilon_1\varepsilon_2^2-2c\varepsilon_2^2\varepsilon_3+d\varepsilon_2\varepsilon_3^2-e\varepsilon_1\varepsilon_2\varepsilon_3,\\
+\dot\varepsilon_3&=\gamma_3\varepsilon_3+c\varepsilon_2^2\varepsilon_3-2d\varepsilon_2\varepsilon_3^2-e\varepsilon_1\varepsilon_2\varepsilon_3-2f\varepsilon_1\varepsilon_3^2,\\
+\dot\chi&=-(\gamma_1\varepsilon_1+2\gamma_2\varepsilon_2+4\gamma_3\varepsilon_3)
+=-(3b\varepsilon_1\varepsilon_2^2+6d\varepsilon_2\varepsilon_3^2+5e\varepsilon_1\varepsilon_2\varepsilon_3+7f\varepsilon_1\varepsilon_3^2)\quad(\text{固定点}).
+\end{align}
+添え字 1・2・3 は 211・322・544。最後の形は、放出 1 回あたり外へ出る角運動量 $m=3$、6、5、7 の和である。自己相互作用の率はどれも $(\Mpl/f)^4$ に比例するので、固定点の占有数は $(f/\Mpl)^2$ に比例し、$\dot\chi=\mu(f/\Mpl)^2H(\alpha,\chi)$ の形は変わらない。E10 の表の方法がそのまま使える。
+
+\subsection{固定点の構造}
+
+固定点には三つの型がある。空の準位の方向にも安定かどうかを調べた。
+\begin{itemize}
+\item \textbf{P3 = (211, 322)}(E12 の固定点): 211 の臨界より上ではこれが唯一の安定な固定点で、$e$ の過程が 544 を抑える。$H$ は E12 と同じ。
+\item \textbf{P2 = (322, 544)}($\varepsilon_1=0$): $\varepsilon_2=(2/\sqrt3)\sqrt{\gamma_2d}/c$、$\varepsilon_3=c\varepsilon_2/(2d)$、$\dot\chi=-2\gamma_2\varepsilon_2$。211--322 の組と同じ形である。211 の臨界より下では、P3 は 544 が育つので不安定になり、P2 が安定になる。
+\item \textbf{どちらも安定でない幅}: 211 の臨界のすぐ下に、P3 が安定な幅($\lesssim4\times10^{-7}$)と P2 が安定になるまでの幅($\lesssim10^{-3}$)があり、そのあいだでは系は固定点に落ち着かない(振動しうる)。$H$ には遅いほうを使った。速いほうを使っても、降下の時間は 0.2\% 以下しか変わらない。
+\end{itemize}
+
+\begin{result}
+\begin{itemize}
+\item \textbf{E12 の訂正 1 の訂正}: 211 の臨界より下の降下は P3 ではなく P2 で起き、322 の臨界 + 0.01 まで下がる時間は E12 の二準位より 15 倍(GW241011 の主星、$\alpha=0.104$)、21 倍($25\Msun$)、28 倍($30\Msun$)、51 倍($45\Msun$)長い。たとえば GW241011 の主星($f=10^{16}\GeV$、$10^9\yr$)は、E12 の 0.220 ではなく 0.341(三準位の ODE 0.341)。
+\item \textbf{322 から育つ BH}: 322 が 1 個の量子から育ち、211 は空のまま P2 に入る(ODE で $\varepsilon_{211}$ は 1 個の量子の水準にとどまる)。降下は 211 から育つ BH の臨界より下と同じ P2 の表で計算できる。
+\item \textbf{三準位の ODE との一致}(1 個の量子から、各過程に自発的な放出を入れ、BH の質量は固定): 固定点の領域(印 1・4)の 41 点で、差は最大 0.0008。211 から育つ BH(GW241011 の主星、$25$、$30\Msun$)も、322 から育つ BH($45\Msun$・$\chi_0=0.7$、$20\Msun$・0.3、$30\Msun$・0.5、$15\Msun$・0.25、$f=10^{13}$--$10^{16}\GeV$)も合う。322 から育つ BH では、322 が 1 個の量子から育つ時間($20\Msun$・$\chi_0=0.3$ で約 $4\times10^8\yr$)を年齢から引くことが要る。
+\item \textbf{窓の数値は変わらない}(GW241011 の主星、$5\times10^7\yr$、$f=10^{12}\GeV$ で 0.7508)。
+\end{itemize}
+\end{result}
+
+\begin{figure}[H]
+\centering
+\input{figs/e14_scan}
+\caption{三準位の $\chi_\mathrm{SR}$ の $f$ 依存($\mu=0.71\times10^{-12}\eV$)。破線は E12 の二準位(GW241011 の主星)、丸は三準位の ODE。$45\Msun$ と $20\Msun$ は 322 から育つ BH で、E12 までは模型の外だった。灰色の $f>10^{17}\GeV$ は、関数がまだ ODE と合っていない。}
+\label{fig:e14}
+\end{figure}
+
+\subsection{322 から育つ BH の判定}
+
+211 から育つ BH と同じ形の判定にした(BGLS の B|C の境界を 322--544 に移したもの)。固定点の占有数 $\varepsilon'_\mathrm{eq}=(2/\sqrt3)\sqrt{\gamma_2d}/c$ と行き過ぎ $\varepsilon'_\mathrm{th}=\sqrt{2\gamma_2\ln(GM^2)/c}$ が、どちらも飽和の量 $\varepsilon'_\mathrm{max}=(\chi_0-\chi_c^{(322)})/2$ より小さければ固定点とする。そのときは育つ時間を年齢から引き、行き過ぎで失う $2\varepsilon'_\mathrm{th}$ を初期スピンから引いて、表で降下させる。そうでなければ自由場(322 が飽和して 322 の臨界へ)とする。$45\Msun$($\chi_0=0.7$)でも $20\Msun$(0.3)でも、自由場になるのは $f\approx1.7\times10^{17}\GeV$ から(E12 の二つの判定の見積もり $(1$--$3)\times10^{17}$ と合う)。
+
+\begin{result}
+Beta(0.69, 2.28) の 1 世代目($8$--$50\Msun$ で一様、6 Gyr)では、$f\le10^{16}\GeV$ で印 3(模型の外)の標本はなくなった(E12 では 19\%)。$f=10^{12}$--$10^{14}\GeV$ では、印 0(超放射しない)66\%、印 1 が 23\%、印 4($\alpha>0.15$)が 11\%。$10^6$ 個の標本で 0.54 秒。
+\end{result}
+
+\subsection{$f>10^{17}\GeV$}
+
+三準位の ODE は、変数の切り詰めを入れると $f>10^{17}\GeV$ でも解けるようになった。GW241011 の主星で 322 の段階が終わる時刻は、$f=10^{18}$、$3\times10^{18}$、$10^{19}$、$10^{20}\GeV$ で $2.8\times10^7$、$3.2\times10^7$、$2.0\times10^8$、$2.4\times10^8\yr$。$f\gtrsim10^{19}\GeV$ で自由場に戻る($10^{20}\GeV$ の値は、BH の質量の減少を除けば、322 を 1 個の量子から数える見積もり $2.3\times10^8\yr$ と合う)。いまの関数は $f>10^{17}\GeV$ で 322 を 1 個の量子から数えるので、$10^{17}$--$5\times10^{18}\GeV$ では 322 の段階を遅く見積もり、$T\approx3\times10^7$--$4\times10^8\yr$ でスピンを最大 0.19 高く返す。$3\times10^{16}$--$10^{17}\GeV$ の自由場の側(印 2)では、ODE との差は最大 0.048。
+
+\begin{caveat}
+\begin{itemize}
+\item \textbf{$f>10^{17}\GeV$}: 上のとおり合っていない。$f$ を次元に加えて三準位の ODE を表にする必要がある(自己相互作用の率が $f$ の前の因子に出ない領域なので、表の方法は使えない)。
+\item \textbf{入れていない準位}: 433($211\times322\to433\times\mathrm{BH}$、$9.1\times10^{-8}\alpha^{11}$)は $\alpha\gtrsim0.15$ で育つ(印 4)。655、988 など 544 の先の準位、$100$・$21{-}1$ のように強く減衰する準位も入れていない(減衰が強いので占有されない)。
+\item \textbf{重力波の過程}: 211 の消滅と $322\to211$ の遷移は、固定点にも ODE にも入れていない。E5 の二準位の ODE には入れていた。
+\item \textbf{自己相互作用の率}: 主要項。$C_\mathrm{BH}$ は $a$ にだけ掛けられるようにした($c$ の補正は不明)。
+\end{itemize}
+\end{caveat}

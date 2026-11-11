@@ -7,14 +7,16 @@
 
 regime(印):
     0 = 超放射しない(chi0 が 211 と 322 の臨界以下。m >= 3 は入れていない)
-    1 = 自己相互作用の準平衡(211・322 の二準位の固定点、alpha <= 0.15)。322 の臨界まで下がりうる
+    1 = 自己相互作用の固定点(211・322・544 の三準位、alpha <= 0.15)。211 から育つ BH も 322 から育つ BH も、
+        322 の臨界まで下がりうる
     2 = 自由場(211 が 1 個の量子から飽和して臨界へ。そのあと f <= 1e17 GeV は固定点の降下、それより上は 322 を
-        1 個の量子から。BH の質量の減少を入れる)、または 322 から先に育つ BH で自己相互作用が飽和までに効かない場合
-    3 = この模型の外。chi0 を返す: 322 から先に育ち自己相互作用が効く BH、準平衡で alpha < 0.01 または > 0.30、alpha > 0.5
-    4 = 準平衡だが 0.15 < alpha <= 0.30(433・411 などが育つので二準位の近似は粗い)。値は計算して返す
+        1 個の量子から。BH の質量の減少を入れる)、または 322 から育つ BH で自己相互作用が飽和までに効かない場合
+    3 = この模型の外。chi0 を返す: 固定点で alpha < 0.01 または > 0.30、alpha > 0.5
+    4 = 固定点だが 0.15 < alpha <= 0.30(433・411 などが育つので近似は粗い)。値は計算して返す
 
 模型の要点(詳しくは README.md):
-  準平衡は Baryakhtar+ 2011.11646 の式 34--36 の右辺を 0 とおいた固定点で、322 の超放射も入れる。
+  固定点は Baryakhtar+ 2011.11646 の式 34--36 に 544 を加えた三準位(Table V・VI の率)。211 の臨界より上は (211, 322)、
+  下は 211 が空の (322, 544)。
   dchi/dt = mu (f/M_pl)^2 H(alpha, chi) なので、I(alpha, chi) = int_chi^0.995 dchi'/|H| を表にし、
   I(alpha, chi_T) = I(alpha, chi_0') + mu (f/M_pl)^2 (T - t_grow) を chi_T について解く。
   領域の判定: 準平衡の占有数 eps_eq と行き過ぎの占有数 eps_th が、どちらも自由場で飽和する量 chi0 - chi_c より小さければ準平衡。
@@ -32,7 +34,7 @@ class ChiSR:
     def __init__(self, path):
         z = np.load(path)
         self.z = z
-        for k in ["HBAR_EVS", "TSUN", "N0", "YR", "MPL_GEV", "KAPPA_BH", "KAPPA_INF", "KAPPA_BH_544", "CHI_TOP",
+        for k in ["HBAR_EVS", "TSUN", "N0", "YR", "MPL_GEV", "KAPPA_BH", "KAPPA_INF", "K_C", "K_D", "CHI_TOP",
                   "ALPHA_2LEVEL", "ALPHA_MAX", "F_FP_MAX"]:
             setattr(self, k, float(z[k]))
         self.ALPHAS = z["ALPHAS"]
@@ -216,16 +218,31 @@ class ChiSR:
         only322 = (~sr211) & (chi0 > c2) & ~big
         if only322.any():
             i3 = np.flatnonzero(only322)
-            c0 = np.minimum(chi0[i3], 0.995)
-            g2 = self.g(a[i3], c0, "322") * mu_s[i3]
-            g1d = np.abs(self.g(a[i3], c0, "211")) * mu_s[i3]
-            gbh2 = self.KAPPA_BH_544 * a[i3] ** 11 * (self.MPL_GEV / f_gev[i3]) ** 4 * self.rplus(c0) * mu_s[i3]
-            emax2 = (chi0[i3] - c2[i3]) / 2
+            a3, x0, T3, f3, m3 = a[i3], chi0[i3], T[i3], f_gev[i3], mu_s[i3]
+            c0 = np.minimum(x0, 0.995)
+            g2 = self.g(a3, c0, "322") * m3
+            s4 = (self.MPL_GEV / f3) ** 4 * m3
+            gc = self.K_C * a3 ** 11 * self.rplus(c0) * s4
+            gd = self.K_D * a3 ** 8 * s4
+            emax2 = (x0 - c2[i3]) / 2
             with np.errstate(divide="ignore", invalid="ignore"):
-                eth2 = np.sqrt(2 * g2 * lnGM2[i3] / gbh2)
-                epump = np.sqrt(g1d / ginf[i3])
+                eeq2 = 2 / np.sqrt(3) * np.sqrt(np.maximum(g2, 0) * gd) / gc
+                eth2 = np.sqrt(2 * np.maximum(g2, 0) * lnGM2[i3] / gc)
+                tgrow2 = (np.log(np.maximum(eeq2, 1e-300)) + lnGM2[i3]) / g2
                 tsat2 = (np.log(np.maximum(emax2, 1e-300)) + lnGM2[i3]) / g2
-            free2 = (g2 > 0) & (eth2 >= emax2) & (epump >= emax2)
-            out[i3] = np.where(free2 & (T[i3] >= tsat2), c2[i3], chi0[i3])
-            reg[i3] = np.where(free2, 2, 3)
+            fpq = (g2 > 0) & (eeq2 < emax2) & (eth2 < emax2)
+            ok = fpq & (a3 >= self.ALPHAS[0]) & (a3 <= self.ALPHAS[-1])
+            res = x0.copy()
+            rg = np.where(g2 > 0, 3, 0)
+            if ok.any():
+                Teff = np.maximum(T3[ok] - tgrow2[ok], 0.0)
+                tau = m3[ok] * (f3[ok] / self.MPL_GEV) ** 2 * Teff
+                c0eff = np.maximum(x0[ok] - 2 * eth2[ok], c2[i3][ok] + 1e-12)
+                res[ok] = np.where(Teff > 0, self._chi_after(a3[ok], c0eff, tau), x0[ok])
+                rg[ok] = np.where(a3[ok] > self.ALPHA_2LEVEL, 4, 1)
+            free = (g2 > 0) & ~fpq
+            res[free] = np.where(T3[free] >= tsat2[free], c2[i3][free], x0[free])
+            rg[free] = 2
+            out[i3] = res
+            reg[i3] = rg
         return out.reshape(shape), reg.reshape(shape)
