@@ -1,24 +1,19 @@
-"""集団解析用の速い chi_SR: 自己相互作用のある超放射で、年齢 T のあとの BH のスピン(研究ノート E10、E11、E12)。
+"""集団解析用の速い chi_SR: 自己相互作用のある超放射で、年齢 T のあとの BH のスピン(研究ノート E10--E16)。
 
-準平衡: BGLS(2011.11646)の式 34--36 の右辺を 0 とおいた二準位(211・322)の固定点。
-  u = gamma_BH eps211^2 は 3 u^2 + (2 g322 - 4 g_inf g211 / g_BH) u - g322^2 = 0 の正の根、
-  eps322 = (u + g322) / (2 g_inf eps211)、
-  dchi/dt = -g211 eps211 - 2 g322 eps322 = -3 g_inf eps211 eps322^2。
-g322 -> 0 で E3 の式(BGLS 式 55)に戻る。E12 で 322 の超放射を入れ、211 の臨界より下(211 は吸収される)でも
-322 x 322 -> 211 x inf が 211 を補充して、322 の臨界まで下がるようにした。211 の臨界より下では
-  dchi/dt ~ -(3/2) g322 sqrt(|g211| / g_inf)
-で、gamma_BH によらない。どちらの側でも dchi/dt = mu (f/M_pl)^2 H(alpha, chi) で、f と mu は前の因子にしか入らないので、
+固定点: BGLS(2011.11646)の式 34--36 に 544 を加えた三準位(211・322・544)の安定な固定点(fp3.fixed_points、E14)。
+  211 の臨界より上は (211, 322)、下は 211 が空の (322, 544)。211 から先に育たず 322 から育つ BH も同じ固定点で降下する。
+どちらの側でも dchi/dt = mu (f/M_pl)^2 H(alpha, chi) で、f と mu は前の因子にしか入らないので、
   I(alpha, chi) = int_chi^{CHI_TOP} dchi' / |H(alpha, chi')|
 を一度表にすれば、年齢 T のあとのスピンは I(alpha, chi_T) = I(alpha, chi_0) + tau(tau = mu (f/M_pl)^2 T)を解くだけで決まる。
-E14 で 544 を加えた三準位(211・322・544、fp3.py)にした。211 の臨界より下では (211, 322) の固定点は 544 が育つので
-不安定で、安定なのは 211 が空の (322, 544) の固定点(e322 = (2/sqrt3) sqrt(g322 d)/c、dchi/dt = -2 g322 e322)。
-降下は E12 の二準位より 15--50 倍遅い。211 から先に育たず 322 から育つ BH も、同じ固定点で降下する。
-表は alpha と w の格子で ln I を持つ。w は 322 の臨界(w = 0)、211 の臨界(w = 1)、CHI_TOP(w = 2)を結ぶ区分的な座標。
-211 の臨界のすぐ上と下(幅 1e-8 ほど)に、回転を失う速さが最も遅い「ボトルネック」があるので、w は両側に対数で詰める。
+表は alpha の節(ALPHAS)と w の格子で ln I を持つ。w は 322 の臨界(w = 0)、211 の臨界(w = 1)、CHI_TOP(w = 2)を
+結ぶ区分的な座標。211 の臨界のすぐ上と下(幅 1e-8 ほど)に回転を失う速さが最も遅い「ボトルネック」があるので、w は両側に
+対数で詰める。chi_after は両隣の alpha の節で I を足してそれぞれ厳密に逆に引き、w を alpha について線形に混ぜる
+(tau -> 0 で chi_T = chi_0 が厳密に成り立つ。E16)。
+臨界スピンは、相対論的な率(g_vec)が 0 になるスピンを細かい alpha の格子(THR_ALPHAS)で表にしたものを、どこでも使う
+(固定点の表、領域の判定、自由場の飽和。E16)。
 """
 import numpy as np
 from scipy.integrate import cumulative_trapezoid
-from scipy.interpolate import RegularGridInterpolator
 from scipy.optimize import brentq
 
 import fp3
@@ -27,10 +22,12 @@ import sr
 
 CHI_TOP = 0.995                       # E4 の表の上端
 ALPHAS = np.geomspace(0.01, 0.30, 161)
-ALPHA_2LEVEL = 0.15                   # E14 までの印 4 の境(E15 からは育つ準位の判定 flag_fp を使う。参照用に残す)
+# 臨界スピンの表(E16)。率は表と解析式の切り替わり(sr._REL_RANGE の端)で不連続なので、その両側に節を置く。
+_THR_EDGES = sorted({b for (n, l, m), r in sr._REL_RANGE.items() if (n, l, m) in ((2, 1, 1), (3, 2, 2)) for b in r})
+THR_ALPHAS = np.unique(np.concatenate([np.geomspace(0.003, 0.6, 2000)]
+                                      + [[b * (1 - 1e-12), b, b * (1 + 1e-12)] for b in _THR_EDGES]))
 ALPHA_MAX = 0.5                       # これより上は印 3(211 は超放射できず、m >= 3 が効く)
 F_FP_MAX = 1e17                       # 自由場の側で、211 の飽和のあと固定点の降下を使う f の上限 [GeV](E12)
-KAPPA_BH_544 = fp3.K_C               # BGLS Table V: Gamma^{544 x BH}_{322 x 322} / (alpha^11 (M_pl/f)^4 r+ mu)
 
 _E = np.geomspace(1e-13, 1e-2, 110, endpoint=False)
 W_LO = np.concatenate([_E, np.linspace(1e-2, 1 - 1e-2, 300, endpoint=False), 1 - _E[::-1]])   # (0, 1): 322 の臨界から 211 の臨界
@@ -39,7 +36,7 @@ W = np.concatenate([W_LO, W_HI])
 U = W                                 # 旧名(E10 の e10_gwonly.py が参照する)
 
 
-# ---------- 率 ----------
+# ---------- 率と固定点 ----------
 def g_vec(alpha, chi, n, l, m):
     """超放射の率 / mu(占有数の率)を配列で。連分数法の表の範囲は表、外は解析式(sr.gamma_rel_over_mu と同じ規則)。"""
     alpha, chi = np.broadcast_arrays(np.asarray(alpha, float), np.asarray(chi, float))
@@ -52,91 +49,79 @@ def g_vec(alpha, chi, n, l, m):
     return out
 
 
-def H(alpha, chi, cbh=False, mass_corr=False):
-    """dchi/dt / (mu (f/M_pl)^2)(負、配列で渡せる)。三準位(211・322・544)の安定な固定点(E14、fp3.py)。
-    P3 = (211, 322)(E12): 211 の臨界より上、または 544 の方向に安定なとき。
-    P2 = (322, 544): 211 の臨界より下で、211 の方向に安定なとき。
-    どちらも安定でない幅(211 の臨界の下 1e-3 ほど)では遅いほう(降下の時間への寄与は 0.2% 以下)。
-    544 の超放射は alpha^20 で小さいので、固定点の式では落とす(速さには入れる)。
-    """
-    alpha, chi = np.broadcast_arrays(np.asarray(alpha, float), np.asarray(chi, float))
+def _fixed(alpha, chi, c_a=1.0, c_c=1.0):
+    """三準位の率と固定点。c_a、c_c は 211x211 -> 322xBH と 322x322 -> 544xBH に掛ける有限 alpha の補正。"""
     g1 = g_vec(alpha, chi, 2, 1, 1)
     g2 = g_vec(alpha, chi, 3, 2, 2)
     g3 = np.array(sr.gamma_over_mu(alpha, chi, 5, 4, 4, sr.NORM_N), float)
-    c = np.interp(alpha, si.CBH_ALPHA, si.CBH_VALUE) if cbh else 1.0
     rp = sr.rplus(chi)
-    ka = si.KAPPA_BH * alpha ** 11 * rp * c                     # 211 x 211 -> 322 x BH
-    kb = si.KAPPA_INF * alpha ** 8                              # 322 x 322 -> 211 x inf
-    kc = fp3.K_C * alpha ** 11 * rp                             # 322 x 322 -> 544 x BH
-    kd = fp3.K_D * alpha ** 8                                   # 544 x 544 -> 322 x inf
-    ke = fp3.K_E * alpha ** 8                                   # 322 x 544 -> 211 x inf
-    kf = fp3.K_F * alpha ** 8                                   # 544 x 544 -> 211 x inf
-    with np.errstate(divide="ignore", invalid="ignore"):
-        # P3
-        B = 2 * g2 - 4 * kb * g1 / ka
-        D = np.sqrt(B * B + 12 * g2 * g2)
-        u = np.where(B > 0, 2 * g2 * g2 / (B + D), (D - B) / 6)
-        e1 = np.sqrt(u / ka)
-        e2 = (u + g2) / (2 * kb * e1)
-        h3 = -(g1 * e1 + 2 * g2 * e2)
-        lam3 = g3 + kc * e2 ** 2 - ke * e1 * e2                 # 544 の方向
-        # P2
-        f2 = 2 / np.sqrt(3) * np.sqrt(np.maximum(g2, 0) * kd) / kc
-        f3 = kc * f2 / (2 * kd)
-        h2 = -(2 * g2 * f2 + 4 * g3 * f3)
-        lam1 = g1 + kb * f2 ** 2 + ke * f2 * f3 + kf * f3 ** 2  # 211 の方向
-    use3 = (g1 >= 0) | (lam3 < 0)
-    use2 = (~use3) & (lam1 < 0)
-    h = np.where(use3, h3, np.where(use2, h2, np.maximum(h2, h3)))
+    a11, a8 = alpha ** 11, alpha ** 8
+    r = fp3.fixed_points(g1, g2, g3, si.KAPPA_BH * a11 * rp * c_a, si.KAPPA_INF * a8, fp3.K_C * a11 * rp * c_c,
+                         fp3.K_D * a8, fp3.K_E * a8, fp3.K_F * a8)
+    r.update(g1=g1, g2=g2, g3=g3)
+    return r
+
+
+def H(alpha, chi, cbh=False, mass_corr=False):
+    """dchi/dt / (mu (f/M_pl)^2)(負、配列で渡せる)。三準位の安定な固定点(E14)。
+    P3 = (211, 322): 211 の臨界より上、または 544 の方向に安定なとき。P2 = (322, 544): 211 の臨界より下で、211 の方向に
+    安定なとき。どちらも安定でない幅(211 の臨界の下 1e-3 ほど)では遅いほう(降下の時間への寄与は 0.2% 以下)。
+    """
+    alpha, chi = np.broadcast_arrays(np.asarray(alpha, float), np.asarray(chi, float))
+    c = np.interp(alpha, si.CBH_ALPHA, si.CBH_VALUE) if cbh else 1.0
+    r = _fixed(alpha, chi, c_a=c)
+    g1, g2, g3 = r["g1"], r["g2"], r["g3"]
+    with np.errstate(invalid="ignore"):
+        h3 = -(g1 * r["e1"] + 2 * g2 * r["e2"])
+        h2 = -(2 * g2 * r["f2"] + 4 * g3 * r["f3"])
+    h = np.where(r["use3"], h3, np.where(r["use2"], h2, np.maximum(h2, h3)))
     h = np.where((g2 > 0) & np.isfinite(h), h, 0.0)
     if mass_corr:   # 放出 1 回あたり、P3 は m = 3 に対しエネルギー mu、P2 は m = 6 に対し mu を失う
-        h = h * np.where(use3, 1 - 2 * chi * alpha / 3, 1 - chi * alpha / 3)
+        h = h * np.where(r["use3"], 1 - 2 * chi * alpha / 3, 1 - chi * alpha / 3)
     return h
 
 
 def extra_growth(alpha, chi):
     """三準位の外の準位(411、433、211 の臨界より上の 544)の、固定点での 1 粒子あたりの増加率の最大 / mu(f によらない)。
     BH が吸収する過程すべてに E7 の有限 alpha の補正 C_BH を掛けて評価する(BGLS: 補正は地平線の近くで決まるので、
-    BH が吸収する過程どうしの比はあまり変えない)。補正なしでは 411 は alpha < 0.33 で育たず、BGLS の「411 は
-    alpha >~ 0.2 で育つ」は補正込みで再現する(E15)。印 4 の判定を控えめ(多めに印をつける側)にするための選択。
-    411 の超放射は Leaver の連分数法の表(E15、out/rates_411.npz)。
+    BH が吸収する過程どうしの比はあまり変えない)。印 4 の判定を控えめ(多めに印をつける側)にするための選択(E15)。
     """
     alpha, chi = np.broadcast_arrays(np.asarray(alpha, float), np.asarray(chi, float))
     C = np.interp(alpha, si.CBH_ALPHA, si.CBH_VALUE)
-    g1 = g_vec(alpha, chi, 2, 1, 1)
-    g2 = g_vec(alpha, chi, 3, 2, 2)
-    g3 = np.array(sr.gamma_over_mu(alpha, chi, 5, 4, 4, sr.NORM_N), float)
-    g411 = g_vec(alpha, chi, 4, 1, 1)            # Leaver の連分数法の表(E15)
-    g433 = g_vec(alpha, chi, 4, 3, 3)
-    rpc = sr.rplus(chi) * C
-    a11, a8 = alpha ** 11, alpha ** 8
-    ka, kb, kc, kd = si.KAPPA_BH * a11 * rpc, si.KAPPA_INF * a8, fp3.K_C * a11 * rpc, fp3.K_D * a8
-    ke, kf = fp3.K_E * a8, fp3.K_F * a8
-    with np.errstate(divide="ignore", invalid="ignore"):
-        B = 2 * g2 - 4 * kb * g1 / ka
-        D = np.sqrt(B * B + 12 * g2 * g2)
-        u = np.where(B > 0, 2 * g2 * g2 / (B + D), (D - B) / 6)
-        e1 = np.sqrt(u / ka)
-        e2 = (u + g2) / (2 * kb * e1)
-        lam544 = g3 + kc * e2 ** 2 - ke * e1 * e2
-        f2 = 2 / np.sqrt(3) * np.sqrt(np.maximum(g2, 0) * kd) / kc
-        f3 = kc * f2 / (2 * kd)
-        lam211 = g1 + kb * f2 ** 2 + ke * f2 * f3 + kf * f3 ** 2
-    use3 = (g1 >= 0) | (lam544 < 0)
-    use2 = (~use3) & (lam211 < 0)
-    x1 = np.where(use3, e1, np.where(use2, 0.0, e1))
-    x2 = np.where(use3, e2, np.where(use2, f2, e2))
-    x3 = np.where(use3, 0.0, np.where(use2, f3, 0.0))
-    l411 = g411 - (fp3.K_P1 * a11 * rpc + fp3.K_Q1 * a8) * x1 * x2
-    l433 = (g433 + (fp3.K_G * a11 * rpc - fp3.K_E2 * a8) * x1 * x2 - fp3.K_H * a11 * rpc * x1 * x3
-            - fp3.K_K1 * a8 * x2 * x3 - fp3.K_K2 * a8 * x1 * x3)
-    lmax = np.maximum(np.maximum(l411, l433), np.where(use3, lam544, -np.inf))
-    return np.where((g2 > 0) & np.isfinite(lmax), lmax, 0.0)
+    r = _fixed(alpha, chi, c_a=C, c_c=C)
+    use3, use2 = r["use3"], r["use2"]
+    x1 = np.where(use2, 0.0, r["e1"])                 # 両方とも不安定な幅では P3 の占有数
+    x2 = np.where(use2, r["f2"], r["e2"])
+    x3 = np.where(use2, r["f3"], 0.0)
+    l411, l433 = fp3.extra_rates(alpha, sr.rplus(chi) * C, x1, x2, x3, g_vec(alpha, chi, 4, 1, 1), g_vec(alpha, chi, 4, 3, 3))
+    lmax = np.maximum(np.maximum(l411, l433), np.where(use3, r["lam544"], -np.inf))
+    return np.where((r["g2"] > 0) & np.isfinite(lmax), lmax, 0.0)
 
 
+# ---------- 臨界スピン ----------
 def _zero(alpha, n, l, m):
-    """準位 (n, l, m) の率が 0 になるスピン(質量固定、相対論的な率の表と同じもの)。"""
+    """準位 (n, l, m) の率が 0 になるスピン(質量固定、相対論的な率の表と同じもの)。どのスピンでも超放射しなければ 1。"""
+    if float(g_vec(alpha, 0.9999, n, l, m)) <= 0:
+        return 1.0
+    if float(g_vec(alpha, 1e-4, n, l, m)) > 0:
+        return 1e-4
     return brentq(lambda c: float(g_vec(alpha, c, n, l, m)), 1e-4, 0.9999, xtol=1e-14)
+
+
+def chic_vec(alpha, m, n=None, tab=None):
+    """臨界スピン(質量固定)。tab があれば、相対論的な率の 0 の表(THR_ALPHAS)を log alpha について補間する(E16)。
+    表の下(alpha < 0.003)は m Omega_H = E_n(水素原子の主要項)の解析解、上(alpha > 0.6)は 1(超放射しない)。
+    tab がなければ解析解(alpha_E / m >= 1/2 では 1)。"""
+    alpha = np.asarray(alpha, float)
+    n = m + 1 if n is None else n
+    ap = alpha * (1 - alpha ** 2 / (2 * n ** 2))          # alpha E/mu
+    out = np.where(ap / m < 0.5, 4 * m * ap / (m ** 2 + 4 * ap ** 2), 1.0)
+    if tab is not None and m in (1, 2):
+        ta = tab["thr_alpha"]
+        thr = tab["thr1"] if m == 1 else tab["thr2"]
+        inside = np.interp(np.log(np.clip(alpha, ta[0], ta[-1])), np.log(ta), thr)
+        out = np.where(alpha < ta[0], out, np.where(alpha > ta[-1], 1.0, inside))
+    return out
 
 
 def chi_of_w(w, c1, c2):
@@ -149,16 +134,15 @@ def w_of_chi(chi, c1, c2):
 
 
 # ---------- 表 ----------
-def build(cbh=False, mass_corr=False, ny=1200):
+def build(cbh=False, mass_corr=False):
     """表を作る。
-    lnI[alpha, w]: ln I、chi = chi_of_w(w, chic, chic2)。
-    winv[alpha, y]: ln I = y となる w(逆引き。y は共通の格子 Y)。
-    chic, chic2: 211 と 322 の臨界スピン(相対論的な率の 0)。
+    lnI[alpha, w]: ln I、chi = chi_of_w(w, chic, chic2)(節の alpha での臨界)。
     J[alpha, w]: 三準位の外の準位が、chi(w) から CHI_TOP までの降下のあいだに育つ e-fold の数 x (f/M_pl)^2(E15)。
+    chic, chic2: 節の alpha での 211 と 322 の臨界。thr_alpha, thr1, thr2: 臨界スピンの細かい表(E16)。
     """
     nA = len(ALPHAS)
     lnI = np.empty((nA, len(W)))
-    J = np.empty((nA, len(W)))     # J = int_chi^TOP lam+/|H| dchi'(三準位の外の準位が育つ e-fold の数 x (f/M_pl)^2)
+    J = np.empty((nA, len(W)))
     c1s, c2s = np.empty(nA), np.empty(nA)
     for i, a in enumerate(ALPHAS):
         c1, c2 = _zero(a, 2, 1, 1), _zero(a, 3, 2, 2)
@@ -168,43 +152,66 @@ def build(cbh=False, mass_corr=False, ny=1200):
         I = -cumulative_trapezoid(invH[::-1], chis[::-1], initial=0.0)[::-1]   # 上から積分
         I[-1] = I[-2] * 1e-3            # w = 2(chi = CHI_TOP)の I = 0 を有限の小さい値で置き換える
         lnI[i] = np.log(I)
-        lam = np.maximum(extra_growth(a, chis), 0.0)                              # 三準位の外の準位の増加率 / mu
+        lam = np.maximum(extra_growth(a, chis), 0.0)
         J[i] = -cumulative_trapezoid((lam * invH)[::-1], chis[::-1], initial=0.0)[::-1]
-    Y = np.linspace(lnI[:, -2].min(), lnI[:, 0].max(), ny)
-    winv = np.empty((nA, ny))
-    for i in range(nA):
-        winv[i] = np.interp(Y, lnI[i][::-1], W[::-1], left=W[-1], right=W[0])
-    return {"lnI": lnI, "chic": c1s, "chic2": c2s, "Y": Y, "winv": winv, "J": J}
+    thr1 = np.array([_zero(a, 2, 1, 1) for a in THR_ALPHAS])
+    thr2 = np.array([_zero(a, 3, 2, 2) for a in THR_ALPHAS])
+    return {"lnI": lnI, "J": J, "chic": c1s, "chic2": c2s, "thr_alpha": THR_ALPHAS, "thr1": thr1, "thr2": thr2}
 
 
-def _interps(tab):
-    if "_f_lnI" not in tab:
-        la = np.log(ALPHAS)
-        tab["_f_lnI"] = RegularGridInterpolator((la, W), tab["lnI"], bounds_error=False, fill_value=None)
-        tab["_f_w"] = RegularGridInterpolator((la, tab["Y"]), tab["winv"], bounds_error=False, fill_value=None)
-    return tab["_f_lnI"], tab["_f_w"]
+def _alpha_nodes(alpha):
+    """alpha を挟む節の番号 i(i と i+1)と、log alpha での重み t。"""
+    la = np.log(ALPHAS)
+    x = np.clip(np.log(alpha), la[0], la[-1])
+    i = np.clip(np.searchsorted(la, x, side="right") - 1, 0, len(la) - 2)
+    return i, (x - la[i]) / (la[i + 1] - la[i])
+
+
+def _fwd(arr, rows, w):
+    """arr[row](w) を w について線形に補間(行ごと)。"""
+    j = np.clip(np.searchsorted(W, w, side="right") - 1, 0, len(W) - 2)
+    s = (w - W[j]) / (W[j + 1] - W[j])
+    return arr[rows, j] + s * (arr[rows, j + 1] - arr[rows, j])
+
+
+def _inv(lnI, rows, y):
+    """lnI[row] は w について減少する。lnI[row](w) = y となる w(区分線形の補間の厳密な逆)。
+    行ごとにまとめて np.searchsorted で区間を探す(行は高々 len(ALPHAS) 本)。"""
+    n = lnI.shape[1]
+    y = np.clip(y, lnI[rows, -1], lnI[rows, 0])
+    j = np.empty(len(rows), int)
+    order = np.argsort(rows, kind="stable")
+    r_sorted = rows[order]
+    starts = np.flatnonzero(np.r_[True, r_sorted[1:] != r_sorted[:-1]])
+    ends = np.r_[starts[1:], len(rows)]
+    for st, en in zip(starts, ends):
+        idx = order[st:en]
+        j[idx] = np.searchsorted(-lnI[r_sorted[st]], -y[idx], side="left") - 1
+    j = np.clip(j, 0, n - 2)
+    v0, v1 = lnI[rows, j], lnI[rows, j + 1]
+    with np.errstate(divide="ignore", invalid="ignore"):
+        s = np.where(v0 > v1, (v0 - y) / (v0 - v1), 0.0)
+    return W[j] + np.clip(s, 0.0, 1.0) * (W[j + 1] - W[j])
 
 
 def chi_after(tab, alpha, chi0, tau):
-    """準平衡(固定点)で年齢のあとのスピン(配列で渡せる)。tau = mu (f/M_pl)^2 T。
-    322 の臨界まで下がりうる。alpha の格子の外と、chi0 が 322 の臨界以下の点では chi0 をそのまま返す。
+    """固定点で年齢のあとのスピン(配列で渡せる)。tau = mu (f/M_pl)^2 T。
+    322 の臨界まで下がりうる。alpha の節の外と、chi0 が 322 の臨界以下の点では chi0 をそのまま返す。
     """
     alpha, chi0, tau = np.broadcast_arrays(np.asarray(alpha, float), np.asarray(chi0, float),
                                            np.asarray(tau, float))
     shape = alpha.shape
     alpha, chi0, tau = alpha.ravel(), chi0.ravel(), tau.ravel()
-    f_lnI, f_w = _interps(tab)
-    la = np.log(ALPHAS)
-    lal = np.clip(np.log(alpha), la[0], la[-1])
-    c1 = np.interp(lal, la, tab["chic"])
-    c2 = np.interp(lal, la, tab["chic2"])
+    c1 = chic_vec(alpha, 1, tab=tab)
+    c2 = chic_vec(alpha, 2, tab=tab)
     w0 = np.clip(w_of_chi(chi0, c1, c2), W[0], W[-1])
-    lnI0 = f_lnI(np.stack([lal, w0], -1))
-    yT = np.logaddexp(lnI0, np.log(np.maximum(tau, 1e-300)))
-    yT = np.clip(yT, tab["Y"][0], tab["Y"][-1])
-    wT = np.clip(f_w(np.stack([lal, yT], -1)), W[0], W[-1])
-    out = chi_of_w(wT, c1, c2)
-    keep = (chi0 <= c2) | (np.log(alpha) < la[0]) | (np.log(alpha) > la[-1])
+    i, t = _alpha_nodes(alpha)
+    lt = np.log(np.maximum(tau, 1e-300))
+    lnI = tab["lnI"]
+    wa = _inv(lnI, i, np.logaddexp(_fwd(lnI, i, w0), lt))
+    wb = _inv(lnI, i + 1, np.logaddexp(_fwd(lnI, i + 1, w0), lt))
+    out = chi_of_w((1 - t) * wa + t * wb, c1, c2)
+    keep = (chi0 <= c2) | (alpha < ALPHAS[0]) | (alpha > ALPHAS[-1])
     return np.where(keep, chi0, np.minimum(out, chi0)).reshape(shape)
 
 
@@ -212,16 +219,14 @@ def flag_fp(tab, alpha, chi_start, chi_T, s2, T_s, mu_s, lnGM2):
     """固定点の領域の印: 三準位の外の準位が年齢のうちに 1 個の量子から育ちうるなら 4、そうでなければ 1(E15)。
     降下のあいだの e-fold は (J(w_T) - J(w_start)) / (f/M_pl)^2。322 の臨界まで下がった BH は、
     そのあと 433 の超放射だけで育つ e-fold(mu g433 T、控えめに年齢全体)も見る。"""
-    if "_f_J" not in tab:
-        tab["_f_J"] = RegularGridInterpolator((np.log(ALPHAS), W), tab["J"], bounds_error=False, fill_value=None)
-    la = np.log(ALPHAS)
-    lal = np.clip(np.log(alpha), la[0], la[-1])
-    c1 = np.interp(lal, la, tab["chic"])
-    c2 = np.interp(lal, la, tab["chic2"])
+    c1 = chic_vec(alpha, 1, tab=tab)
+    c2 = chic_vec(alpha, 2, tab=tab)
     w0 = np.clip(w_of_chi(chi_start, c1, c2), W[0], W[-1])
     wT = np.clip(w_of_chi(chi_T, c1, c2), W[0], W[-1])
-    J0 = tab["_f_J"](np.stack([lal, w0], -1))
-    JT = tab["_f_J"](np.stack([lal, wT], -1))
+    i, t = _alpha_nodes(alpha)
+    J = tab["J"]
+    J0 = (1 - t) * _fwd(J, i, w0) + t * _fwd(J, i + 1, w0)
+    JT = (1 - t) * _fwd(J, i, wT) + t * _fwd(J, i + 1, wT)
     dJ = np.where(JT > J0 * (1 + 1e-9), JT - J0, 0.0)          # 補間の丸めで 0 の区間に正の値が出ないように
     n_desc = dJ / s2
     bottom = wT <= W[0] * 1.000001
@@ -235,60 +240,55 @@ def tau_of(mu_eV, f_gev, T_yr):
     return mu_eV / sr.HBAR_EVS * (f_gev / si.MPL_GEV) ** 2 * T_yr * sr.YR
 
 
-# ---------- 臨界スピン ----------
-def chic_vec(alpha, m, n, tab=None):
-    """臨界スピン(質量固定)。表の範囲では表(相対論的な率の 0)、外は m Omega_H = E_n(水素原子の主要項)の解析解。
-    alpha_E / m >= 1/2 では、その m の準位はどのスピンでも超放射しないので 1 を返す。
-    """
-    alpha = np.asarray(alpha, float)
-    ap = alpha * (1 - alpha ** 2 / (2 * n ** 2))          # alpha E/mu
-    out = np.where(ap / m < 0.5, 4 * m * ap / (m ** 2 + 4 * ap ** 2), 1.0)
-    if tab is not None and m in (1, 2):
-        key = "chic" if m == 1 else "chic2"
-        la = np.log(ALPHAS)
-        inr = (alpha >= ALPHAS[0]) & (alpha <= ALPHAS[-1])
-        out = np.where(inr, np.interp(np.log(np.clip(alpha, ALPHAS[0], ALPHAS[-1])), la, tab[key]), out)
-    return out
-
-
 # ---------- 自由場 ----------
-def _sat_state(M, chi, mu_eV, m, n):
+def _sat_state(M, chi, mu_eV, m, n, tab):
     """自由場で準位 (n, m=l) が飽和したあとの (M_f, chi_f)。BH の質量の減少を入れる。
-    角運動量 dJ = J0 - chi_c(M_f) M_f^2 を渡すと、質量は dM = (E/mu) alpha_sun dJ / m 減る。臨界は m Omega_H = E_n
-    (水素原子の主要項)。M_f を二分法で自己無撞着に解く(E12: 以前は 5 回の反復で打ち切っていた)。
+    角運動量 dJ = J0 - chi_c(M_f) M_f^2 を渡すと、質量は dM = (E/mu) alpha_sun dJ / m 減る(E は水素原子の主要項)。
+    臨界 chi_c は chic_vec(相対論的な率の 0、E16)。M_f を二分法で自己無撞着に解く。
     """
     a_sun = sr.alpha_of(1.0, mu_eV)
     J0 = chi * M ** 2
 
-    def crit(Mf):
-        a = a_sun * Mf
-        ap = a * (1 - a ** 2 / (2 * n ** 2))
-        return a, np.where(ap / m < 0.5, 4 * m * ap / (m ** 2 + 4 * ap ** 2), 1.0)
-
     def F(Mf):                                  # 0 になる Mf を探す(Mf = M で >= 0、Mf = M/2 で < 0)
-        a, cf = crit(Mf)
+        a = a_sun * Mf
+        cf = chic_vec(a, m, n, tab)
         return Mf - M + a_sun * (1 - a ** 2 / (2 * n ** 2)) * (J0 - cf * Mf ** 2) / m
 
-    lo, hi = 0.5 * M, M.copy()
-    for _ in range(60):
-        mid = 0.5 * (lo + hi)
-        neg = F(mid) < 0
-        lo = np.where(neg, mid, lo)
-        hi = np.where(neg, hi, mid)
-    Mf = 0.5 * (lo + hi)
-    return Mf, crit(Mf)[1]
+    return _bracket_root(F, 0.5 * np.asarray(M, float), np.array(M, float), a_sun, m, n, tab)
+
+
+def _bracket_root(F, lo, hi, a_sun, m, n, tab, tol=1e-13, itmax=60):
+    """F(lo) < 0 <= F(hi) の区間で F = 0 を Illinois 法(はさみうち法の改良)で解く(配列で渡せる)。
+    二分法と同じく区間の外に出ないが、10 回ほどの評価で収束する。"""
+    Flo, Fhi = F(lo), F(hi)
+    side = np.zeros(lo.shape, int)            # 直前に動かした端(-1: lo、+1: hi)
+    x = hi.copy()
+    for _ in range(itmax):
+        with np.errstate(divide="ignore", invalid="ignore"):
+            x = np.where(Fhi != Flo, hi - Fhi * (hi - lo) / (Fhi - Flo), 0.5 * (lo + hi))
+        x = np.clip(x, lo, hi)
+        Fx = F(x)
+        neg = Fx < 0
+        Fhi = np.where(neg & (side == -1), 0.5 * Fhi, Fhi)    # 同じ端が続けて動いたら反対側の値を半分に
+        Flo = np.where(~neg & (side == 1), 0.5 * Flo, Flo)
+        lo, Flo = np.where(neg, x, lo), np.where(neg, Fx, Flo)
+        hi, Fhi = np.where(neg, hi, x), np.where(neg, Fhi, Fx)
+        side = np.where(neg, -1, 1)
+        if np.all((hi - lo) <= tol * hi) or np.all(np.abs(Fx) <= tol * hi):
+            break
+    return x, chic_vec(a_sun * x, m, n, tab)
 
 
 def _free_branch(tab, M, chi0, a, mu_eV, mu_s, T, f_gev, g1):
     """自由場: 211 が 1 個の量子から飽和(E2 の半解析と同じ数え方)。そのあと
     f <= F_FP_MAX: 211 x 211 -> 322 x BH が 322 をすぐに育てるので、固定点の降下で 322 の臨界へ(E12)。
-    f >  F_FP_MAX: 322 を t = 0 から 1 個の量子として e-fold を積む(E11 のまま。ODE より遅いことがある、E12)。
+    f >  F_FP_MAX: 322 を t = 0 から 1 個の量子として e-fold を積む(E11 のまま。ODE より遅いことがある、E14)。
     """
-    M1, c1 = _sat_state(M, chi0, mu_eV, 1, 2)
+    M1, c1 = _sat_state(M, chi0, mu_eV, 1, 2, tab)
     c1 = np.minimum(c1, chi0)
     lnN1 = np.log(np.maximum(chi0 * M ** 2 - c1 * M1 ** 2, 1e-300)) + np.log(sr.N0)
     tsat1 = lnN1 / g1
-    M2, c2 = _sat_state(M1, c1, mu_eV, 2, 3)
+    M2, c2 = _sat_state(M1, c1, mu_eV, 2, 3, tab)
     lnN2 = np.log(np.maximum((c1 * M1 ** 2 - c2 * M2 ** 2) / 2, 1e-300)) + np.log(sr.N0)
     g2a = np.maximum(g_vec(a, np.minimum(chi0, 0.995), 3, 2, 2), 0) * mu_s          # 211 が飽和するまで
     a1 = sr.alpha_of(M1, mu_eV)
@@ -303,8 +303,8 @@ def _free_branch(tab, M, chi0, a, mu_eV, mu_s, T, f_gev, g1):
     fp = (~slow) & (t2_first >= tsat1) & (T > tsat1)
     if fp.any():
         tau1 = mu_s[fp] * (f_gev[fp] / si.MPL_GEV) ** 2 * (T[fp] - tsat1[fp])
-        start = chic_vec(a1[fp], 1, 2, tab)
-        drop = start - chi_after(tab, a1[fp], start + 1e-15, tau1)                   # 表の 211 の臨界からの降下
+        start = c1[fp]
+        drop = start - chi_after(tab, a1[fp], start + 1e-15, tau1)                   # 211 の臨界からの降下
         res[fp] = np.maximum(c1[fp] - drop, c2[fp])
     return res
 
@@ -327,7 +327,7 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
         1 = 自己相互作用の固定点(三準位 211・322・544)。211 から育つ BH も 322 から育つ BH も、322 の臨界まで
             下がりうる。三準位の外の準位(411、433 など)は年齢のうちに育たない
         2 = 自由場(211 が飽和して臨界へ。そのあと f <= 1e17 GeV は固定点の降下、それより上は 322 を 1 個の量子から)、
-            または 322 から育つ BH で自己相互作用が飽和までに効かず、322 が飽和して 322 の臨界へ
+            または 322 から育つ BH で自己相互作用が飽和までに効かず、322 が飽和して 322 の臨界へ(どちらも BH の質量の減少を入れる)
         3 = この模型の外。chi0 を返す: 固定点で alpha が表の外(alpha < 0.01 または > 0.30)、alpha > 0.5
         4 = 固定点だが、三準位の外の準位(411、433、211 の臨界より上の 544)が年齢のうちに育ちうる(有限 alpha の
             補正込みで判定、E15)。値は三準位で計算して返すが、近似は粗い
@@ -343,8 +343,8 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
     mu_s = mu_eV / sr.HBAR_EVS
     T = T_yr * sr.YR
     lnGM2 = np.log(sr.N0 * M ** 2)
-    c1 = chic_vec(a, 1, 2, tab)
-    c2 = chic_vec(a, 2, 3, tab)
+    c1 = chic_vec(a, 1, tab=tab)
+    c2 = chic_vec(a, 2, tab=tab)
     big = a > ALPHA_MAX
     out = chi0.copy()
     reg = np.zeros(len(M), int)
@@ -352,7 +352,9 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
 
     sr211 = (chi0 > c1) & ~big
     # ---- 211 が超放射する BH ----
-    g1 = np.where(sr211, g_vec(a, np.minimum(chi0, 0.995), 2, 1, 1), 0.0) * mu_s       # 1/s
+    g1 = np.zeros(len(M))
+    i1 = np.flatnonzero(sr211)
+    g1[i1] = g_vec(a[i1], np.minimum(chi0[i1], 0.995), 2, 1, 1) * mu_s[i1]           # 1/s(211 が超放射する点だけ)
     ginf = si.KAPPA_INF * a ** 8 * (si.MPL_GEV / f_gev) ** 4 * mu_s
     gbh = si.KAPPA_BH * a ** 11 * (si.MPL_GEV / f_gev) ** 4 * sr.rplus(np.minimum(chi0, 0.999)) * mu_s
     emax = chi0 - c1
@@ -362,6 +364,7 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
     si_reg = sr211 & (g1 > 0) & (eeq < emax) & (eth < emax)
     inval = si_reg & ((a > ALPHAS[-1]) | (a < ALPHAS[0]))
     reg[inval] = 3
+    reg[sr211 & (g1 <= 0) & (chi0 > CHI_TOP)] = 3       # 臨界が率の表の端(0.995)より上: 率を引けないので模型の外(E16)
     q = si_reg & ~inval
     if q.any():
         tgrow = (np.log(np.maximum(eeq[q], 1e-300)) + lnGM2[q]) / g1[q]
@@ -379,11 +382,12 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
     # 322 が 1 個の量子から育ち、322 x 322 -> 544 x BH と 544 x 544 -> 322 x inf の (322, 544) の固定点に入る(211 は空のまま)。
     # 判定は 211 の場合と同じ形: 固定点の占有数 eps_eq' = (2/sqrt3) sqrt(g322 g_d)/g_c と行き過ぎ eps_th' = sqrt(2 g322 ln GM^2/g_c)
     # が、どちらも飽和の量 eps_max' = (chi0 - chi_c322)/2 より小さければ固定点。そのときは育つ時間を年齢から引き、
-    # 行き過ぎで失う 2 eps_th' を初期スピンから引いて、同じ表で降下させる。そうでなければ自由場(322 が飽和して 322 の臨界へ)。
+    # 行き過ぎで失う 2 eps_th' を初期スピンから引いて、同じ表で降下させる。そうでなければ自由場(322 が飽和して、
+    # BH の質量の減少を入れた 322 の臨界へ。E16)。
     only322 = (~sr211) & (chi0 > c2) & ~big
     if only322.any():
         i3 = np.flatnonzero(only322)
-        a3, x0, T3, f3, m3 = a[i3], chi0[i3], T[i3], f_gev[i3], mu_s[i3]
+        M3, a3, x0, T3, f3, m3, u3 = M[i3], a[i3], chi0[i3], T[i3], f_gev[i3], mu_s[i3], mu_eV[i3]
         c0 = np.minimum(x0, 0.995)
         g2 = g_vec(a3, c0, 3, 2, 2) * m3
         s4 = (si.MPL_GEV / f3) ** 4 * m3
@@ -394,11 +398,10 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
             eeq2 = 2 / np.sqrt(3) * np.sqrt(np.maximum(g2, 0) * gd) / gc
             eth2 = np.sqrt(2 * np.maximum(g2, 0) * lnGM2[i3] / gc)
             tgrow2 = (np.log(np.maximum(eeq2, 1e-300)) + lnGM2[i3]) / g2
-            tsat2 = (np.log(np.maximum(emax2, 1e-300)) + lnGM2[i3]) / g2
         fpq = (g2 > 0) & (eeq2 < emax2) & (eth2 < emax2)
         ok = fpq & (a3 >= ALPHAS[0]) & (a3 <= ALPHAS[-1])
         res = x0.copy()
-        rg = np.where(g2 > 0, 3, 0)
+        rg = np.where((g2 > 0) | (x0 > CHI_TOP), 3, 0)
         if ok.any():
             Teff = np.maximum(T3[ok] - tgrow2[ok], 0.0)
             tau = m3[ok] * (f3[ok] / si.MPL_GEV) ** 2 * Teff
@@ -406,8 +409,12 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
             res[ok] = np.where(Teff > 0, chi_after(tab, a3[ok], c0eff, tau), x0[ok])
             rg[ok] = flag_fp(tab, a3[ok], c0eff, res[ok], (f3[ok] / si.MPL_GEV) ** 2, Teff, m3[ok], lnGM2[i3][ok])
         free = (g2 > 0) & ~fpq
-        res[free] = np.where(T3[free] >= tsat2[free], c2[i3][free], x0[free])
-        rg[free] = 2
+        if free.any():
+            Mf2, cf2 = _sat_state(M3[free], x0[free], u3[free], 2, 3, tab)
+            cf2 = np.minimum(cf2, x0[free])
+            lnN2 = np.log(np.maximum((x0[free] * M3[free] ** 2 - cf2 * Mf2 ** 2) / 2, 1e-300)) + np.log(sr.N0)
+            res[free] = np.where(T3[free] >= lnN2 / g2[free], cf2, x0[free])
+            rg[free] = 2
         out[i3] = res
         reg[i3] = rg
     return out.reshape(shape), reg.reshape(shape)

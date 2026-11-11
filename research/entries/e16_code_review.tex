@@ -1,0 +1,49 @@
+% エントリ 16(2026-11-10): 計算コードの査読と修正
+\section{[E16, 2026-11-10] 計算コードの査読と修正}\label{sec:e16}
+
+\texttt{research/calc} と \texttt{share/chi\_sr} を査読し(ユーザー指示「計算コードの査読をしてください」)、見つかった 10 件をすべて直した(ユーザー指示「Fix all ten」)。結果に効いたのは 4 件で、どれも窓($f\sim10^{12}\GeV$)の結論は変えない。修正の前後の比較は \texttt{calc/e16\_code\_review.py}(修正前の \texttt{chisr.py} は git の 72eac8a から読み込む)、出力は \texttt{calc/out/e16.json}。
+
+\subsection{結果に効いた修正}
+
+\paragraph{1. 322 から育つ BH の自由場の飽和で、BH の質量の減少が落ちていた}
+211 から育つ BH の自由場の経路は質量の減少を入れていたが、322 から育つ BH の経路は質量を固定した 322 の臨界を返していた。質量の減少を入れた飽和(\texttt{\_sat\_state})に直した($\mu=0.71\times10^{-12}\eV$、$f=10^{19}\GeV$、$10^{10}\yr$)。
+\begin{center}\small
+\begin{tabular}{rcccc}
+\toprule
+ & $20\Msun$、$\chi_0=0.3$ & $30\Msun$、0.5 & $45\Msun$、0.7 & $50\Msun$、0.6\\
+\midrule
+修正前 & 0.2101 & 0.3105 & 0.4510 & 0.4945\\
+修正後 & 0.2091 & 0.3057 & 0.4369 & 0.4872\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{2. $\alpha>0.30$ で臨界の定義が食い違っていた}
+臨界の判定は水素原子の主要項の式、率は相対論的な表を使っていたので、211 が実際には超放射する狭い帯の BH が「322 から育つ」経路に回されていた。たとえば $\alpha=0.35$、$\chi_0=0.9342$($g_{211}>0$)は、$f=10^{17}\GeV$ で $\chi_0$ を印 3 で、$f\ge3\times10^{17}\GeV$ で 0.6203 を返していた。修正後は 211 の経路で、それぞれ 0.9337、0.5824(印 2)。
+
+臨界スピンは、相対論的な率が 0 になるスピンを $\alpha=0.003$--0.6 の 2000 点で表にし、固定点の表、領域の判定、自由場の飽和のすべてで使うようにした。率は表と解析式の切り替わり($\alpha=0.03$、0.1、0.52、0.55)で不連続なので、その両側に節を置いた。補間の誤差は $\alpha=0.005$--0.5 で最大 $1.8\times10^{-5}$。
+
+\paragraph{3. 表の順引きと逆引きが逆関数になっていなかった}
+$\ln I$ の順引きと逆引きを別々の格子で $\alpha$ について補間していたので、$\tau\to0$ でもスピンが下がっていた(最大 $4.2\times10^{-4}$、$\alpha=0.1$)。両隣の $\alpha$ の節で $I$ に $\tau$ を足してそれぞれ厳密に逆に引き、$w$ を $\alpha$ について線形に混ぜるようにした。誤差は $5\times10^{-16}$ 以下になった。窓の値(GW241011 の主星、$5\times10^7\yr$、$f=10^{12}\GeV$)は 0.75083 から 0.75091 に動いた。
+
+\paragraph{4. 大域の設定が例外のときに戻らなかった}
+窓の上限を出す \texttt{f\_limit}(E8)が \texttt{si.REL} を書き換え、例外のときに戻していなかった。\texttt{try}/\texttt{finally} で戻すようにした。
+
+\subsection{構造の修正}
+
+\begin{itemize}
+\item \textbf{臨界の定義を一つに}: 上の 2。\texttt{si.t\_spindown} も、積分と同じ率で臨界を判定するようにした。E2--E12 の解析に使った \texttt{si.chi\_threshold\_211} と \texttt{sr.chi\_threshold}(水素原子の $\alpha^5$ までの式)はそのままにした。相対論的な率の 0 との差は $\alpha\le0.27$ で $5\times10^{-5}$ 以下で、$\chi_\mathrm{SR}$ では使っていない。
+\item \textbf{固定点の式を一か所に}: \texttt{chisr.H}、\texttt{chisr.extra\_growth}、\texttt{fp3} の三か所にあった固定点の式を \texttt{fp3.fixed\_points} に、411・433 の増加率の式を \texttt{fp3.extra\_rates} にまとめた。
+\item \textbf{使っていない関数と定数を消した}: \texttt{fp3} の \texttt{candidates}、\texttt{fp\_P1}、\texttt{jac}、\texttt{is\_stable}、\texttt{H3}、\texttt{chisr} の \texttt{ALPHA\_2LEVEL}、\texttt{KAPPA\_BH\_544}。単体版の表からも \texttt{ALPHA\_2LEVEL} と逆引きの表(\texttt{Y}、\texttt{winv})を除いた。
+\item \textbf{E15 の 411 の表}: 毎回作り直していたのを、ないとき(または \texttt{--rebuild-411})だけにした。
+\item \textbf{速さ}: 211 の率を、211 が超放射する標本だけで計算するようにした。飽和の自己無撞着な解き方を二分法から Illinois 法に替えた(二分法との差 $10^{-15}$)。厳密な逆引きのぶん遅くなり、$10^6$ 個の標本で 0.81 秒(以前は 0.54 秒)。
+\item \textbf{単体版の確かめを増やした}(\texttt{calc/export\_chisr.py}): 無作為な標本での一致に加えて、臨界のすぐ上と下での経路、$\tau\to0$、自由場の飽和と \texttt{\_sat\_state} の一致、三準位の ODE との一致(3 例で 0.002 以内)を確かめ、外れたら止まる。この確かめで、さらに二つの問題が見つかった: 率の切り替わり($\alpha=0.1$)をまたいだ臨界の補間の誤差($1.1\times10^{-4}$)と、臨界が率の表の端(0.995)より上になる $\alpha\approx0.48$ で超放射する BH が印 0 になること。前者は切り替わりの両側に節を置いて、後者は印 3 にして直した。
+\end{itemize}
+
+\begin{result}
+\begin{itemize}
+\item 三準位の ODE との一致(E14 の固定点の 15 点): 修正後の差は最大 $8.1\times10^{-4}$(修正前 $8.0\times10^{-4}$)で変わらない。
+\item Beta(0.69, 2.28) の 1 世代目の印の割合は変わらない(印 4 は $f=10^{12}$、$10^{14}$、$10^{16}\GeV$ で 2.3、2.2、0.4\%)。
+\item 単体版とプロジェクト版は、無作為な 20 万個の標本と、臨界の帯の点で、値も印も一致する。
+\end{itemize}
+\end{result}

@@ -1,4 +1,4 @@
-"""211・322・544 の三準位の運動論と、その固定点(研究ノート E14)。
+"""211・322・544 の三準位の運動論と、その固定点(研究ノート E14、E15、E16)。
 
 率は BGLS(2011.11646)の Table IV--VI(占有数の率 / mu、(M_pl/f)^4 は外に出す):
   a: 211 x 211 -> 322 x BH   4.3e-7 alpha^11 r+     (Table V)
@@ -14,10 +14,10 @@
   dchi/dt = -(g1 e1 + 2 g2 e2 + 4 g3 e3)
 eps = (f/M_pl)^2 x et とおくと f が消える(et の式は上で係数 (M_pl/f)^4 を落としたもの)。固定点の et は f によらず、
 dchi/dt = mu (f/M_pl)^2 H(alpha, chi)、H = -(g1 et1 + 2 g2 et2 + 4 g3 et3)。
-固定点の型: P3 = (211, 322)(E12)、P2 = (322, 544)、P1 = 三つとも。空の準位の方向の安定性も見て、安定なものを選ぶ。
+固定点の型: P3 = (211, 322)(E12)、P2 = (322, 544)。空の準位の方向の安定性で選ぶ(fixed_points)。
+固定点の式と、三準位の外の準位の増加率の式は、この file の fixed_points と extra_rates だけに置き、chisr はそれを呼ぶ(E16)。
 """
 import numpy as np
-from scipy.optimize import root
 
 import si
 import sr
@@ -50,84 +50,48 @@ def percap(x, g, k):
     return np.array([r1, r2, r3])
 
 
-def rhs(x, g, k):
-    return np.asarray(x) * percap(x, g, k)
+def fixed_points(g1, g2, g3, ka, kb, kc, kd, ke, kf):
+    """三準位の固定点(配列で渡せる、f によらない et)。544 の超放射は固定点の式では落とす(alpha^20 で小さい)。
+    返り値の dict:
+      e1, e2: P3 = (211, 322)。u = ka e1^2 は 3u^2 + (2 g2 - 4 kb g1/ka) u - g2^2 = 0 の正の根、e2 = (u + g2)/(2 kb e1)。
+      f2, f3: P2 = (322, 544)。f2 = (2/sqrt3) sqrt(g2 kd)/kc、f3 = kc f2/(2 kd)。
+      lam544: P3 での 544 の方向の増加率、lam211: P2 での 211 の方向の増加率。
+      use3: P3 を使う(211 の臨界より上、または 544 の方向に安定)。use2: use3 でなく、P2 が 211 の方向に安定。
+      どちらでもない点(211 の臨界の下 1e-3 ほど)は、両方とも不安定な幅。
+    """
+    with np.errstate(divide="ignore", invalid="ignore"):
+        B = 2 * g2 - 4 * kb * g1 / ka
+        D = np.sqrt(B * B + 12 * g2 * g2)
+        u = np.where(B > 0, 2 * g2 * g2 / (B + D), (D - B) / 6)   # 桁落ちしない形の正の根
+        e1 = np.sqrt(u / ka)
+        e2 = (u + g2) / (2 * kb * e1)
+        lam544 = g3 + kc * e2 ** 2 - ke * e1 * e2
+        f2 = 2 / np.sqrt(3) * np.sqrt(np.maximum(g2, 0) * kd) / kc
+        f3 = kc * f2 / (2 * kd)
+        lam211 = g1 + kb * f2 ** 2 + ke * f2 * f3 + kf * f3 ** 2
+    use3 = (g1 >= 0) | (lam544 < 0)
+    use2 = (~use3) & (lam211 < 0)
+    return dict(e1=e1, e2=e2, f2=f2, f3=f3, lam544=lam544, lam211=lam211, use3=use3, use2=use2)
 
 
-def jac(x, g, k):
-    x = np.asarray(x, float)
-    J = np.empty((3, 3))
-    for j in range(3):
-        h = 1e-7 * max(abs(x[j]), 1e-30) + 1e-30
-        xp, xm = x.copy(), x.copy()
-        xp[j] += h
-        xm[j] -= h
-        J[:, j] = (rhs(xp, g, k) - rhs(xm, g, k)) / (2 * h)
-    return J
-
-
-def is_stable(x, g, k):
-    lam = np.linalg.eigvals(jac(x, g, k))
-    return bool(np.all(lam.real < 1e-12 * np.max(np.abs(lam))))
+def _fp_from(g, k):
+    return fixed_points(g[0], g[1], g[2], k["a"], k["b"], k["c"], k["d"], k["e"], k["f"])
 
 
 def fp_P3(g, k):
     """(211, 322) の固定点(E12 の式)。"""
     if g[1] <= 0:
         return None
-    B = 2 * g[1] - 4 * k["b"] * g[0] / k["a"]
-    D = np.sqrt(B * B + 12 * g[1] ** 2)
-    u = 2 * g[1] ** 2 / (B + D) if B > 0 else (D - B) / 6
-    e1 = np.sqrt(u / k["a"])
-    e2 = (u + g[1]) / (2 * k["b"] * e1)
-    return np.array([e1, e2, 0.0])
+    r = _fp_from(g, k)
+    return np.array([float(r["e1"]), float(r["e2"]), 0.0])
 
 
 def fp_P2(g, k):
-    """(322, 544) の固定点。g3 を残して二式を解く(g3 -> 0 で e2 = (2/sqrt3) sqrt(g2 d)/c、e3 = c e2/(2d))。"""
+    """(322, 544) の固定点(544 の超放射は落とす)。"""
     if g[1] <= 0:
         return None
-    e2 = 2 / np.sqrt(3) * np.sqrt(g[1] * k["d"]) / k["c"]
-    e3 = k["c"] * e2 / (2 * k["d"])
-    sol = root(lambda y: [percap([0, np.exp(y[0]), np.exp(y[1])], g, k)[1] / g[1],
-                          percap([0, np.exp(y[0]), np.exp(y[1])], g, k)[2] / g[1]], np.log([e2, e3]), method="hybr")
-    if sol.success:
-        e2, e3 = np.exp(sol.x)
-    return np.array([0.0, e2, e3])
-
-
-def fp_P1(g, k, guesses):
-    """三つとも占有された固定点。対数で根を探す。"""
-    best = None
-    scale = max(abs(g[0]), abs(g[1]))
-    for x0 in guesses:
-        x0 = np.maximum(np.asarray(x0, float), 1e-30)
-        sol = root(lambda y: percap(np.exp(y), g, k) / scale, np.log(x0), method="hybr", options={"xtol": 1e-13})
-        if sol.success and np.max(np.abs(sol.fun)) < 1e-8:
-            x = np.exp(sol.x)
-            if best is None or np.linalg.norm(np.log(x) - np.log(x0)) < np.linalg.norm(np.log(best) - np.log(x0)):
-                best = x
-    return best
-
-
-def candidates(alpha, chi, cbh=1.0):
-    """安定な固定点の候補 [(型, x)]。"""
-    g, k = coeffs(alpha, chi, cbh)
-    out = []
-    p3 = fp_P3(g, k)
-    p2 = fp_P2(g, k)
-    guesses = []
-    if p3 is not None:
-        guesses.append(p3 + np.array([0, 0, 1e-6 * p3[1]]))
-    if p2 is not None:
-        guesses.append(p2 + np.array([1e-6 * p2[1], 0, 0]))
-    if p3 is not None and p2 is not None:
-        guesses.append(np.sqrt(np.maximum(p3, 1e-30) * np.maximum(p2, 1e-30)))
-    p1 = fp_P1(g, k, guesses) if guesses else None
-    for name, x in (("P3", p3), ("P2", p2), ("P1", p1)):
-        if x is not None and np.all(x >= 0) and np.all(np.isfinite(x)) and is_stable(x, g, k):
-            out.append((name, x))
-    return out, g, k
+    r = _fp_from(g, k)
+    return np.array([0.0, float(r["f2"]), float(r["f3"])])
 
 
 def H_of(x, g):
@@ -175,22 +139,6 @@ def evolve3(M, chi0, mu_eV, f_gev, T_yr, t_eval_yr, levels0=(1, 1, 1), rtol=1e-8
                      t_eval=np.asarray(t_eval_yr) * sr.YR, events=stop)
 
 
-def H3(alpha, chi, cbh=1.0):
-    """三準位の固定点での dchi/dt / (mu (f/M_pl)^2)(スカラー)。
-    211 の臨界より上は P3(E12 と同じ)。下は P2 が安定ならそれ。どちらも安定でない幅(211 の臨界の下 1e-3 ほど、
-    ここでは系は振動しうる)では、遅いほうを取る(降下の時間への寄与は 0.2% 以下、E14)。"""
-    g, k = coeffs(alpha, chi, cbh)
-    if g[1] <= 0:
-        return 0.0
-    p3 = fp_P3(g, k)
-    if g[0] >= 0 or percap(p3, g, k)[2] < 0:
-        return H_of(p3, g)
-    p2 = fp_P2(g, k)
-    if percap(p2, g, k)[0] < 0:
-        return H_of(p2, g)
-    return max(H_of(p2, g), H_of(p3, g))          # 負の数なので max が遅いほう
-
-
 # ---------- 固定点の外の準位(411、433)が育つか(E15) ----------
 # BGLS Table V・VI(BH が吸収する過程は alpha^11 r+、放出は alpha^8):
 K_P1 = 2.5e-8   # 211 x 411 -> 322 x BH
@@ -202,17 +150,20 @@ K_K1 = 7.8e-10  # 433 x 544 -> 322 x inf
 K_K2 = 1.9e-11  # 433 x 544 -> 211 x inf
 
 
-def extra_growth(alpha, chi, x, cbh=1.0):
-    """固定点 x = (e211, e322, e544)(f によらない et)で、411 と 433 の 1 粒子あたりの増加率 / mu(線形)。
+def extra_rates(alpha, rpc, x1, x2, x3, g411, g433):
+    """固定点 (x1, x2, x3) = (e211, e322, e544)(f によらない et)での、411 と 433 の 1 粒子あたりの増加率 / mu(配列で渡せる)。
+    rpc = r+ x C_BH(BH が吸収する過程に掛ける)。
     411: g411 - (p1 + q1) e1 e2(BGLS 式 n11evol)。433: g433 + (g - e2) e1 e2 - h e1 e3 - k1 e2 e3 - k2 e1 e3(BGLS n33 の式に 544 の項)。"""
-    rp = sr.rplus(chi) * cbh                     # BH が吸収する過程に有限 alpha の補正を掛ける
-    e1, e2, e3 = x
-    g411 = g_rel(alpha, chi, 4, 1, 1)            # Leaver の連分数法の表(E15、out/rates_411.npz)
-    g433 = g_rel(alpha, chi, 4, 3, 3)
-    l411 = g411 - (K_P1 * alpha ** 11 * rp + K_Q1 * alpha ** 8) * e1 * e2
-    l433 = (g433 + (K_G * alpha ** 11 * rp - K_E2 * alpha ** 8) * e1 * e2
-            - K_H * alpha ** 11 * rp * e1 * e3 - K_K1 * alpha ** 8 * e2 * e3 - K_K2 * alpha ** 8 * e1 * e3)
+    a11, a8 = alpha ** 11, alpha ** 8
+    l411 = g411 - (K_P1 * a11 * rpc + K_Q1 * a8) * x1 * x2
+    l433 = (g433 + (K_G * a11 * rpc - K_E2 * a8) * x1 * x2 - K_H * a11 * rpc * x1 * x3
+            - K_K1 * a8 * x2 * x3 - K_K2 * a8 * x1 * x3)
     return l411, l433
+
+
+def extra_growth(alpha, chi, x, cbh=1.0):
+    """extra_rates のスカラー版。411 は Leaver の連分数法の表(E15、out/rates_411.npz)。"""
+    return extra_rates(alpha, sr.rplus(chi) * cbh, x[0], x[1], x[2], g_rel(alpha, chi, 4, 1, 1), g_rel(alpha, chi, 4, 3, 3))
 
 
 # ---------- 照合用: 211・322・411・433・544 の五準位の ODE(E15) ----------

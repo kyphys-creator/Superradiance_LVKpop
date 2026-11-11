@@ -7,7 +7,7 @@
 4. 新しい印の割合(1 世代目の自然スピン Beta(0.69, 2.28))。
 5. 図のデータ: 育つ場所の (alpha, chi) の地図と、五準位の ODE の時間変化。
 出力: out/e15.json、../figs/data/e15_*.dat
-実行: cd research && ~/miniforge3/bin/python3 calc/e15_extra_levels.py
+実行: cd research && ~/miniforge3/bin/python3 calc/e15_extra_levels.py(411 の表を作り直すときは --rebuild-411)
 """
 import json
 import os
@@ -185,8 +185,15 @@ def figure_data(res, M=10.0, c0=0.9, f=1e14):
     res["ode5_c211"] = chisr._zero(0.22, 2, 1, 1)
 
 
-def main():
-    res = {"rates_411_table": make_rates_411()}
+def rates_411_stats():
+    z = np.load(os.path.join(OUT, "rates_411.npz"))
+    return {"n_alpha": len(z["alpha"]), "n_chi": len(z["chi"]), "n_nan": int(np.isnan(z["im"]).sum())}
+
+
+def main(rebuild_411=False):
+    """rebuild_411: 411 の表(chisr と単体版の入力、commit してある)を作り直すか。ない場合だけ自動で作る(E16)。"""
+    path = os.path.join(OUT, "rates_411.npz")
+    res = {"rates_411_table": make_rates_411() if (rebuild_411 or not os.path.exists(path)) else rates_411_stats()}
     res.update({"growth_map_leading": growth_map(False), "growth_map_cbh": growth_map(True), "leaver_411": leaver_411()})
     tab = chisr.build()
 
@@ -228,4 +235,4 @@ if __name__ == "__main__":
         ode5(sys.argv[2], float(sys.argv[3]), float(sys.argv[4]), float(sys.argv[5]), float(sys.argv[6]),
              [float(x) for x in sys.argv[7].split(",")])
     else:
-        main()
+        main(rebuild_411="--rebuild-411" in sys.argv)

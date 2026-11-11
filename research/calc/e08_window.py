@@ -31,9 +31,12 @@ MUS = np.geomspace(0.4e-12, 1.2e-12, 17)
 
 def f_limit(M, chi_i, chi_f, T, mu, rel=True):
     """準平衡で chi_i -> chi_f にかかる時間が T になる f [GeV](時間は f^-2 に比例)。"""
+    old = si.REL
     si.REL = rel
-    t = si.t_spindown(M, chi_i, chi_f, mu, FREF)
-    si.REL = False
+    try:
+        t = si.t_spindown(M, chi_i, chi_f, mu, FREF)
+    finally:
+        si.REL = old                    # 例外のときも大域の設定を戻す(E16)
     if not np.isfinite(t):
         return np.nan
     return FREF * np.sqrt(t / T)

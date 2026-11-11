@@ -72,7 +72,7 @@ def t_spindown(M, chi_i, chi_f, mu_eV, f_gev):
     """
     mu_s = mu_eV / sr.HBAR_EVS
     a = sr.alpha_of(M, mu_eV)
-    if sr.gamma_over_mu(a, chi_f, 2, 1, 1) <= 0:
+    if g_sr(a, chi_f, mu_s) <= 0:     # 積分と同じ率で臨界を判定する(REL のとき相対論的な率、E16)
         return np.inf
     xs = np.linspace(chi_f, chi_i, 2001)
     rate = np.array([-chidot(a, c, mu_s, f_gev) for c in xs])
