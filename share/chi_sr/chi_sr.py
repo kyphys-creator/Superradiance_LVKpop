@@ -7,12 +7,13 @@
 
 regime(印):
     0 = 超放射しない(chi0 が 211 と 322 の臨界以下。m >= 3 は入れていない)
-    1 = 自己相互作用の固定点(211・322・544 の三準位、alpha <= 0.15)。211 から育つ BH も 322 から育つ BH も、
-        322 の臨界まで下がりうる
+    1 = 自己相互作用の固定点(211・322・544 の三準位)。211 から育つ BH も 322 から育つ BH も、322 の臨界まで
+        下がりうる。三準位の外の準位(411、433 など)は年齢のうちに育たない
     2 = 自由場(211 が 1 個の量子から飽和して臨界へ。そのあと f <= 1e17 GeV は固定点の降下、それより上は 322 を
         1 個の量子から。BH の質量の減少を入れる)、または 322 から育つ BH で自己相互作用が飽和までに効かない場合
     3 = この模型の外。chi0 を返す: 固定点で alpha < 0.01 または > 0.30、alpha > 0.5
-    4 = 固定点だが 0.15 < alpha <= 0.30(433・411 などが育つので近似は粗い)。値は計算して返す
+    4 = 固定点だが、三準位の外の準位(411、433、211 の臨界より上の 544)が年齢のうちに育ちうる(有限 alpha の補正
+        込みで判定)。値は三準位で計算して返すが、近似は粗い
 
 模型の要点(詳しくは README.md):
   固定点は Baryakhtar+ 2011.11646 の式 34--36 に 544 を加えた三準位(Table V・VI の率)。211 の臨界より上は (211, 322)、
@@ -44,9 +45,10 @@ class ChiSR:
         self._winv = RegularGridInterpolator((la, z["Y"]), z["winv"], bounds_error=False, fill_value=None)
         self.Y = z["Y"]
         self.chic_tab = {1: z["chic"], 2: z["chic2"]}
+        self._J = RegularGridInterpolator((la, self.W), z["J"], bounds_error=False, fill_value=None)
         self._rel = {}
         self._range = {}
-        for key, l in [("211", 1), ("322", 2)]:
+        for key, l in [("211", 1), ("322", 2), ("433", 3)]:
             self._rel[key] = RegularGridInterpolator((np.log(z[f"rel{key}_alpha"]), z[f"rel{key}_chi"]), z[f"rel{key}_F"],
                                                      method="cubic", bounds_error=False, fill_value=None)
             self._range[key] = tuple(z[f"rel{key}_range"])
@@ -77,8 +79,8 @@ class ChiSR:
         return 2.0 * 2 * rp * C * g * (m * chi / (2 * rp) - w) * a ** (4 * l + 5) / a
 
     def g(self, a, chi, level):
-        """超放射の率 / mu(占有数の率)。level = "211" か "322"。"""
-        n, l, m = (2, 1, 1) if level == "211" else (3, 2, 2)
+        """超放射の率 / mu(占有数の率)。level = "211"、"322"、"433"。"""
+        n, l, m = {"211": (2, 1, 1), "322": (3, 2, 2), "433": (4, 3, 3)}[level]
         a, chi = np.broadcast_arrays(np.asarray(a, float), np.asarray(chi, float))
         out = np.array(self._gamma_analytic(a, chi, n, l, m), float)
         lo, hi = self._range[level]
@@ -117,6 +119,26 @@ class ChiSR:
         out = self._chi_of_w(wT, c1, c2)
         keep = (chi0 <= c2) | (np.log(a) < la[0]) | (np.log(a) > la[-1])
         return np.where(keep, chi0, np.minimum(out, chi0))
+
+    def _flag_fp(self, a, chi_start, chi_T, s2, T_s, mu_s, lnGM2):
+        """固定点の領域の印(4 か 1): 三準位の外の準位が年齢のうちに 1 個の量子から育ちうるなら 4。"""
+        la = np.log(self.ALPHAS)
+        lal = np.clip(np.log(a), la[0], la[-1])
+        c1 = np.interp(lal, la, self.chic_tab[1])
+        c2 = np.interp(lal, la, self.chic_tab[2])
+        with np.errstate(divide="ignore", invalid="ignore"):
+            w0 = np.where(chi_start >= c1, 1 + (chi_start - c1) / (self.CHI_TOP - c1), (chi_start - c2) / (c1 - c2))
+            wT = np.where(chi_T >= c1, 1 + (chi_T - c1) / (self.CHI_TOP - c1), (chi_T - c2) / (c1 - c2))
+        w0 = np.clip(w0, self.W[0], self.W[-1])
+        wT = np.clip(wT, self.W[0], self.W[-1])
+        J0 = self._J(np.stack([lal, w0], -1))
+        JT = self._J(np.stack([lal, wT], -1))
+        dJ = np.where(JT > J0 * (1 + 1e-9), JT - J0, 0.0)
+        n_desc = dJ / s2
+        bottom = wT <= self.W[0] * 1.000001
+        g433 = np.maximum(self.g(a, np.minimum(chi_T, 0.995), "433"), 0.0)
+        n_bot = np.where(bottom, mu_s * g433 * T_s, 0.0)
+        return np.where((n_desc > lnGM2) | (n_bot > lnGM2), 4, 1)
 
     # ---------- 自由場 ----------
     def _sat_state(self, M, chi, mu, m, n):
@@ -210,7 +232,7 @@ class ChiSR:
             tau = mu_s[q] * (f_gev[q] / self.MPL_GEV) ** 2 * Teff
             c0eff = np.maximum(chi0[q] - eth[q], c1[q])
             out[q] = np.where(Teff > 0, self._chi_after(a[q], c0eff, tau), chi0[q])
-            reg[q] = np.where(a[q] > self.ALPHA_2LEVEL, 4, 1)
+            reg[q] = self._flag_fp(a[q], c0eff, out[q], (f_gev[q] / self.MPL_GEV) ** 2, Teff, mu_s[q], lnGM2[q])
         fr = sr211 & ~si_reg & (g1 > 0)
         if fr.any():
             out[fr] = self._free(M[fr], chi0[fr], a[fr], mu_eV[fr], mu_s[fr], T[fr], f_gev[fr], g1[fr])
@@ -239,7 +261,7 @@ class ChiSR:
                 tau = m3[ok] * (f3[ok] / self.MPL_GEV) ** 2 * Teff
                 c0eff = np.maximum(x0[ok] - 2 * eth2[ok], c2[i3][ok] + 1e-12)
                 res[ok] = np.where(Teff > 0, self._chi_after(a3[ok], c0eff, tau), x0[ok])
-                rg[ok] = np.where(a3[ok] > self.ALPHA_2LEVEL, 4, 1)
+                rg[ok] = self._flag_fp(a3[ok], c0eff, res[ok], (f3[ok] / self.MPL_GEV) ** 2, Teff, m3[ok], lnGM2[i3][ok])
             free = (g2 > 0) & ~fpq
             res[free] = np.where(T3[free] >= tsat2[free], c2[i3][free], x0[free])
             rg[free] = 2

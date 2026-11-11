@@ -30,11 +30,13 @@ def g_rel(alpha, chi, n, l, m):
     return sr.gamma_rel_over_mu(alpha, chi, n, l, m, sr.NORM_N)
 
 
-def coeffs(alpha, chi, cbh=1.0):
+def coeffs(alpha, chi, cbh=1.0, cbh_all=False):
+    """cbh: 211 x 211 -> 322 x BH に掛ける有限 alpha の補正。cbh_all=True なら BH が吸収する過程すべてに同じ補正を掛ける
+    (BGLS: 補正は地平線の近くで決まるので、BH が吸収する過程どうしの比はあまり変えない)。"""
     g = np.array([g_rel(alpha, chi, 2, 1, 1), g_rel(alpha, chi, 3, 2, 2),
                   sr.gamma_over_mu(alpha, chi, 5, 4, 4, sr.NORM_N)])
     rp = sr.rplus(chi)
-    k = dict(a=K_A * alpha ** 11 * rp * cbh, b=K_B * alpha ** 8, c=K_C * alpha ** 11 * rp,
+    k = dict(a=K_A * alpha ** 11 * rp * cbh, b=K_B * alpha ** 8, c=K_C * alpha ** 11 * rp * (cbh if cbh_all else 1.0),
              d=K_D * alpha ** 8, e=K_E * alpha ** 8, f=K_F * alpha ** 8)
     return g, k
 
@@ -187,3 +189,74 @@ def H3(alpha, chi, cbh=1.0):
     if percap(p2, g, k)[0] < 0:
         return H_of(p2, g)
     return max(H_of(p2, g), H_of(p3, g))          # 負の数なので max が遅いほう
+
+
+# ---------- 固定点の外の準位(411、433)が育つか(E15) ----------
+# BGLS Table V・VI(BH が吸収する過程は alpha^11 r+、放出は alpha^8):
+K_P1 = 2.5e-8   # 211 x 411 -> 322 x BH
+K_Q1 = 3.8e-9   # 322 x 411 -> 211 x inf
+K_G = 9.1e-8    # 211 x 322 -> 433 x BH
+K_E2 = 2.6e-9   # 322 x 433 -> 211 x inf
+K_H = 1.1e-9    # 211 x 433 -> 544 x BH
+K_K1 = 7.8e-10  # 433 x 544 -> 322 x inf
+K_K2 = 1.9e-11  # 433 x 544 -> 211 x inf
+
+
+def extra_growth(alpha, chi, x, cbh=1.0):
+    """固定点 x = (e211, e322, e544)(f によらない et)で、411 と 433 の 1 粒子あたりの増加率 / mu(線形)。
+    411: g411 - (p1 + q1) e1 e2(BGLS 式 n11evol)。433: g433 + (g - e2) e1 e2 - h e1 e3 - k1 e2 e3 - k2 e1 e3(BGLS n33 の式に 544 の項)。"""
+    rp = sr.rplus(chi) * cbh                     # BH が吸収する過程に有限 alpha の補正を掛ける
+    e1, e2, e3 = x
+    # 411 の相対論的な率の表はないので、解析式に 211 の相対論的な補正の比を掛ける(Leaver で 411 を解いて比べると、
+    # alpha = 0.1--0.3 で 211 の比との違いは 12% 以内。E15)
+    g411 = sr.gamma_over_mu(alpha, chi, 4, 1, 1, sr.NORM_N) * (g_rel(alpha, chi, 2, 1, 1)
+                                                            / sr.gamma_over_mu(alpha, chi, 2, 1, 1, sr.NORM_N))
+    g433 = g_rel(alpha, chi, 4, 3, 3)
+    l411 = g411 - (K_P1 * alpha ** 11 * rp + K_Q1 * alpha ** 8) * e1 * e2
+    l433 = (g433 + (K_G * alpha ** 11 * rp - K_E2 * alpha ** 8) * e1 * e2
+            - K_H * alpha ** 11 * rp * e1 * e3 - K_K1 * alpha ** 8 * e2 * e3 - K_K2 * alpha ** 8 * e1 * e3)
+    return l411, l433
+
+
+# ---------- 照合用: 211・322・411・433・544 の五準位の ODE(E15) ----------
+LEVELS5 = [(2, 1, 1), (3, 2, 2), (4, 1, 1), (4, 3, 3), (5, 4, 4)]
+# (i, j, k, kappa, BH が吸収するか): i x j -> k x (BH か inf)。BGLS Table V・VI。
+PROC5 = [(0, 0, 1, K_A, True), (1, 1, 0, K_B, False), (1, 1, 4, K_C, True), (4, 4, 1, K_D, False),
+         (1, 4, 0, K_E, False), (4, 4, 0, K_F, False), (0, 2, 1, K_P1, True), (2, 2, 1, 9.8e-11, True),
+         (1, 2, 0, K_Q1, False), (0, 1, 3, K_G, True), (1, 3, 0, K_E2, False), (0, 3, 4, K_H, True),
+         (3, 4, 1, K_K1, False), (3, 4, 0, K_K2, False), (3, 3, 0, 9.2e-11, False)]
+
+
+def sr_rates5(alpha, chi):
+    g211 = g_rel(alpha, chi, 2, 1, 1)
+    ratio = g211 / sr.gamma_over_mu(alpha, chi, 2, 1, 1, sr.NORM_N)
+    return np.array([g211, g_rel(alpha, chi, 3, 2, 2), sr.gamma_over_mu(alpha, chi, 4, 1, 1, sr.NORM_N) * ratio,
+                     g_rel(alpha, chi, 4, 3, 3), sr.gamma_over_mu(alpha, chi, 5, 4, 4, sr.NORM_N)])
+
+
+def evolve5(M, chi0, mu_eV, f_gev, T_yr, t_eval_yr, cbh=1.0, rtol=1e-8):
+    """五準位の運動論を 1 個の量子から解く(BH の質量は固定)。cbh は BH が吸収する過程すべてに掛ける。"""
+    from scipy.integrate import solve_ivp
+    mu_s = mu_eV / sr.HBAR_EVS
+    a = sr.alpha_of(M, mu_eV)
+    s4 = (si.MPL_GEV / f_gev) ** 4
+    eq = 1.0 / (sr.N0 * M ** 2)
+    ms = np.array([l[2] for l in LEVELS5])
+
+    def f(t, y):
+        e = np.exp(np.clip(y[:5], -700.0, 5.0))
+        chi = min(max(y[5], 0.01), 0.9999)
+        rp = sr.rplus(chi)
+        g = sr_rates5(a, chi)
+        d = np.where(g > 0, g * (e + eq), g * e)
+        dchi = -np.sum(ms * d)
+        for i, j, k, kap, bh in PROC5:
+            R = kap * (a ** 11 * rp * cbh if bh else a ** 8) * s4 * e[i] * e[j] * (e[k] + eq)
+            d[i] -= R
+            d[j] -= R
+            d[k] += R
+        return mu_s * np.concatenate([d / e, [dchi]])
+
+    y0 = [np.log(eq)] * 5 + [chi0]
+    return solve_ivp(f, (0.0, T_yr * sr.YR), y0, method="LSODA", rtol=rtol, atol=1e-10,
+                     t_eval=np.asarray(t_eval_yr) * sr.YR)

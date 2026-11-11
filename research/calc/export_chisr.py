@@ -34,12 +34,14 @@ def main():
     tab = chisr.build()
     a211, c211, F211 = rel_F(2, 1, 1)
     a322, c322, F322 = rel_F(3, 2, 2)
+    a433, c433, F433 = rel_F(4, 3, 3)
     os.makedirs(PKG, exist_ok=True)
     np.savez(os.path.join(PKG, "chi_sr_tables.npz"),
              ALPHAS=chisr.ALPHAS, W=chisr.W, CHI_TOP=chisr.CHI_TOP,
-             lnI=tab["lnI"], chic=tab["chic"], chic2=tab["chic2"], Y=tab["Y"], winv=tab["winv"],
+             lnI=tab["lnI"], chic=tab["chic"], chic2=tab["chic2"], Y=tab["Y"], winv=tab["winv"], J=tab["J"],
              rel211_alpha=a211, rel211_chi=c211, rel211_F=F211, rel211_range=np.array(sr._REL_RANGE[(2, 1, 1)]),
              rel322_alpha=a322, rel322_chi=c322, rel322_F=F322, rel322_range=np.array(sr._REL_RANGE[(3, 2, 2)]),
+             rel433_alpha=a433, rel433_chi=c433, rel433_F=F433, rel433_range=np.array(sr._REL_RANGE[(4, 3, 3)]),
              HBAR_EVS=sr.HBAR_EVS, TSUN=sr.TSUN, N0=sr.N0, YR=sr.YR,
              MPL_GEV=si.MPL_GEV, KAPPA_BH=si.KAPPA_BH, KAPPA_INF=si.KAPPA_INF, K_C=fp3.K_C, K_D=fp3.K_D,
              ALPHA_2LEVEL=chisr.ALPHA_2LEVEL, ALPHA_MAX=chisr.ALPHA_MAX, F_FP_MAX=chisr.F_FP_MAX)

@@ -27,7 +27,7 @@ import sr
 
 CHI_TOP = 0.995                       # E4 の表の上端
 ALPHAS = np.geomspace(0.01, 0.30, 161)
-ALPHA_2LEVEL = 0.15                   # これより上の固定点は印 4(433・411 が育つ: WM 2412.03655、BGLS IV C)
+ALPHA_2LEVEL = 0.15                   # E14 までの印 4 の境(E15 からは育つ準位の判定 flag_fp を使う。参照用に残す)
 ALPHA_MAX = 0.5                       # これより上は印 3(211 は超放射できず、m >= 3 が効く)
 F_FP_MAX = 1e17                       # 自由場の側で、211 の飽和のあと固定点の降下を使う f の上限 [GeV](E12)
 KAPPA_BH_544 = fp3.K_C               # BGLS Table V: Gamma^{544 x BH}_{322 x 322} / (alpha^11 (M_pl/f)^4 r+ mu)
@@ -94,6 +94,48 @@ def H(alpha, chi, cbh=False, mass_corr=False):
     return h
 
 
+def extra_growth(alpha, chi):
+    """三準位の外の準位(411、433、211 の臨界より上の 544)の、固定点での 1 粒子あたりの増加率の最大 / mu(f によらない)。
+    BH が吸収する過程すべてに E7 の有限 alpha の補正 C_BH を掛けて評価する(BGLS: 補正は地平線の近くで決まるので、
+    BH が吸収する過程どうしの比はあまり変えない)。補正なしでは 411 は alpha < 0.33 で育たず、BGLS の「411 は
+    alpha >~ 0.2 で育つ」は補正込みで再現する(E15)。印 4 の判定を控えめ(多めに印をつける側)にするための選択。
+    411 の超放射は解析式に 211 の相対論的な補正の比を掛けたもの(fp3.extra_growth と同じ)。
+    """
+    alpha, chi = np.broadcast_arrays(np.asarray(alpha, float), np.asarray(chi, float))
+    C = np.interp(alpha, si.CBH_ALPHA, si.CBH_VALUE)
+    g1 = g_vec(alpha, chi, 2, 1, 1)
+    g2 = g_vec(alpha, chi, 3, 2, 2)
+    g3 = np.array(sr.gamma_over_mu(alpha, chi, 5, 4, 4, sr.NORM_N), float)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        g411 = (np.array(sr.gamma_over_mu(alpha, chi, 4, 1, 1, sr.NORM_N), float)
+                * g1 / np.array(sr.gamma_over_mu(alpha, chi, 2, 1, 1, sr.NORM_N), float))
+    g433 = g_vec(alpha, chi, 4, 3, 3)
+    rpc = sr.rplus(chi) * C
+    a11, a8 = alpha ** 11, alpha ** 8
+    ka, kb, kc, kd = si.KAPPA_BH * a11 * rpc, si.KAPPA_INF * a8, fp3.K_C * a11 * rpc, fp3.K_D * a8
+    ke, kf = fp3.K_E * a8, fp3.K_F * a8
+    with np.errstate(divide="ignore", invalid="ignore"):
+        B = 2 * g2 - 4 * kb * g1 / ka
+        D = np.sqrt(B * B + 12 * g2 * g2)
+        u = np.where(B > 0, 2 * g2 * g2 / (B + D), (D - B) / 6)
+        e1 = np.sqrt(u / ka)
+        e2 = (u + g2) / (2 * kb * e1)
+        lam544 = g3 + kc * e2 ** 2 - ke * e1 * e2
+        f2 = 2 / np.sqrt(3) * np.sqrt(np.maximum(g2, 0) * kd) / kc
+        f3 = kc * f2 / (2 * kd)
+        lam211 = g1 + kb * f2 ** 2 + ke * f2 * f3 + kf * f3 ** 2
+    use3 = (g1 >= 0) | (lam544 < 0)
+    use2 = (~use3) & (lam211 < 0)
+    x1 = np.where(use3, e1, np.where(use2, 0.0, e1))
+    x2 = np.where(use3, e2, np.where(use2, f2, e2))
+    x3 = np.where(use3, 0.0, np.where(use2, f3, 0.0))
+    l411 = g411 - (fp3.K_P1 * a11 * rpc + fp3.K_Q1 * a8) * x1 * x2
+    l433 = (g433 + (fp3.K_G * a11 * rpc - fp3.K_E2 * a8) * x1 * x2 - fp3.K_H * a11 * rpc * x1 * x3
+            - fp3.K_K1 * a8 * x2 * x3 - fp3.K_K2 * a8 * x1 * x3)
+    lmax = np.maximum(np.maximum(l411, l433), np.where(use3, lam544, -np.inf))
+    return np.where((g2 > 0) & np.isfinite(lmax), lmax, 0.0)
+
+
 def _zero(alpha, n, l, m):
     """準位 (n, l, m) の率が 0 になるスピン(質量固定、相対論的な率の表と同じもの)。"""
     return brentq(lambda c: float(g_vec(alpha, c, n, l, m)), 1e-4, 0.9999, xtol=1e-14)
@@ -114,9 +156,11 @@ def build(cbh=False, mass_corr=False, ny=1200):
     lnI[alpha, w]: ln I、chi = chi_of_w(w, chic, chic2)。
     winv[alpha, y]: ln I = y となる w(逆引き。y は共通の格子 Y)。
     chic, chic2: 211 と 322 の臨界スピン(相対論的な率の 0)。
+    J[alpha, w]: 三準位の外の準位が、chi(w) から CHI_TOP までの降下のあいだに育つ e-fold の数 x (f/M_pl)^2(E15)。
     """
     nA = len(ALPHAS)
     lnI = np.empty((nA, len(W)))
+    J = np.empty((nA, len(W)))     # J = int_chi^TOP lam+/|H| dchi'(三準位の外の準位が育つ e-fold の数 x (f/M_pl)^2)
     c1s, c2s = np.empty(nA), np.empty(nA)
     for i, a in enumerate(ALPHAS):
         c1, c2 = _zero(a, 2, 1, 1), _zero(a, 3, 2, 2)
@@ -126,11 +170,13 @@ def build(cbh=False, mass_corr=False, ny=1200):
         I = -cumulative_trapezoid(invH[::-1], chis[::-1], initial=0.0)[::-1]   # 上から積分
         I[-1] = I[-2] * 1e-3            # w = 2(chi = CHI_TOP)の I = 0 を有限の小さい値で置き換える
         lnI[i] = np.log(I)
+        lam = np.maximum(extra_growth(a, chis), 0.0)                              # 三準位の外の準位の増加率 / mu
+        J[i] = -cumulative_trapezoid((lam * invH)[::-1], chis[::-1], initial=0.0)[::-1]
     Y = np.linspace(lnI[:, -2].min(), lnI[:, 0].max(), ny)
     winv = np.empty((nA, ny))
     for i in range(nA):
         winv[i] = np.interp(Y, lnI[i][::-1], W[::-1], left=W[-1], right=W[0])
-    return {"lnI": lnI, "chic": c1s, "chic2": c2s, "Y": Y, "winv": winv}
+    return {"lnI": lnI, "chic": c1s, "chic2": c2s, "Y": Y, "winv": winv, "J": J}
 
 
 def _interps(tab):
@@ -162,6 +208,28 @@ def chi_after(tab, alpha, chi0, tau):
     out = chi_of_w(wT, c1, c2)
     keep = (chi0 <= c2) | (np.log(alpha) < la[0]) | (np.log(alpha) > la[-1])
     return np.where(keep, chi0, np.minimum(out, chi0)).reshape(shape)
+
+
+def flag_fp(tab, alpha, chi_start, chi_T, s2, T_s, mu_s, lnGM2):
+    """固定点の領域の印: 三準位の外の準位が年齢のうちに 1 個の量子から育ちうるなら 4、そうでなければ 1(E15)。
+    降下のあいだの e-fold は (J(w_T) - J(w_start)) / (f/M_pl)^2。322 の臨界まで下がった BH は、
+    そのあと 433 の超放射だけで育つ e-fold(mu g433 T、控えめに年齢全体)も見る。"""
+    if "_f_J" not in tab:
+        tab["_f_J"] = RegularGridInterpolator((np.log(ALPHAS), W), tab["J"], bounds_error=False, fill_value=None)
+    la = np.log(ALPHAS)
+    lal = np.clip(np.log(alpha), la[0], la[-1])
+    c1 = np.interp(lal, la, tab["chic"])
+    c2 = np.interp(lal, la, tab["chic2"])
+    w0 = np.clip(w_of_chi(chi_start, c1, c2), W[0], W[-1])
+    wT = np.clip(w_of_chi(chi_T, c1, c2), W[0], W[-1])
+    J0 = tab["_f_J"](np.stack([lal, w0], -1))
+    JT = tab["_f_J"](np.stack([lal, wT], -1))
+    dJ = np.where(JT > J0 * (1 + 1e-9), JT - J0, 0.0)          # 補間の丸めで 0 の区間に正の値が出ないように
+    n_desc = dJ / s2
+    bottom = wT <= W[0] * 1.000001
+    g433 = np.maximum(g_vec(alpha, np.minimum(chi_T, 0.995), 4, 3, 3), 0.0)
+    n_bot = np.where(bottom, mu_s * g433 * T_s, 0.0)
+    return np.where((n_desc > lnGM2) | (n_bot > lnGM2), 4, 1)
 
 
 def tau_of(mu_eV, f_gev, T_yr):
@@ -258,12 +326,13 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
     """年齢 T のあとの BH のスピンと、どの領域で計算したかの印(配列で渡せる)。
 
     印: 0 = 超放射しない(chi0 が 211 と 322 の臨界以下。m >= 3 は入れていない)
-        1 = 自己相互作用の固定点(三準位 211・322・544、alpha <= 0.15)。211 から育つ BH も 322 から育つ BH も、
-            322 の臨界まで下がりうる
+        1 = 自己相互作用の固定点(三準位 211・322・544)。211 から育つ BH も 322 から育つ BH も、322 の臨界まで
+            下がりうる。三準位の外の準位(411、433 など)は年齢のうちに育たない
         2 = 自由場(211 が飽和して臨界へ。そのあと f <= 1e17 GeV は固定点の降下、それより上は 322 を 1 個の量子から)、
             または 322 から育つ BH で自己相互作用が飽和までに効かず、322 が飽和して 322 の臨界へ
         3 = この模型の外。chi0 を返す: 固定点で alpha が表の外(alpha < 0.01 または > 0.30)、alpha > 0.5
-        4 = 固定点だが 0.15 < alpha <= 0.30。433・411 などが育つので近似は粗い。値は計算して返す
+        4 = 固定点だが、三準位の外の準位(411、433、211 の臨界より上の 544)が年齢のうちに育ちうる(有限 alpha の
+            補正込みで判定、E15)。値は三準位で計算して返すが、近似は粗い
     領域の判定(BGLS の B|C の境界、式 53・56): 準平衡の占有数 eps_eq と行き過ぎの占有数 eps_th が、
     どちらも自由場で飽和する量 eps_max = chi0 - chi_c より小さければ準平衡。
     準平衡では、1 個の量子から eps_eq まで育つ時間 t_grow を年齢から引き、行き過ぎで失う eps_th を初期スピンから引く。
@@ -302,7 +371,7 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
         tau = mu_s[q] * (f_gev[q] / si.MPL_GEV) ** 2 * Teff
         c0eff = np.maximum(chi0[q] - eth[q], c1[q])
         out[q] = np.where(Teff > 0, chi_after(tab, a[q], c0eff, tau), chi0[q])
-        reg[q] = np.where(a[q] > ALPHA_2LEVEL, 4, 1)
+        reg[q] = flag_fp(tab, a[q], c0eff, out[q], (f_gev[q] / si.MPL_GEV) ** 2, Teff, mu_s[q], lnGM2[q])
     fr = sr211 & ~si_reg & (g1 > 0)
     if fr.any():
         out[fr] = _free_branch(tab, M[fr], chi0[fr], a[fr], mu_eV[fr], mu_s[fr], T[fr], f_gev[fr], g1[fr])
@@ -337,7 +406,7 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
             tau = m3[ok] * (f3[ok] / si.MPL_GEV) ** 2 * Teff
             c0eff = np.maximum(x0[ok] - 2 * eth2[ok], c2[i3][ok] + 1e-12)
             res[ok] = np.where(Teff > 0, chi_after(tab, a3[ok], c0eff, tau), x0[ok])
-            rg[ok] = np.where(a3[ok] > ALPHA_2LEVEL, 4, 1)
+            rg[ok] = flag_fp(tab, a3[ok], c0eff, res[ok], (f3[ok] / si.MPL_GEV) ** 2, Teff, m3[ok], lnGM2[i3][ok])
         free = (g2 > 0) & ~fpq
         res[free] = np.where(T3[free] >= tsat2[free], c2[i3][free], x0[free])
         rg[free] = 2
