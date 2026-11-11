@@ -12,6 +12,8 @@
 臨界スピンは、相対論的な率(g_vec)が 0 になるスピンを細かい alpha の格子(THR_ALPHAS)で表にしたものを、どこでも使う
 (固定点の表、領域の判定、自由場の飽和。E16)。
 """
+import os
+
 import numpy as np
 from scipy.integrate import cumulative_trapezoid
 from scipy.optimize import brentq
@@ -28,6 +30,7 @@ THR_ALPHAS = np.unique(np.concatenate([np.geomspace(0.003, 0.6, 2000)]
                                       + [[b * (1 - 1e-12), b, b * (1 + 1e-12)] for b in _THR_EDGES]))
 ALPHA_MAX = 0.5                       # これより上は印 3(211 は超放射できず、m >= 3 が効く)
 F_FP_MAX = 1e17                       # 自由場の側で、211 の飽和のあと固定点の降下を使う f の上限 [GeV](E12)
+REFTAB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", "reftab.npz")   # 値の表(E18)
 
 _E = np.geomspace(1e-13, 1e-2, 110, endpoint=False)
 W_LO = np.concatenate([_E, np.linspace(1e-2, 1 - 1e-2, 300, endpoint=False), 1 - _E[::-1]])   # (0, 1): 322 の臨界から 211 の臨界
@@ -137,7 +140,7 @@ def w_of_chi(chi, c1, c2):
 
 
 # ---------- 表 ----------
-def build(cbh=False, mass_corr=False):
+def build(cbh=False, mass_corr=False, use_reftab=True, reftab_path=None):
     """表を作る。
     lnI[alpha, w]: ln I、chi = chi_of_w(w, chic, chic2)(節の alpha での臨界)。
     J[alpha, w]: 三準位の外の準位が、chi(w) から CHI_TOP までの降下のあいだに育つ e-fold の数 x (f/M_pl)^2(E15)。
@@ -160,8 +163,16 @@ def build(cbh=False, mass_corr=False):
     thr1 = np.array([_zero(a, 2, 1, 1) for a in THR_ALPHAS])
     thr2 = np.array([_zero(a, 3, 2, 2) for a in THR_ALPHAS])
     thr3 = np.array([_zero(a, 4, 3, 3) for a in THR_ALPHAS])
-    return {"lnI": lnI, "J": J, "chic": c1s, "chic2": c2s, "thr_alpha": THR_ALPHAS, "thr1": thr1, "thr2": thr2,
+    tab = {"lnI": lnI, "J": J, "chic": c1s, "chic2": c2s, "thr_alpha": THR_ALPHAS, "thr1": thr1, "thr2": thr2,
             "thr3": thr3}
+    if use_reftab:
+        import reftab
+        path = reftab_path or REFTAB_PATH
+        if not os.path.exists(path):              # 表は git に入れていない(700 MB): 黙って半解析に戻さない
+            raise FileNotFoundError(f"値の表 {path} がない。calc/e18_reftab_build.py で作るか、"
+                                    "半解析だけで使うなら build(use_reftab=False)(E17 までの版、E18 の約束の外)")
+        tab["rt"] = reftab.load3(path)
+    return tab
 
 
 def _alpha_nodes(alpha):
@@ -328,19 +339,33 @@ def _check(M, chi0, T_yr, mu_eV, f_gev):
 def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
     """年齢 T のあとの BH のスピンと、どの領域で計算したかの印(配列で渡せる)。
 
-    印: 0 = 超放射しない(chi0 が 211 と 322 の臨界以下。m >= 3 は入れていない)
+    値(E18): 超放射する点(chi0 が 322 の臨界より上)の値は、基準の運動論(fp3.evolve3m: 211・322・544 の三準位、
+    BH の質量と角運動量の変化、BH へのエネルギーの戻り、重力波の過程)から直接作った表(calc/reftab.py、
+    out/reftab.npz)から引く。表の範囲は alpha 0.008--0.5、f 1e8--10^20.5 GeV(それより上は上端の値)、M 1--300 Msun、
+    mu T <= 0.13 eV yr。f < 1e8 GeV と alpha < 0.008 は下の半解析の値のまま(照合で確かめた)。印 1・2 の区別は
+    半解析の領域の判定から付ける。
+    約束(E18、照合した範囲は M 2--200 Msun、mu 1e-13--1e-11 eV、f 1e6--1e22 GeV、T 1e5--1.4e10 yr、alpha <= 0.5):
+    印 0・1・2 の値は、基準の運動論と |chi_SR(T) - chi_ref(T')| <= 0.03 を満たす T' が |ln(T'/T)| <= 0.02 の中にある
+    (速い段差の時刻は 2% までずれてよい)。独立な 3000 点 x 40 年齢で最大 0.023、越えた点なし。
+
+    印: 0 = 超放射しない(chi0 が 211 と 322 の臨界以下で、433 も年齢のうちに飽和しない)。chi0 を返す
         1 = 自己相互作用の固定点(三準位 211・322・544)。211 から育つ BH も 322 から育つ BH も、322 の臨界まで
             下がりうる。三準位の外の準位(411、433 など)は年齢のうちに育たない
-        2 = 自由場(211 が飽和して臨界へ。そのあと f <= 1e17 GeV は固定点の降下、それより上は 322 を 1 個の量子から)、
-            または 322 から育つ BH で自己相互作用が飽和までに効かず、322 が飽和して 322 の臨界へ(どちらも BH の質量の減少を入れる)
-        3 = この模型の外。chi0 を返す: 固定点で alpha が表の外(alpha < 0.01 または > 0.30)、alpha > 0.5、
-            211・322 は超放射しないが 433(m = 3)が年齢のうちに飽和しうる(E17)
-        4 = 値は計算して返すが、模型の外の準位が年齢のうちに育ちうるので近似は粗い: 固定点で 411、433、211 の臨界
-            より上の 544 が育ちうる(有限 alpha の補正込みで判定、E15)、または自由場で止まったスピンから 433 が
-            飽和しうる(E17)
+        2 = 自由場(211 が飽和して臨界へ、そのあと 322 の段階)、または 322 から育つ BH で自己相互作用が飽和までに
+            効かず、322 が飽和する場合
+        3 = この模型の外。chi0 を返す: 固定点で alpha が半解析の表の外(alpha < 0.01 または > 0.30)、alpha > 0.5、
+            211・322 は超放射しないが 433(m = 3)が年齢のうちに飽和しうる(E17)、表の範囲の中なのに値を引けない
+            (M が 1--300 Msun の外、mu T > 0.13 eV yr、重みのある節がその年齢まで解けていない)、
+            chi0 > 0.995 で超放射する(E18)
+        4 = 値は返すが、模型の外の準位が年齢のうちに育ちうるので近似は粗い: 固定点で 411、433、211 の臨界より上の
+            544 が育ちうる(有限 alpha の補正込みで判定、E15)、または自由場で止まったスピンから 433 が飽和しうる(E17)。
+            約束の外(照合で最大 0.17)
+        5 = 値は表の補間だが、速い段差の時刻が表の節のあいだで急に変わる所(E18): 角の節の値の幅が 0.06 を越え、
+            しかも段差の時刻の曲がりが 0.05 dex を越える。約束の外(照合で 3% が 0.03 を越え、最大 0.27)
     領域の判定(BGLS の B|C の境界、式 53・56): 準平衡の占有数 eps_eq と行き過ぎの占有数 eps_th が、
     どちらも自由場で飽和する量 eps_max = chi0 - chi_c より小さければ準平衡。
-    準平衡では、1 個の量子から eps_eq まで育つ時間 t_grow を年齢から引き、行き過ぎで失う eps_th を初期スピンから引く。
+    準平衡では、1 個の量子から eps_eq まで育つ時間 t_grow を年齢から引き、行き過ぎで失う eps_th を初期スピンから引く
+    (表の範囲の外で使う半解析の値)。
     """
     M, chi0, T_yr, mu_eV, f_gev = np.broadcast_arrays(*[np.asarray(x, float) for x in (M, chi0, T_yr, mu_eV, f_gev)])
     shape = M.shape
@@ -356,6 +381,29 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
     out = chi0.copy()
     reg = np.zeros(len(M), int)
     reg[big] = 3
+
+    # ---- 値の表(E18): 基準の運動論から作った表で、超放射する点の値を引く ----
+    # 表の範囲の外: f が表の下端より小さい点と alpha が表の下端より小さい点は、下の半解析の値のまま(照合で確かめる)。
+    # f が表の上端より大きい点は上端の値(自己相互作用が効かない)。M、mu T が表の範囲の外の点と、重みのある節が解けて
+    # いない点は印 3。
+    rt = tab.get("rt")
+    tv = chi0.copy()
+    use_t = np.zeros(len(M), bool)
+    out_rt = np.zeros(len(M), bool)
+    sharp_t = np.zeros(len(M), bool)
+    if rt is not None:
+        import reftab
+        cand_t = (chi0 > c2) & ~big
+        if cand_t.any():
+            it = np.flatnonzero(cand_t)
+            lfmax = rt["LF_NODES"][-1]
+            ff = np.minimum(f_gev[it], 10 ** lfmax)
+            v, ok, sh = reftab.lookup_rt3(rt, T_yr[it], a[it], chi0[it], ff, M[it], mu_eV[it], c1[it], c2[it])
+            tv[it] = v
+            use_t[it] = ok
+            sharp_t[it] = sh & ok
+            below = (np.log10(f_gev[it]) < rt["LF_NODES"][0]) | (a[it] < rt["A_NODES"][0])
+            out_rt[it] = ~ok & ~below            # 表の範囲の中なのに引けない、または M・mu T が範囲の外
 
     sr211 = (chi0 > c1) & ~big
     # ---- 211 が超放射する BH ----
@@ -379,10 +427,12 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
         tau = mu_s[q] * (f_gev[q] / si.MPL_GEV) ** 2 * Teff
         c0eff = np.maximum(chi0[q] - eth[q], c1[q])
         out[q] = np.where(Teff > 0, chi_after(tab, a[q], c0eff, tau), chi0[q])
-        reg[q] = flag_fp(tab, a[q], c0eff, out[q], (f_gev[q] / si.MPL_GEV) ** 2, Teff, mu_s[q], lnGM2[q])
+        out[q] = np.where(use_t[q], tv[q], out[q])
+        reg[q] = flag_fp(tab, a[q], np.maximum(c0eff, out[q]), out[q], (f_gev[q] / si.MPL_GEV) ** 2, Teff, mu_s[q], lnGM2[q])
     fr = sr211 & ~si_reg & (g1 > 0)
     if fr.any():
         out[fr] = _free_branch(tab, M[fr], chi0[fr], a[fr], mu_eV[fr], mu_s[fr], T[fr], f_gev[fr], g1[fr])
+        out[fr] = np.where(use_t[fr], tv[fr], out[fr])
         reg[fr] = 2
 
     # ---- 211 は超放射しないが 322 はする BH(chi_c322 < chi0 <= chi_c211)、E14 ----
@@ -414,16 +464,28 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
             tau = m3[ok] * (f3[ok] / si.MPL_GEV) ** 2 * Teff
             c0eff = np.maximum(x0[ok] - 2 * eth2[ok], c2[i3][ok] + 1e-12)
             res[ok] = np.where(Teff > 0, chi_after(tab, a3[ok], c0eff, tau), x0[ok])
-            rg[ok] = flag_fp(tab, a3[ok], c0eff, res[ok], (f3[ok] / si.MPL_GEV) ** 2, Teff, m3[ok], lnGM2[i3][ok])
+            res[ok] = np.where(use_t[i3][ok], tv[i3][ok], res[ok])
+            rg[ok] = flag_fp(tab, a3[ok], np.maximum(c0eff, res[ok]), res[ok], (f3[ok] / si.MPL_GEV) ** 2, Teff, m3[ok],
+                             lnGM2[i3][ok])
         free = (g2 > 0) & ~fpq
         if free.any():
             Mf2, cf2 = _sat_state(M3[free], x0[free], u3[free], 2, 3, tab)
             cf2 = np.minimum(cf2, x0[free])
             lnN2 = np.log(np.maximum((x0[free] * M3[free] ** 2 - cf2 * Mf2 ** 2) / 2, 1e-300)) + np.log(sr.N0)
             res[free] = np.where(T3[free] >= lnN2 / g2[free], cf2, x0[free])
+            res[free] = np.where(use_t[i3][free], tv[i3][free], res[free])
             rg[free] = 2
         out[i3] = res
         reg[i3] = rg
+
+    # 表の範囲の中なのに値を引けない点(M・mu T が範囲の外、節が解けていない)は印 3(chi0 を返す)。E18
+    bad_t = out_rt & np.isin(reg, (1, 2, 4))
+    out[bad_t] = chi0[bad_t]
+    reg[bad_t] = 3
+    # 初期スピンが率の表の端(0.995)より上で超放射する点も印 3(E18)
+    top = (chi0 > CHI_TOP) & np.isin(reg, (1, 2, 4))
+    out[top] = chi0[top]
+    reg[top] = 3
 
     # ---- m = 3(433)の超放射(模型に入っていない)、E17 ----
     # 返すスピンが 433 の臨界より上で、433 が 1 個の量子から(自由場で)年齢のうちに飽和しうる点に印をつける。
@@ -436,4 +498,6 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
         lnN3 = np.log(np.maximum((out[i4] - c3[i4]) / 3, 1e-300)) + lnGM2[i4]
         grows = (g433 > 0) & (g433 * T[i4] > lnN3)
         reg[i4[grows]] = np.where(reg[i4[grows]] == 0, 3, 4)
+    # 速い段差の時刻が表の節のあいだで急に変わる所(E18): 値は表の補間のまま、印 5
+    reg[np.isin(reg, (1, 2)) & sharp_t] = 5
     return out.reshape(shape), reg.reshape(shape)

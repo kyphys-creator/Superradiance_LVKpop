@@ -25,6 +25,10 @@ data/*/
 
 # 計算の作業ファイル
 research/calc/out/work/
+# E18 の基準の運動論の表(700 MB、calc/e18_reftab_build.py で作り直せる)と照合の基準の曲線(calc/e18_validate2.py refs)
+research/calc/out/reftab.npz
+research/calc/out/reftab_partial.npz
+research/calc/out/e18_refs_*.npz
 research/figs/png/
 
 # ダウンロードした論文(arXiv のソース・PDF。抜き書きは Refs/notes/ に残す)

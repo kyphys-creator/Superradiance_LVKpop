@@ -206,3 +206,108 @@ def evolve5(M, chi0, mu_eV, f_gev, T_yr, t_eval_yr, cbh=1.0, rtol=1e-8):
     y0 = [np.log(eq)] * 5 + [chi0]
     return solve_ivp(f, (0.0, T_yr * sr.YR), y0, method="LSODA", rtol=rtol, atol=1e-10,
                      t_eval=np.asarray(t_eval_yr) * sr.YR)
+
+
+# ---------- 照合の基準: BH の質量と角運動量も時間で変える三準位の運動論(E18) ----------
+def evolve3m(M0, chi0, mu_eV, f_gev, T_yr, t_eval_yr, rtol=1e-8, gw=True, max_nfev=1200000):
+    """211・322・544 の運動論を 1 個の量子から解く。BH の質量 M [Msun] と角運動量 J [G Msun^2/c] も時間で変える。
+    変数は ln n_i(n = N/N0、N0 = G Msun^2/(hbar c))、M、J。
+      超放射: dn_i = g_i mu (n_i + n_q) dt(g_i > 0 のとき。n_q = 1/N0 は 1 個の量子)、
+              BH は dM = -(omega_i/mu) alpha_sun dn_i、dJ = -m_i dn_i。
+      自己相互作用: BGLS の eps = n/M^2 の式を、dn = M^2 d eps として n で書き直す。
+              BH が吸収する過程 i x j -> k x BH では、BH がエネルギー omega_i + omega_j - omega_k を受け取る(m は保存され、
+              BH の角運動量は変わらない)。無限遠への放出は BH に影響しない。
+    重力波の過程(BGLS Table IV、gw=True のとき): 211 と 322 の消滅 1e-2 alpha^14、3e-8 alpha^18(eps_dot = -2 g eps^2)、
+    322 -> 211 の遷移 5e-6 alpha^10(eps_dot_211 = +g eps322 eps211)。雲だけを減らし、BH には効かない。自由場では、
+    322 の段階のあいだに残った 211 の雲が BH に吸い戻されて回転を戻すのを、この消滅が防ぐ(E18)。
+    解法は LSODA。止まったら最後の出力の時刻から Radau、BDF と切り替えて続ける(右辺の評価は全体で max_nfev まで。E18)。
+    返り値: scipy の解(y = ln n1, ln n2, ln n3, M, J)。"""
+    from scipy.integrate import solve_ivp
+    mu_s = mu_eV / sr.HBAR_EVS
+    a_sun = sr.alpha_of(1.0, mu_eV)
+    s4 = (si.MPL_GEV / f_gev) ** 4
+    nq = 1.0 / sr.N0
+    lev = ((2, 1, 1), (3, 2, 2), (5, 4, 4))
+
+    def f(t, y):
+        n = np.exp(np.clip(y[:3], -800.0, 30.0))
+        M = min(max(y[3], 0.5 * M0), M0)                  # 解法が大きく踏み出したときの保護(物理的には M0/2 < M <= M0)
+        J = max(y[4], 0.0)
+        chi = min(max(J / M ** 2, 0.0), 0.9999)
+        a = a_sun * M
+        g, k = coeffs(a, chi)
+        w = [sr.omega_over_mu(a, nn, l, m, chi) for (nn, l, m) in lev]
+        e1, e2, e3 = n / M ** 2
+        eq = nq / M ** 2
+        Ra = k["a"] * s4 * e1 ** 2 * (e2 + eq)
+        Rb = k["b"] * s4 * e2 ** 2 * (e1 + eq)
+        Rc = k["c"] * s4 * e2 ** 2 * (e3 + eq)
+        Rd = k["d"] * s4 * e3 ** 2 * (e2 + eq)
+        Re = k["e"] * s4 * e2 * e3 * (e1 + eq)
+        Rf = k["f"] * s4 * e3 ** 2 * (e1 + eq)
+        # 減衰する準位(g < 0)は n_floor = 1e-2 n_q へなめらかに近づける(1 個より少ない占有数は意味がなく、あとで育つときの
+        # 種は n + n_q なので結果は変わらない。ln n が下へ走って解法が止まるのを防ぐ。E18)
+        sr_ = [g[i] * (n[i] + nq) if g[i] > 0 else g[i] * (n[i] - 1e-2 * nq) for i in range(3)]
+        M2 = M ** 2
+        if gw:
+            G1, G2, Gt = 1e-2 * a ** 14 * e1 ** 2, 3e-8 * a ** 18 * e2 ** 2, 5e-6 * a ** 10 * e2 * (e1 + eq)
+        else:
+            G1 = G2 = Gt = 0.0
+        d1 = sr_[0] + M2 * (-2 * Ra + Rb + Re + Rf - 2 * G1 + Gt)
+        d2 = sr_[1] + M2 * (Ra - 2 * Rb - 2 * Rc + Rd - Re - 2 * G2 - Gt)
+        d3 = sr_[2] + M2 * (Rc - 2 * Rd - Re - 2 * Rf)
+        dM = -a_sun * (w[0] * sr_[0] + w[1] * sr_[1] + w[2] * sr_[2]) + a_sun * M2 * (Ra * (2 * w[0] - w[1]) + Rc * (2 * w[1] - w[2]))
+        dJ = -(sr_[0] + 2 * sr_[1] + 4 * sr_[2])
+        out = mu_s * np.array([d1 / n[0], d2 / n[1], d3 / n[2], dM, dJ])
+        return np.where(np.isfinite(out), out, 0.0)
+
+    y0 = [np.log(nq)] * 3 + [M0, chi0 * M0 ** 2]
+    te = np.clip(np.asarray(t_eval_yr, float) * sr.YR, 0.0, T_yr * sr.YR)   # 丸めで端を越えないように
+    # 解法が途中で止まったら、最後に出力した時刻から別の解法で続ける(LSODA -> Radau -> BDF -> LSODA ...)。
+    # 1 区間の右辺の評価は seg_nfev まで(event で止める)、全体で max_nfev まで。
+    from types import SimpleNamespace
+    T_end = T_yr * sr.YR
+    seg_nfev = max(max_nfev // 4, 1000)
+    count = [0]
+    t_stop = [np.inf]
+
+    def budget(t, y):                                     # 評価の上限に達した時刻で 0 を横切る(連続な関数にしておく)
+        return 1.0 if not np.isfinite(t_stop[0]) else t_stop[0] - t
+    budget.terminal = True
+
+    def fc(t, y):
+        count[0] += 1
+        if count[0] == seg_nfev:
+            t_stop[0] = t
+        return f(t, y)
+
+    methods = ("LSODA", "Radau", "BDF")
+    t_cur, y_cur = 0.0, np.asarray(y0, float)
+    ts, ys = [], []
+    done, total, k, stall = 0, 0, 0, 0
+    while done < len(te) and total < max_nfev and stall < len(methods):
+        count[0] = 0
+        t_stop[0] = np.inf
+        sol = solve_ivp(fc, (t_cur, T_end), y_cur, method=methods[k % len(methods)], rtol=rtol, atol=1e-12,
+                        t_eval=te[done:], events=budget)
+        total += count[0]
+        sy = np.asarray(sol.y, float)
+        if sy.ndim != 2 or sy.shape[1] == 0:                # 出力点に 1 つも届かなかった
+            sy = np.zeros((5, 0))
+        good = np.all(np.isfinite(sy), axis=0)
+        nnew = int(np.argmin(good)) if not np.all(good) else len(good)       # 有限な出力が続くところまで
+        if nnew > 0:
+            ts.append(np.asarray(sol.t)[:nnew])
+            ys.append(sy[:, :nnew])
+            done += nnew
+            t_cur, y_cur = ts[-1][-1], sy[:, nnew - 1]
+            stall = 0
+        else:
+            stall += 1
+        if done < len(te):
+            k += 1
+    ok = done == len(te)
+    y = np.concatenate(ys, axis=1) if ys else np.zeros((5, 0))
+    t = np.concatenate(ts) if ts else np.zeros(0)
+    return SimpleNamespace(status=0 if ok else -1, y=y, t=t, nfev=total, nseg=k + 1,
+                           message="ok" if ok else f"stopped at t = {t_cur / sr.YR:.3e} yr")
