@@ -1,0 +1,25 @@
+% E22: (a) 年齢の分布、(b) 年齢について周辺化した、回転を保つ確率と失う確率。データは calc/e22_ages.py
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1, horizontal sep=17mm}, width=0.48\linewidth, height=0.44\linewidth, note, xmode=log]
+\nextgroupplot[xmin=1e4, xmax=2e10, ymin=0, ymax=3.4, xlabel={年齢 $T$ [年]}, ylabel={$dP/d\log_{10}T$},
+  title={\small (a) 年齢の分布},
+  legend style={font=\scriptsize, at={(0.03,0.97)}, anchor=north west, fill=white, fill opacity=0.85, text opacity=1, draw=none},
+  legend cell align=left]
+  \addplot[cA, line width=1.0pt] table[x=T, y=g1_field] {figs/data/e22_pdf.dat}; \addlegendentry{1 世代目、既定}
+  \addplot[cA, line width=1.0pt, dashed] table[x=T, y=g1_old] {figs/data/e22_pdf.dat}; \addlegendentry{1 世代目、古い}
+  \addplot[cB, line width=1.0pt] table[x=T, y=g2_wide] {figs/data/e22_pdf.dat}; \addlegendentry{2 世代目、広い}
+  \addplot[cB, line width=1.0pt, dashed] table[x=T, y=g2_peak] {figs/data/e22_pdf.dat}; \addlegendentry{2 世代目、星団の目安}
+  \addplot[cB, line width=1.0pt, densely dotted] table[x=T, y=g2_slow] {figs/data/e22_pdf.dat}; \addlegendentry{2 世代目、遅い}
+  \addplot[cM, line width=1.0pt] table[x=T, y=g2_agn] {figs/data/e22_pdf.dat}; \addlegendentry{2 世代目、AGN 円盤}
+\nextgroupplot[xmin=3e10, xmax=1e14, ymin=0, ymax=1.05, xlabel={$f$ [GeV]}, ylabel={確率},
+  title={\small (b) 年齢について周辺化した確率},
+  legend style={font=\scriptsize, at={(0.5,-0.30)}, anchor=north, fill=white, draw=none}, legend columns=2,
+  legend cell align=left]
+  \addplot[cB, line width=1.0pt] table[x=f, y=wide_078] {figs/data/e22_prob_keep.dat}; \addlegendentry{保つ: 2 世代目、広い}
+  \addplot[cA, line width=1.0pt] table[x=f, y=field_20] {figs/data/e22_prob_drop.dat}; \addlegendentry{失う: 1 世代目 $20\,M_\odot$、既定}
+  \addplot[cB, line width=1.0pt, dashed] table[x=f, y=peak_078] {figs/data/e22_prob_keep.dat}; \addlegendentry{保つ: 2 世代目、星団の目安}
+  \addplot[cA, line width=1.0pt, dashed] table[x=f, y=old_20] {figs/data/e22_prob_drop.dat}; \addlegendentry{失う: 1 世代目 $20\,M_\odot$、古い}
+  \addplot[cB, line width=1.0pt, densely dotted] table[x=f, y=slow_078] {figs/data/e22_prob_keep.dat}; \addlegendentry{保つ: 2 世代目、遅い}
+  \addplot[cC, line width=1.0pt, dashed] table[x=f, y=old_10] {figs/data/e22_prob_drop.dat}; \addlegendentry{失う: 1 世代目 $10\,M_\odot$、古い}
+\end{groupplot}
+\end{tikzpicture}

@@ -30,6 +30,7 @@ Refs/arxiv/                  ダウンロードした論文のソース・PDF(gi
 DESIGN.md                    決めた設計とその理由
 paper/outline.md             論文の構成案と、データ解析の前に残る理論の作業
 share/chi_sr/                集団解析用の χ_SR の単体版(共同研究者に渡す。表は research/calc/export_chisr.py が作る)
+share/ages/                  BH の年齢の分布の模型(集団解析が年齢を周辺化するための部品。確かめは research/calc/e22_ages.py)
 study/study_note.tex         勉強ノート(学部の物理から、この研究の物理を省略せずに導出。chapters/、figs/。ビルド: cd study && latexmk -lualatex study_note.tex)
 ```
 
