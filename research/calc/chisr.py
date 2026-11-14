@@ -34,6 +34,9 @@ REFTAB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", "r
 # 単体版に書き出した値の表(12 MB、git にある)。基準の表がない計算機では、ここから同じ数の辞書を作る(E19)
 EXPORTED_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "share", "chi_sr", "chi_sr_tables.npz")
 LOW_MARGIN = 7.0                      # E19: 値の表で引けない固定点の点を chi0 のままにする条件(育つ時刻の何 e-fold 前か)
+# E20: f の下限 [GeV]。f が約 1e-58 GeV より小さいと、自己相互作用の率 ∝ (M_Pl/f)^4 が倍精度をあふれ、準平衡の判定が NaN に
+# なって、自由場の値を印 2 で返してしまう(正しくは chi0 のまま)。物理的に意味のない範囲なので、入力の検査で止める
+F_MIN_GEV = 1e-40
 
 _E = np.geomspace(1e-13, 1e-2, 110, endpoint=False)
 W_LO = np.concatenate([_E, np.linspace(1e-2, 1 - 1e-2, 300, endpoint=False), 1 - _E[::-1]])   # (0, 1): 322 の臨界から 211 の臨界
@@ -357,6 +360,8 @@ def _check(M, chi0, T_yr, mu_eV, f_gev):
         raise ValueError("chi0 は 0 <= chi0 < 1")
     if np.any(M <= 0) or np.any(mu_eV <= 0) or np.any(f_gev <= 0) or np.any(T_yr < 0):
         raise ValueError("M, mu_eV, f_gev は正、T_yr は 0 以上")
+    if np.any(f_gev < F_MIN_GEV):
+        raise ValueError(f"f_gev は {F_MIN_GEV:g} 以上(これより小さいと、自己相互作用の率が倍精度をあふれる)")
 
 
 def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):

@@ -5,6 +5,7 @@
     model = ChiSR("chi_sr_tables.npz")
     chi_T, regime = model(M_msun, chi0, T_yr, mu_eV, f_GeV)   # どれも配列でよい(ブロードキャスト)
 M_msun は生まれたときの BH の質量(超放射で減る前)。観測された質量を渡すと、f >= 1e17 GeV で最大 0.04 ずれる(README)。
+入力は有限の値で、0 <= chi0 < 1、M_msun > 0、mu_eV > 0、T_yr >= 0、f_GeV >= 1e-40。外れると ValueError。
 
 regime(印):
     0 = 超放射しない(chi0 が 211 と 322 の臨界以下で、433 も年齢のうちに飽和しない)。chi0 を返す
@@ -62,6 +63,9 @@ KS_MIN = 0.02 / np.log(10.0)       # 約束が許す時刻のずれ 2% [dex]。�
 KS_CAP = 0.3                       # 時刻をずらす幅の上限 [dex]
 THETA_SW = 0.015                   # 折れの分だけ時刻をずらしたときの値の変化がこれを越えたら印 5
 THETA_P = 0.02                     # 補間が止まった所(平らな所)で、角の節の値の幅がこれを越えたら印 5
+# f の下限 [GeV](E20)。f が約 1e-58 GeV より小さいと、自己相互作用の率 ∝ (M_Pl/f)^4 が倍精度をあふれ、準平衡の判定が NaN に
+# なって、自由場の値を印 2 で返してしまう(正しくは chi0 のまま)。物理的に意味のない範囲なので、入力の検査で止める
+F_MIN_GEV = 1e-40
 
 
 def _dequantize_lt(q):
@@ -604,6 +608,8 @@ class ChiSR:
             raise ValueError("chi0 は 0 <= chi0 < 1")
         if np.any(M <= 0) or np.any(mu_eV <= 0) or np.any(f_gev <= 0) or np.any(T_yr < 0):
             raise ValueError("M, mu_eV, f_GeV は正、T_yr は 0 以上")
+        if np.any(f_gev < F_MIN_GEV):
+            raise ValueError(f"f_GeV は {F_MIN_GEV:g} 以上(これより小さいと、自己相互作用の率が倍精度をあふれる)")
 
     def __call__(self, M, chi0, T_yr, mu_eV, f_gev):
         M, chi0, T_yr, mu_eV, f_gev = np.broadcast_arrays(*[np.asarray(x, float) for x in (M, chi0, T_yr, mu_eV, f_gev)])

@@ -12,6 +12,9 @@
   4. 値の表の節の上で、基準の運動論(fp3.evolve3m)を表の分解能 0.01 以内で再現する(E18。全域の照合は
      calc/e18_validate2.py と calc/e19_validate.py)。
   5. 単体版が pickle でき(中身は表の場所だけ)、戻したものが同じ値を返す。配列で呼んでも警告が出ない(E19)。
+  6. f を下限 F_MIN_GEV(1e-40 GeV)まで小さくしても、警告なしで chi0 を返し(自己相互作用が強い極限)、両者が一致する。
+     下限より小さい f は、どちらも ValueError で止まる(E20。約 1e-58 GeV より下では率の計算が倍精度をあふれ、
+     以前は自由場の値を印 2 で返していた)。
 出力: share/chi_sr/chi_sr_tables.npz(中身が変わらないときは書き直さない)、
       share/chi_sr/selftest.npz(渡した先の計算機で値と印を照らすための入力 5000 個と出力。share/chi_sr/selftest.py が使う。E19)
 基準の表 out/reftab.npz(700 MB、git に入れない)がない計算機では、chisr.build() が書き出し済みの表から同じ数の辞書を作る
@@ -108,8 +111,9 @@ def checks(tab, model_raw):
 
     # 1c. E19 で印の付け方を変えた所: 率の切り替えを挟む alpha のセルと、alpha < 0.012(半解析の固定点の表の下端 0.01 の両側)
     import reftab
-    assert (pkg.LOW_MARGIN, pkg.KS_STEP, pkg.KS_MIN, pkg.KS_CAP, pkg.THETA_SW, pkg.THETA_P) == \
-        (chisr.LOW_MARGIN, reftab.KS_STEP, reftab.KS_MIN, reftab.KS_CAP, reftab.THETA_SW, reftab.THETA_P), "E19 の定数が単体版と違う"
+    assert (pkg.LOW_MARGIN, pkg.KS_STEP, pkg.KS_MIN, pkg.KS_CAP, pkg.THETA_SW, pkg.THETA_P, pkg.F_MIN_GEV) == \
+        (chisr.LOW_MARGIN, reftab.KS_STEP, reftab.KS_MIN, reftab.KS_CAP, reftab.THETA_SW, reftab.THETA_P, chisr.F_MIN_GEV), \
+        "E19・E20 の定数が単体版と違う"
     an = tab["rt"]["A_NODES"]
     n = 100000
     rng = np.random.default_rng(19)
@@ -216,6 +220,36 @@ def checks(tab, model_raw):
     cb, rb = strict(m2)(Mt, ct, Tt, 0.71e-12, 1e18)
     rep["pickle_roundtrip_max_diff"] = float(np.max(np.abs(ca - cb)))
     assert rep["pickle_roundtrip_max_diff"] == 0 and np.all(ra == rb), rep
+
+    # 6. f の小さい極限(E20): 下限 F_MIN_GEV まで、警告なしで chi0 を返す(超放射する点は印 1。印 3 は模型の外で、どの f でも
+    #    chi0 を返す点)。プロジェクト版も警告を例外にして呼ぶ。下限より小さい f は ValueError
+    import warnings
+    n = 20000
+    rng = np.random.default_rng(20)
+    M = np.exp(rng.uniform(np.log(1), np.log(300), n))
+    mu = np.exp(rng.uniform(np.log(1e-13), np.log(1e-11), n))
+    c0 = rng.uniform(0.0, 0.999, n)
+    T = 10 ** rng.uniform(5, np.log10(1.4e10), n)
+    rep["small_f_max_abs_dchi"] = 0.0
+    rep["small_f_regimes"] = {}
+    for fv in (pkg.F_MIN_GEV, 1e-30, 1e-10):
+        f = np.full(n, fv)
+        c_pkg, r_pkg = model(M, c0, T, mu, f)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            c_ref, r_ref = chisr.chi_sr(tab, M, c0, T, mu, f)
+        assert np.array_equal(c_pkg, c_ref) and np.array_equal(r_pkg, r_ref), f"small f = {fv:g}: 単体版とプロジェクト版が違う"
+        rep["small_f_max_abs_dchi"] = max(rep["small_f_max_abs_dchi"], float(np.max(np.abs(c_pkg - c0))))
+        rep["small_f_regimes"][f"{fv:g}"] = [int(np.sum(r_pkg == j)) for j in range(6)]
+        assert np.all(np.isin(r_pkg, (0, 1, 3))), (fv, rep["small_f_regimes"])
+    assert rep["small_f_max_abs_dchi"] <= 1e-12, rep
+    for call in (lambda fv: model_raw(10.0, 0.5, 1e8, 1e-12, fv), lambda fv: chisr.chi_sr(tab, 10.0, 0.5, 1e8, 1e-12, fv)):
+        for fv in (pkg.F_MIN_GEV * 0.999, 1e-58, 1e-300):
+            try:
+                call(fv)
+                raise AssertionError(f"f = {fv:g} が入力の検査を通った")
+            except ValueError:
+                pass
     return rep
 
 
