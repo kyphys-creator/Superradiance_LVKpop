@@ -16,6 +16,7 @@ eps = (f/M_pl)^2 x et とおくと f が消える(et の式は上で係数 (M_pl
 dchi/dt = mu (f/M_pl)^2 H(alpha, chi)、H = -(g1 et1 + 2 g2 et2 + 4 g3 et3)。
 固定点の型: P3 = (211, 322)(E12)、P2 = (322, 544)。空の準位の方向の安定性で選ぶ(fixed_points)。
 固定点の式と、三準位の外の準位の増加率の式は、この file の fixed_points と extra_rates だけに置き、chisr はそれを呼ぶ(E16)。
+422 の増加率は rate_422、422 を加えた四準位の固定点と ODE は fixed_point_422 と evolve4(E21)。
 """
 import numpy as np
 
@@ -166,6 +167,64 @@ def extra_growth(alpha, chi, x, cbh=1.0):
     return extra_rates(alpha, sr.rplus(chi) * cbh, x[0], x[1], x[2], g_rel(alpha, chi, 4, 1, 1), g_rel(alpha, chi, 4, 3, 3))
 
 
+# ---------- 422(E21) ----------
+# 422 を含む過程の、水素型の率(alpha の主要項)。calc/hyd.py で計算した値を 2 桁に丸めたもの(calc/e21_level422.py が照らす)。
+# 括弧の中は Witte & Mummery(2412.03655)の Table I・II の値。BH が吸収する過程は alpha^11 r+、放出は alpha^8。
+K_422A = 1.5e-7     # 211 x 211 -> 422 x BH (1.5e-7。BGLS Table V も同じ)
+K_422B = 1.6e-8     # 322 x 422 -> 211 x inf(1.6e-8)
+K_422C = 1.2e-11    # 322 x 422 -> 544 x BH (1.3e-11)
+K_422D = 3.1e-11    # 422 x 544 -> 322 x inf(2.5e-11。これは l = 4 の部分波だけの値で、l = 6 を足すと 3.07e-11。E21)
+K_422E = 4.7e-12    # 422 x 544 -> 211 x inf(表にない)
+K_422Q = 2.3e-9     # 422 x 422 -> 544 x BH (2.3e-9)
+K_422R = 1.6e-9     # 422 x 422 -> 211 x inf(1.6e-9)
+RHO_422 = 0.62      # 422 と 322 の超放射の率の比の上限(多倍長の連分数法で 0.60--0.62、alpha <= 0.30、322 と 211 の臨界のあいだ)
+
+
+def rate_422(alpha, rpc, x1, x2, x3, g322):
+    """固定点 (x1, x2, x3) = (e211, e322, e544)(f によらない et)での、422 の 1 粒子あたりの増加率 / mu(配列で渡せる。E21)。
+    422 の占有数について一次の項で、相手の二つが 211・322・544 のものをすべて入れる(ほかは、m != 0 の強制振動を BH が
+    吸収する過程で、alpha^15 以上):
+      + 211 x 211 -> 422 x BH、- 322 x 422 -> 211 x inf、- 322 x 422 -> 544 x BH、- 422 x 544 -> 322 x inf、- 422 x 544 -> 211 x inf。
+    超放射の率は上限の RHO_422 g322 を使う(印の判定を控えめにする側)。rpc = r+ x C_BH(BH が吸収する過程に掛ける)。"""
+    a11, a8 = alpha ** 11, alpha ** 8
+    return (RHO_422 * g322 + K_422A * a11 * rpc * x1 ** 2 - K_422B * a8 * x1 * x2
+            - (K_422C * a11 * rpc + K_422D * a8) * x2 * x3 - K_422E * a8 * x1 * x3)
+
+
+def fixed_point_422(g2, g3, g4, kc, kd, kC, kD, kQ):
+    """211 が空の四準位の固定点 (e322, e422, e544)(f によらない et。E21)。422 が育たないとき(P2 で増加率が 0 以下)は None。
+      0 = g2 - 2 kc e2 e4 + kd e4^2 + (kD - kC) e3 e4          (322)
+      0 = g3 - (kC + kD) e2 e4 - 2 kQ e3 e4                    (422)
+      0 = g4 + kc e2^2 - 2 kd e2 e4 + (kC - kD) e2 e3 + kQ e3^2 (544)
+    kc: 322 x 322 -> 544 x BH、kd: 544 x 544 -> 322 x inf、kC: 322 x 422 -> 544 x BH、kD: 422 x 544 -> 322 x inf、
+    kQ: 422 x 422 -> 544 x BH(どれも alpha のべきと r+ を掛けた値)。g2, g3, g4 は 322・422・544 の超放射の率。
+    p = e2 e4、s = e3 e4、t = e4^2 と置くと、422 の式から s = (g3 - (kC + kD) p)/(2 kQ)、322 の式から
+    t = (2 kc p - g2 - (kD - kC) s)/kd で、544 の式に t を掛けたもの g4 t + kc p^2 - 2 kd p t + (kC - kD) p s + kQ s^2 = 0 が
+    p の二次方程式になる。正の解(p, s, t > 0)を返す。"""
+    P2 = fp_P2((0.0, g2, g4), dict(a=1.0, b=1.0, c=kc, d=kd, e=0.0, f=0.0))
+    if P2 is None or g3 - (kC + kD) * P2[1] * P2[2] <= 0:
+        return None
+    # s = s0 + s1 p、t = t0 + t1 p
+    s0, s1 = g3 / (2 * kQ), -(kC + kD) / (2 * kQ)
+    t0, t1 = (-g2 - (kD - kC) * s0) / kd, (2 * kc - (kD - kC) * s1) / kd
+    # g4 (t0 + t1 p) + kc p^2 - 2 kd p (t0 + t1 p) + (kC - kD) p (s0 + s1 p) + kQ (s0 + s1 p)^2 = 0
+    A = kc - 2 * kd * t1 + (kC - kD) * s1 + kQ * s1 ** 2
+    B = g4 * t1 - 2 * kd * t0 + (kC - kD) * s0 + 2 * kQ * s0 * s1
+    Cc = g4 * t0 + kQ * s0 ** 2
+    sols = []
+    for p in np.roots([A, B, Cc]):
+        if abs(p.imag) > 1e-9 * abs(p) or p.real <= 0:
+            continue
+        p = p.real
+        s, t = s0 + s1 * p, t0 + t1 * p
+        if s > 0 and t > 0:
+            e4 = np.sqrt(t)
+            sols.append(np.array([p / e4, s / e4, e4]))
+    if len(sols) != 1:
+        raise RuntimeError(f"四準位の固定点の正の解が {len(sols)} 個")
+    return sols[0]
+
+
 # ---------- 照合用: 211・322・411・433・544 の五準位の ODE(E15) ----------
 LEVELS5 = [(2, 1, 1), (3, 2, 2), (4, 1, 1), (4, 3, 3), (5, 4, 4)]
 # (i, j, k, kappa, BH が吸収するか): i x j -> k x (BH か inf)。BGLS Table V・VI。
@@ -206,6 +265,79 @@ def evolve5(M, chi0, mu_eV, f_gev, T_yr, t_eval_yr, cbh=1.0, rtol=1e-8):
     y0 = [np.log(eq)] * 5 + [chi0]
     return solve_ivp(f, (0.0, T_yr * sr.YR), y0, method="LSODA", rtol=rtol, atol=1e-10,
                      t_eval=np.asarray(t_eval_yr) * sr.YR)
+
+
+# ---------- 照合用: 211・322・422・544 の四準位の ODE(E21) ----------
+LEVELS4 = [(2, 1, 1), (3, 2, 2), (4, 2, 2), (5, 4, 4)]
+# (i, j, k, kappa, BH が吸収するか): i x j -> k x (BH か inf)。四つの準位のあいだで、l = 0 の強制振動を BH が吸収する過程と
+# 無限遠への放出のすべて(calc/e21_level422.py が、準位の組を総当たりして、これで全部であることを確かめる)。
+PROC4 = [(0, 0, 1, K_A, True), (1, 1, 0, K_B, False), (1, 1, 3, K_C, True), (3, 3, 1, K_D, False), (1, 3, 0, K_E, False),
+         (3, 3, 0, K_F, False), (0, 0, 2, K_422A, True), (1, 2, 0, K_422B, False), (1, 2, 3, K_422C, True),
+         (2, 3, 1, K_422D, False), (2, 3, 0, K_422E, False), (2, 2, 3, K_422Q, True), (2, 2, 0, K_422R, False)]
+
+
+def evolve4(M, chi0, mu_eV, f_gev, T_yr, t_eval_yr, cbh=1.0, with422=True, g422=None, kscale=None, rtol=1e-8):
+    """四準位(211・322・422・544)の運動論を 1 個の量子から解く(BH の質量は固定、重力波の過程は入れない。evolve5 と同じ作り)。
+    with422=False なら 422 を外した三準位(同じ率、同じ解法)で、422 の効果だけを比べられる。
+    g422: 422 の超放射の率 / mu を返す関数 chi -> g(None なら RHO_422 x 322 の率)。cbh は BH が吸収する過程すべてに掛ける。
+    kscale: {PROC4 の番号: 倍率}(率を動かして感度を見る)。
+    解法は LSODA。途中で止まったら、最後に出力した時刻から BDF、Radau、LSODA の順に切り替えて続ける(evolve3m と同じ考え)。
+    返り値: SimpleNamespace(status(0 なら最後まで解けた)、t、y = ln e211, ln e322, ln e422, ln e544, chi、methods(使った解法))。"""
+    from types import SimpleNamespace
+    from scipy.integrate import solve_ivp
+    from scipy.interpolate import CubicSpline
+    mu_s = mu_eV / sr.HBAR_EVS
+    a = sr.alpha_of(M, mu_eV)
+    s4 = (si.MPL_GEV / f_gev) ** 4
+    eq = 1.0 / (sr.N0 * M ** 2)
+    ms = np.array([l[2] for l in LEVELS4], float)
+    on = np.array([1.0, 1.0, 1.0 if with422 else 0.0, 1.0])
+    kap = [p[3] * (kscale or {}).get(n, 1.0) for n, p in enumerate(PROC4)]
+    # 超放射の率は、この alpha でスピンの格子に一度だけ表にして、3 次のスプラインで引く(右辺を速く、なめらかにする)
+    cg = np.linspace(0.01, 0.9999, 1200)
+    G = [CubicSpline(cg, [g_rel(a, c, 2, 1, 1) for c in cg]), CubicSpline(cg, [g_rel(a, c, 3, 2, 2) for c in cg]), None,
+         CubicSpline(cg, np.array(sr.gamma_over_mu(a, cg, 5, 4, 4, sr.NORM_N), float))]
+    G[2] = (lambda c: RHO_422 * G[1](c)) if g422 is None else g422
+
+    def f(t, y):
+        e = np.exp(np.clip(y[:4], -700.0, 5.0)) * on
+        chi = min(max(y[4], 0.01), 0.9999)
+        rp = sr.rplus(chi)
+        g = np.array([float(G[0](chi)), float(G[1](chi)), float(G[2](chi)), float(G[3](chi))])
+        d = np.where(g > 0, g * (e + eq), g * e) * on
+        dchi = -np.sum(ms * d)
+        for (i, j, k, _, bh), kp in zip(PROC4, kap):
+            if on[i] * on[j] * on[k] == 0:
+                continue
+            R = kp * (a ** 11 * rp * cbh if bh else a ** 8) * s4 * e[i] * e[j] * (e[k] + eq)
+            d[i] -= R
+            d[j] -= R
+            d[k] += R
+        return mu_s * np.concatenate([np.where(on > 0, d / np.where(e > 0, e, 1.0), 0.0), [dchi]])
+
+    te = np.asarray(t_eval_yr, float) * sr.YR
+    T_end = T_yr * sr.YR
+    t_cur, y_cur = 0.0, np.array([np.log(eq)] * 4 + [chi0])
+    ts, ys, used = [], [], []
+    order = ("LSODA", "BDF", "Radau")
+    done, k, stall = 0, 0, 0
+    while done < len(te) and stall < len(order):
+        sol = solve_ivp(f, (t_cur, T_end), y_cur, method=order[k % len(order)], rtol=rtol, atol=1e-10, t_eval=te[done:])
+        sy = np.asarray(sol.y, float)
+        n = sy.shape[1] if sy.ndim == 2 else 0
+        if n > 0:
+            ts.append(np.asarray(sol.t)[:n])
+            ys.append(sy[:, :n])
+            used.append(order[k % len(order)])
+            done += n
+            t_cur, y_cur = ts[-1][-1], sy[:, n - 1]
+            stall = 0
+        else:
+            stall += 1
+        if done < len(te):
+            k += 1
+    return SimpleNamespace(status=0 if done == len(te) else -1, t=np.concatenate(ts) if ts else np.zeros(0),
+                           y=np.concatenate(ys, axis=1) if ys else np.zeros((5, 0)), methods=used)
 
 
 # ---------- 照合の基準: BH の質量と角運動量も時間で変える三準位の運動論(E18) ----------

@@ -1,0 +1,329 @@
+% エントリ 21(2026-11-14): 422 は (322, 544) の固定点で育つ。育ったあとは降下を速めるだけ
+\section{[E21, 2026-11-14] 422 は $(322,544)$ の固定点で育つ。育ったあとは降下を速めるだけ}\label{sec:e21}
+
+E19 の所見 9 は、三準位の外の準位 422 を $(211,322)$ の固定点でしか調べていなかった。211 が空の $(322,544)$ の固定点については、育つかどうかを決める率が手元になく、「確かめていない」と書いた。ここでそれを確かめた(ユーザー指示「422 を確かめる」、2026-11-14)。
+
+結論を先に書く。
+\begin{enumerate}
+\item \textbf{422 は $(322,544)$ の固定点で育つ。} 主要項の率では $\alpha\ge0.210$、BH が吸収する過程に E7 の補正 $C_\mathrm{BH}$ を掛けると $\alpha\ge0.134$ である。E15 の「$(322,544)$ の固定点では $\alpha\le0.30$ で何も育たない」は 411 と 433 についての結果で、422 には当てはまらない。$(211,322)$ の固定点では、E19 のとおり育たない。
+\item \textbf{育った 422 は、降下を速めるだけである。} 422 は $422\times422\to544\times\mathrm{BH}$ で飽和し、占有数は 322 の 0.30 倍(主要項では 0.23 倍)までにとどまる。322 と 544 の占有数は 6\% 以内しか変わらず、BH の降下は最大 1.18 倍に速まる。422 を飽和させる率が主要項の半分だとしても 1.35 倍である。四準位の運動論で比べると、422 による $\chi$ の変化は最大 0.019(飽和の率を半分にすると 0.034)。
+\item \textbf{印の規則を一つ加えた。} 422 のある値は、三準位の「年齢 $T$ の値」と「年齢 $1.4\,T$ の値」のあいだにある。そこで、422 が育ちうる固定点の点のうち、この二つの値の差が 0.015 を越える点だけを印 4 にした。$\chi_\mathrm{SR}$ の値は変えていない。窓の $f=10^{11}$--$10^{13}\GeV$ では、印はほとんど変わらない。$f=10^{13}$--$10^{16}\GeV$ の重い BH で、印 4 が 0.4--1.2 ポイント増える(1 世代目のスピン。速く回る BH では 4--8 ポイント)。
+\item \textbf{率は自分で計算した。} 自己相互作用の過程の率を、水素型の波動関数で計算する部品を作り、公表された表の 63 個の値と比べた。54 個は 5\% 以内で合い、ほかに 3 個は最低の部分波だけの値に合う。必要な二つの率は $\kappa^{544\times\mathrm{BH}}_{322\times422}=1.2\times10^{-11}$、$\kappa^{322\times\infty}_{422\times544}=3.1\times10^{-11}$ で、後者は表の値($2.5\times10^{-11}$)より 23\% 大きい。表の値は、最低の部分波($\ell=4$)だけの値に一致する。
+\item \textbf{ほかの $n\le5$ の準位(311・411・433・511・522・533)}は、いまの印 4 の判定がすでに覆っている場所でしか育たない。522 だけは $(322,544)$ の固定点で $\alpha\gtrsim0.26$ のとき増加率がわずかに正になるが、先に育つ 422 が抑える。
+\end{enumerate}
+
+計算は \texttt{calc/e21\_level422.py}(出力 \texttt{calc/out/e21.json})。率の計算の部品は \texttt{calc/hyd.py}、422 の増加率・四準位の固定点・四準位の運動論は \texttt{calc/fp3.py}、印の規則は \texttt{calc/chisr.py} と単体版 \texttt{share/chi\_sr/chi\_sr.py} にある。
+
+\subsection{問いと記号}
+
+記号は E14・E15 と同じである。$\varepsilon_i=N_i/(GM^2)$ は準位 $i$ の占有数、$\gamma_i$ は超放射の率(占有数の率)、$\tilde r_+=1+\sqrt{1-\chi^2}$。自己相互作用の過程 $i\times j\to k\times X$($X$ は BH か無限遠)の率を
+\begin{equation}
+\gamma^{k\times\mathrm{BH}}_{i\times j}=\kappa^{k\times\mathrm{BH}}_{i\times j}\,\alpha^{11}\Bigl(\frac{\Mpl}{f}\Bigr)^4\tilde r_+\mu,\qquad
+\gamma^{k\times\infty}_{i\times j}=\kappa^{k\times\infty}_{i\times j}\,\alpha^{8}\Bigl(\frac{\Mpl}{f}\Bigr)^4\mu
+\label{eq:e21def}
+\end{equation}
+と書く。率は「過程が 1 回起きる率」で、$\dot\varepsilon_k=+\gamma\,\varepsilon_i\varepsilon_j\varepsilon_k$、$\dot\varepsilon_i=\dot\varepsilon_j=-\gamma\,\varepsilon_i\varepsilon_j\varepsilon_k$ である($i=j$ なら $\dot\varepsilon_i=-2\gamma\,\varepsilon_i^2\varepsilon_k$)。BGLS(\arxiv{2011.11646})と Witte \& Mummery(\arxiv{2412.03655}、以下 WM)の規約と同じである。以下で $\gamma$ と書くときは、$\alpha$ のべきと $\tilde r_+$ を含み、$(\Mpl/f)^4\mu$ を落とした量を指す(固定点の占有数は $(f/\Mpl)^2$ に比例するので、増加率は $f$ によらない)。
+
+固定点は二つある(E14)。211 の臨界より上の P3 = $(211,322)$ と、下の P2 = $(322,544)$ である。問いは、それぞれの固定点の上で、422 の 1 粒子あたりの増加率
+\begin{equation}
+\lambda_{422}\equiv\frac{\dot\varepsilon_{422}}{\varepsilon_{422}}\Big|_{\varepsilon_{422}\to0}
+\end{equation}
+が正になるか、である。正なら 422 は 1 個の量子から育つ。
+
+$\varepsilon_{422}$ について一次の項を作る過程を、相手の二つが 211・322・544 のものについてすべて拾う。$i\times j\to k\times X$ では、$X$ の方位量子数は $m_i+m_j-m_k$、エネルギーは主要項で $\mu[1-(\alpha^2/2)e]$、$e=1/n_i^2+1/n_j^2-1/n_k^2$ である。$e<0$ なら $X$ は無限遠へ出る波、$e>0$ なら束縛された強制振動で、BH に吸収される。吸収が $\alpha^{11}$ で起きるのは、強制振動が $\ell=0$ の成分を持つ($m_i+m_j=m_k$)ときだけで、$\ell\ge1$ の成分は $\alpha^{11+4\ell}$ になる(BGLS Sec.~IV A)。この規則で準位の組を総当たりすると、422 を一つ含み $\alpha^{11}$ か $\alpha^{8}$ で起きる過程は、表~\ref{tab:e21rates} の上の 5 個になる。
+\begin{equation}
+\lambda_{422}=\gamma_{422}+\gamma^{422\times\mathrm{BH}}_{211\times211}\varepsilon_{211}^2-\gamma^{211\times\infty}_{322\times422}\varepsilon_{211}\varepsilon_{322}
+-\bigl(\gamma^{544\times\mathrm{BH}}_{322\times422}+\gamma^{322\times\infty}_{422\times544}\bigr)\varepsilon_{322}\varepsilon_{544}-\gamma^{211\times\infty}_{422\times544}\varepsilon_{211}\varepsilon_{544}.
+\label{eq:e21lam}
+\end{equation}
+P3($\varepsilon_{544}=0$)では初めの三項、P2($\varepsilon_{211}=0$)では $\gamma_{422}$ と括弧の項が残る。E19 が調べたのは前者である。
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{llccc}
+\toprule
+記号(\texttt{fp3.py}) & 過程 & この計算 & 使う値 & WM の表\\
+\midrule
+\texttt{K\_422A} & $211\times211\to422\times\mathrm{BH}$ & $1.526\times10^{-7}$ & $1.5\times10^{-7}$ & $1.5\times10^{-7}$\\
+\texttt{K\_422B} & $322\times422\to211\times\infty$ & $1.620\times10^{-8}$ & $1.6\times10^{-8}$ & $1.6\times10^{-8}$\\
+\texttt{K\_422C} & $322\times422\to544\times\mathrm{BH}$ & $1.208\times10^{-11}$ & $1.2\times10^{-11}$ & $1.3\times10^{-11}$\\
+\texttt{K\_422D} & $422\times544\to322\times\infty$ & $3.068\times10^{-11}$ & $3.1\times10^{-11}$ & $2.5\times10^{-11}$\\
+\texttt{K\_422E} & $422\times544\to211\times\infty$ & $4.724\times10^{-12}$ & $4.7\times10^{-12}$ & (表にない)\\
+\midrule
+\texttt{K\_422Q} & $422\times422\to544\times\mathrm{BH}$ & $2.270\times10^{-9}$ & $2.3\times10^{-9}$ & $2.3\times10^{-9}$\\
+\texttt{K\_422R} & $422\times422\to211\times\infty$ & $1.581\times10^{-9}$ & $1.6\times10^{-9}$ & $1.6\times10^{-9}$\\
+\bottomrule
+\end{tabular}
+\caption{422 を含む過程の係数 $\kappa$(式~\eqref{eq:e21def})。上の 5 個は $\varepsilon_{422}$ について一次、下の 2 個は二次(422 が育ったあとに効く)。「この計算」は \texttt{hyd.py} の値、「使う値」はそれを 2 桁に丸めたもの。比べるために、E14 の $\kappa^{544\times\mathrm{BH}}_{322\times322}=1.9\times10^{-9}$、$\kappa^{322\times\infty}_{544\times544}=4.4\times10^{-11}$ を挙げておく。}
+\label{tab:e21rates}
+\end{table}
+
+\subsection{率の計算と、公表された表との照合}
+
+P2 での答えは、$\kappa^{544\times\mathrm{BH}}_{322\times422}$ と $\kappa^{322\times\infty}_{422\times544}$ で決まる。WM の Table II に値があるが、前者は同じ終状態の $322\times322\to544\times\mathrm{BH}$ の 160 分の 1 しかなく、打ち消しの大きい量である。そこで、率を自分で計算できるようにした。式は BGLS・WM と同じ水素型(主要項)の式で、導出は~\ref{sec:e21deriv} 節に書く。結果だけを書くと、
+\begin{align}
+\kappa^{k\times\mathrm{BH}}_{i\times j}&=\frac{s_{ij}^2}{32\pi}\,\Gamma(1-\nu)^2A^2J^2,&
+J&=\int_0^\infty x\,W_{\nu,1/2}\Bigl(\frac{2x}{\nu}\Bigr)R_iR_jR_k\,dx,\quad\nu=\frac{1}{\sqrt e},\label{eq:e21kbh}\\
+\kappa^{k\times\infty}_{i\times j}&=\frac{s_{ij}^2}{16\,q}\sum_\ell A_\ell^2J_\ell^2,&
+J_\ell&=\int_0^\infty x\,F_\ell\Bigl(-\frac1q,qx\Bigr)R_iR_jR_k\,dx,\quad q=\sqrt{-e}.\label{eq:e21kinf}
+\end{align}
+$s_{ij}$ は $i=j$ で 1、$i\ne j$ で 2。$R_n(x)$ は水素原子の動径の波動関数(長さの単位は $1/(\mu\alpha)$)、$W$ は Whittaker 関数、$F_\ell$ は Coulomb 波(引力)。$A=\int d\Omega\,Y_iY_jY_k^*$、$A_\ell=\int d\Omega\,Y_iY_jY_k^*Y^*_{\ell,m_i+m_j-m_k}$ である。$\nu$ が整数 $n$ になる過程($e=1/n^2$。$n00$ の準位に共鳴する)は式~\eqref{eq:e21kbh} が発散し、$\alpha^7$ の別の式になる(式~\eqref{eq:e21kres})。積分は \texttt{mpmath} の多倍長(30 桁)で行う。
+
+\paragraph{公表された値との照合}
+BGLS の Table V・VI(プロジェクトの \texttt{fp3.py} にある値)と、WM の Table I・II(arXiv の HTML 版から 2026-11-14 に読み取った値)の、合わせて 63 個と比べた(表~\ref{tab:e21calib})。表の値は 2 桁である。
+\begin{table}[H]
+\centering\footnotesize
+\begin{tabular}{lcccl}
+\toprule
+過程の種類 & 比べた数 & 5\% 以内 & この計算/表 & 外れ\\
+\midrule
+BH が吸収($\alpha^{11}$) & 16 & 14 & 0.98--1.04 & $322\times422\to544$(0.93)、$411\times411\to322$(0.95)\\
+BH が吸収、共鳴($\alpha^{7}$) & 14 & 13 & 0.99--1.01 & $411\times411\to422$(表 $2.3\times10^{-7}$、計算 $2.2\times10^{-11}$)\\
+無限遠へ放出($\alpha^{8}$) & 33 & 27 & 0.98--1.04 & 下の 6 個\\
+\bottomrule
+\end{tabular}
+\caption{水素型の率の計算(\texttt{hyd.py})と、公表された表の値の比較。「この計算/表」は、5\% 以内で合うものの範囲。$544\times544\to322\times\infty$ は BGLS($4.4\times10^{-11}$)と WM($4.3\times10^{-11}$)の両方と比べたので、2 個に数えた(この計算は $4.36\times10^{-11}$)。$211\times411\to522\times\mathrm{BH}$ は、表から $\alpha^7$ と読み取ったが共鳴しない過程で($\nu=1.92$)、$\alpha^{11}$ の式の値 $9.89\times10^{-8}$ が表の係数 $9.9\times10^{-8}$ に合うので、上の行に数えた。}
+\label{tab:e21calib}
+\end{table}
+放出で 5\% より外れた 6 個は、二つに分かれる。
+\begin{itemize}
+\item \textbf{表の値が、最低の部分波だけの値に一致する}(3 個): $422\times544\to322\times\infty$(この計算/表は 1.23、最低の $\ell$ だけなら 1.02)、$522\times544\to322\times\infty$(1.12、1.01)、$411\times433\to211\times\infty$(1.06、1.03)。ほかの過程では二番目の部分波は 3\% 以下で、差が見えない。WM の表(少なくともこの 3 個)は最低の部分波だけの値だと考えられる。BGLS の値(たとえば $322\times411\to211\times\infty$ の $3.8\times10^{-9}$。この計算は 3.78、最低の $\ell$ だけなら 3.74)は、二つの部分波の和と合う。
+\item \textbf{説明のつかないもの}(3 個): $311\times311\to211\times\infty$(0.25)、$533\times533\to322\times\infty$(0.24)、$422\times522\to211\times\infty$(0.83)。初めの二つはちょうど 4 分の 1 で、同じ準位が二つ入る過程の係数 $s_{ij}^2$(1 か 4)の違いと同じ大きさである。同じ準位が二つ入るほかの 7 個の放出の過程は合うので、この計算の規約の誤りではない。
+\end{itemize}
+BH が吸収する過程では、BGLS と WM で値が違う $411\times411\to322\times\mathrm{BH}$(BGLS $9.8\times10^{-11}$、WM $1.6\times10^{-11}$)について、この計算は $1.52\times10^{-11}$ で、WM の値に合う。共鳴する過程で外れた $411\times411\to422\times\mathrm{BH}$ は 4 桁違う。外れた値はどれも、表を読み取った値を原文の PDF で確かめていない(読み取りの誤りの可能性が残る)。どれもこのノートでは使わない過程である。
+
+\paragraph{別の方法での確かめ}
+(i) 吸収の式が、$n00$ の準位の減衰の率 $8\alpha^5\tilde r_+\mu/n^3$(\arxiv{1908.10370} の式 2.32 で $\ell=0$)を $n=1$--4 で再現する。(ii) 角度の積分は、\texttt{sympy} の Gaunt 係数と、球面上の数値積分とで $10^{-15}$ まで一致する。(iii) $422\times544\to322\times\infty$ の動径の積分 $J_4$、$J_6$ を、\texttt{mpmath} の Coulomb 波を使わずに、動径の方程式を直接解いて求めた値と比べると、相対差は $2\times10^{-6}$ と $4\times10^{-7}$ である。この過程の部分波ごとの寄与は、$\ell=4$ が $2.554\times10^{-11}$、$\ell=6$ が $5.14\times10^{-12}$、$\ell=8$ が $1.1\times10^{-15}$ で、和が $3.068\times10^{-11}$ になる。$\ell=6$ が 2 割あるのは、放出される波の運動量が小さい($q=0.093$。$e=-0.0086$)ために、Coulomb の引力が遠心力の壁を打ち消すからである。
+
+\subsection{422 の増加率}
+
+\paragraph{422 の超放射の率}
+多倍長の連分数法(E4 の \texttt{leaver.py})で、322 と 211 の臨界のあいだの 49 点($\alpha=0.13$--0.30)について 422 と 322 の率の比を求めた。比は 0.526--0.620 で、水素原子の主要項の比 $C_{42}/C_{32}=0.60$ に近い。322 の臨界のすぐ上では比が小さくなる(422 の臨界のほうが少し上にあるため)。以下では上限の $\gamma_{422}=0.62\,\gamma_{322}$(\texttt{fp3.RHO\_422})を使う。422 を育ちやすく見積もる側である。
+
+\paragraph{P3 = $(211,322)$}
+E19 の結論は変わらない。式~\eqref{eq:e21lam} の初めの三項を、印の判定に使う関数(\texttt{fp3.rate\_422})で $\alpha=0.03$--0.30、211 の臨界から $\chi=0.99$ まで評価すると、$\lambda_{422}/\gamma_{322}$ の最大は主要項で $-0.26$、$C_\mathrm{BH}$ 込みで $-0.25$ で、どこでも負である。
+
+\paragraph{P2 = $(322,544)$}
+P2 の占有数は $\varepsilon_{322}\varepsilon_{544}=2\gamma_{322}/(3\gamma_c)$ を満たす(E14 の式から。$\gamma_c\equiv\gamma^{544\times\mathrm{BH}}_{322\times322}$)。式~\eqref{eq:e21lam} に入れると
+\begin{equation}
+\frac{\lambda_{422}}{\gamma_{322}}=\frac{\gamma_{422}}{\gamma_{322}}-\frac23\left[\frac{\kappa^{544\times\mathrm{BH}}_{322\times422}}{\kappa^{544\times\mathrm{BH}}_{322\times322}}
++\frac{\kappa^{322\times\infty}_{422\times544}}{\kappa^{544\times\mathrm{BH}}_{322\times322}}\,\frac{1}{\alpha^3\tilde r_+C}\right]
+=0.62-0.0042-\frac{0.0109}{\alpha^3\tilde r_+C}.
+\label{eq:e21p2}
+\end{equation}
+$C$ は BH が吸収する過程に掛ける有限 $\alpha$ の補正である(主要項は $C=1$。BH が吸収する二つの過程に同じ $C$ を掛けると、第二項では打ち消し、第三項にだけ残る)。第二項は小さい。$322\times422\to544\times\mathrm{BH}$ の率が $322\times322\to544\times\mathrm{BH}$ の 160 分の 1 しかないためで、544 は 322 にとっては流しになるが、この過程では 422 の流しにならない。422 を抑えるのは第三項の放出 $422\times544\to322\times\infty$ である。この項は $\alpha^{-3}$ で大きくなるので、422 は $\alpha$ の小さい側で抑えられ、$\alpha^3\tilde r_+C>0.0177$ で育つ。
+
+図~\ref{fig:e21}(a) と表~\ref{tab:e21lam} に結果を示す。主要項では $\alpha\ge0.210$ で $\lambda_{422}>0$ になるスピンが現れ、$\alpha\ge0.219$ では 322 と 211 の臨界のあいだのどのスピンでも正である。$C_\mathrm{BH}$ 込みでは、それぞれ 0.134 と 0.135。$\alpha=0.30$ での増加率は $\gamma_{322}$ の 0.34--0.40 倍(主要項)、0.49--0.52 倍($C_\mathrm{BH}$ 込み)である。
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{lccccccccc}
+\toprule
+$\alpha$ & 0.12 & 0.14 & 0.16 & 0.18 & 0.20 & 0.22 & 0.24 & 0.26 & 0.30\\
+\midrule
+主要項 & $-2.63$ & $-1.45$ & $-0.79$ & $-0.38$ & $-0.12$ & $+0.05$ & $+0.18$ & $+0.26$ & $+0.38$\\
+$C_\mathrm{BH}$ 込み & $-0.37$ & $+0.10$ & $+0.32$ & $+0.42$ & $+0.47$ & $+0.49$ & $+0.50$ & $+0.51$ & $+0.51$\\
+\bottomrule
+\end{tabular}
+\caption{P2 での $\lambda_{422}/\gamma_{322}$(322 と 211 の臨界のまんなかのスピン)。}
+\label{tab:e21lam}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\input{figs/e21_level422}
+\caption{(a) P2 = $(322,544)$ の固定点での 422 の増加率と 322 の超放射の率の比。帯は 322 と 211 の臨界のあいだのスピンによる幅。正なら 422 は 1 個の量子から育つ。(b) 四準位の運動論(422 つき、実線)と三準位(破線)のスピンの時間変化。点線は三準位の曲線を年齢 $1.4\,T$ で読んだもの。四準位の曲線は破線と点線のあいだにある。(c) 同じ例の占有数。422 は $2\times10^4$ 年で育ち、322 の 0.11--0.17 倍で飽和して、322・544 と一緒に下がる。}
+\label{fig:e21}
+\end{figure}
+
+\subsection{育ったあと: 四準位の固定点}
+
+422 が育つと、二次の項が効く。211 が空のとき、四準位(322・422・544。添え字 2・3・4)の式は
+\begin{align}
+\dot\varepsilon_2/\varepsilon_2&=\gamma_2-2\gamma_c\varepsilon_2\varepsilon_4+\gamma_d\varepsilon_4^2+(\gamma_D-\gamma_C)\varepsilon_3\varepsilon_4,\nonumber\\
+\dot\varepsilon_3/\varepsilon_3&=\gamma_3-(\gamma_C+\gamma_D)\varepsilon_2\varepsilon_4-2\gamma_Q\varepsilon_3\varepsilon_4,\label{eq:e21fp4}\\
+\dot\varepsilon_4/\varepsilon_4&=\gamma_4+\gamma_c\varepsilon_2^2-2\gamma_d\varepsilon_2\varepsilon_4+(\gamma_C-\gamma_D)\varepsilon_2\varepsilon_3+\gamma_Q\varepsilon_3^2\nonumber
+\end{align}
+である。$\gamma_c$、$\gamma_d$ は E14 の $c$、$d$、$\gamma_C$、$\gamma_D$、$\gamma_Q$ は表~\ref{tab:e21rates} の \texttt{K\_422C}、\texttt{K\_422D}、\texttt{K\_422Q} の過程の率。$p=\varepsilon_2\varepsilon_4$、$s=\varepsilon_3\varepsilon_4$、$t=\varepsilon_4^2$ と置くと、二番目の式から $s=[\gamma_3-(\gamma_C+\gamma_D)p]/(2\gamma_Q)$、一番目から $t=[2\gamma_cp-\gamma_2-(\gamma_D-\gamma_C)s]/\gamma_d$ で、三番目に $t$ を掛けた $\gamma_4t+\gamma_cp^2-2\gamma_dpt+(\gamma_C-\gamma_D)ps+\gamma_Qs^2=0$ が $p$ の二次方程式になる。正の解は一つである(\texttt{fp3.fixed\_point\_422})。
+
+422 を止めるのは $422\times422\to544\times\mathrm{BH}$ である。この率は $322\times322\to544\times\mathrm{BH}$ とほぼ同じ($2.3\times10^{-9}$ と $1.9\times10^{-9}$)なので、422 は 322 と同じ桁の、少し小さい占有数で止まる。$\alpha=0.13$--0.30、臨界のあいだのスピンで解いた結果が表~\ref{tab:e21fp4} である。BH の降下の速さ $-\dot\chi=2\gamma_2\varepsilon_2+2\gamma_3\varepsilon_3+4\gamma_4\varepsilon_4$ は、三準位の P2 の 1.18 倍までにしかならない。322 と 544 の占有数は 6\% 以内しか動かず、増えた分は 422 の超放射($2\gamma_3\varepsilon_3$)である。
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{lccc}
+\toprule
+率の仮定 & $\varepsilon_{422}/\varepsilon_{322}$ の最大 & 降下の速さの比の最大 & 四準位の運動論での $|\Delta\chi|$ の最大\\
+\midrule
+主要項 & 0.23 & 1.175 & 0.018\\
+$C_\mathrm{BH}$ 込み & 0.30 & 1.180 & 0.019\\
+$C_\mathrm{BH}$ 込み、$\gamma_Q$ を半分 & 0.57 & 1.348 & 0.034\\
+$C_\mathrm{BH}$ 込み、$\gamma_Q$ を 3 分の 1 & 0.81 & 1.508 & ---\\
+$C_\mathrm{BH}$ 込み、$\gamma_C=\gamma_D=0$ & 0.36 & 1.169 & ---\\
+\bottomrule
+\end{tabular}
+\caption{四準位の固定点 $(322,422,544)$ と、三準位の P2 との比較。左の二列は固定点の式の解($\alpha=0.13$--0.30 の 18 点 $\times$ スピン 25 点での最大)。右の列は四準位の運動論(下)で、422 を外した三準位と同じ時刻で比べた $\chi$ の差の最大。}
+\label{tab:e21fp4}
+\end{table}
+
+降下の速さの比は、ほぼ $1+(\gamma_3/\gamma_2)(\varepsilon_3/\varepsilon_2)$ で、$\varepsilon_3/\varepsilon_2$ は $\gamma_c/\gamma_Q$ に比例する。BH が吸収するこの二つの過程の有限 $\alpha$ の補正は計算されていない。同じ終状態(544 と BH)を持つ似た過程なので、補正も近いと考えられるが、$\gamma_Q$ が $\gamma_c$ に対して主要項の半分になったとしても、比は 1.35 である。
+
+\paragraph{四準位の運動論}
+\texttt{fp3.evolve4} は、211・322・422・544 を 1 個の量子から解く(BH の質量は固定。E15 の五準位の運動論と同じ作り)。四つの準位のあいだで $\alpha^{11}$ か $\alpha^8$ で起きる過程は 13 個で(E14 の 6 個と表~\ref{tab:e21rates} の 7 個。準位の組を総当たりして確かめた)、すべて入れる。422 を外した三準位を同じ率・同じ解法で解いて比べた。$\alpha=0.15$、0.20、0.25、0.30、初期スピンは臨界のあいだと 0.9、$f=10^{15}$、$10^{16}\GeV$、率の仮定 3 通りの 48 例と、422 の超放射の率を多倍長の連分数法の値にした 3 例である($\mu=0.71\times10^{-12}\eV$、年齢 $1.4\times10^{10}\yr$ まで)。
+\begin{itemize}
+\item 主要項では $\alpha=0.25$、0.30 で 422 が育ち、$\alpha=0.15$、0.20 では育たない。$C_\mathrm{BH}$ 込みでは四つとも育つ。式~\eqref{eq:e21p2} のとおりである。育たない例では、三準位との差は $4\times10^{-8}$ 以下。
+\item 育った 422 は固定点の式の値で止まる($\varepsilon_{422}/\varepsilon_{322}$ の最大は 0.23、0.30、0.57。表~\ref{tab:e21fp4} の左の列と合う)。図~\ref{fig:e21}(b)(c) に一例を示す。
+\item 同じ時刻での $\chi$ の差は最大 0.018(主要項)、0.019($C_\mathrm{BH}$ 込み)、0.034($\gamma_Q$ を半分)。差が大きいのは降下の途中で、最後は同じ 322 の臨界に着く。
+\item \textbf{51 例のすべての時刻で、四準位の値は、三準位の年齢 $T$ の値と年齢 $1.4\,T$ の値のあいだにある}(外れは $3\times10^{-8}$ 以下)。422 は降下を遅らせず、1.4 倍より速めもしない。
+\item 422 の超放射の率を連分数法の値にすると、差は少し小さくなる(3 例で 0.005、0.008、0.011)。
+\end{itemize}
+
+\subsection{印の規則}
+
+422 が育つ点を、E15 と同じ規則(育ちうるなら印 4)で一律に印 4 にすることもできる。しかしそうすると、$f=10^{13}$--$10^{16}\GeV$ の重い BH の印 4 が大きく増える(1 世代目のスピン、20--40$\Msun$、$\mu=0.71\times10^{-12}\eV$ の 40{,}000 個で 3.7\% から 11.8\%。速く回る BH では 38\% から 64\%)。しかも、増える 3{,}212 個の 48\% は、P2 での降下が 0.015 に満たない点である。422 は降下を速めるだけなので、BH がほとんど動いていない点の値は、422 があっても変わらない。印 4 の標本は集団解析で両端に置いて挟むことになる(README)ので、値が正しい点まで印 4 にすると、使える情報を捨てることになる。
+
+そこで、422 については、値が変わりうる点だけに印をつける。
+\begin{enumerate}
+\item 固定点の領域で、422 の $e$-fold の数 $\int\lambda_{422}\,dt$ が $\ln(GM^2)$ を越える点を「422 が育ちうる点」とする。数え方は E15 と同じで、$\lambda_{422}$ には $C_\mathrm{BH}$ を掛けた率と $\gamma_{422}=0.62\gamma_{322}$ を使い(育ちやすい側)、表は別に持つ(\texttt{J422})。
+\item その点について、年齢を $(1+S)$ 倍にした値 $\chi_\mathrm{SR}((1+S)T)$ を同じ関数で引く。$\chi_\mathrm{SR}(T)-\chi_\mathrm{SR}((1+S)T)>D$ なら印 4 にする。年齢を延ばした値を引けない点(印 3)も印 4 にする。
+\item $S=0.4$、$D=0.015$(\texttt{S\_422}、\texttt{D\_422})。値は変えない。
+\end{enumerate}
+根拠は前の節の結果である。422 は P2 での降下を 1 倍から $(1+S)$ 倍のあいだで速めるだけで、ほかの段階(雲が育つ時間、P3 での降下)には効かない。したがって 422 のある値は $\chi_\mathrm{SR}((1+S)T)$ と $\chi_\mathrm{SR}(T)$ のあいだにあり、印 1 のまま残る点では、422 による値の変化は $D$ 以下である。$S=0.4$ は、$\gamma_Q$ を半分にしたときの 1.35 を越えるようにとった。$D=0.015$ は、E19 の折れの規則と同じ値(約束の 0.03 の半分)である。上の例では、この規則での印 4 は 4.9\%(速く回る BH では 45\%)になる。規則は、422 が育ちうる点について値をもう一度引くので、呼び出しは 5--7\% 遅くなる($10^6$ 個で 6.8 秒と 16.3 秒。Apple M3)。
+
+\paragraph{変わる印の数}
+E19 の表(約束の外の標本の割合)と同じ標本で数え直した(表~\ref{tab:e21flags})。窓の $f=10^{11}$--$10^{13}\GeV$ では、P2 での降下が年齢のうちにほとんど進まないので、印はほとんど変わらない(E19 の表の 70 升、280 万個のうち、変わるのは 9 升の 142 個で、印 4 の割合の変化は最大 0.16 ポイント)。変わるのは $f\gtrsim10^{13}\GeV$ である。
+\begin{table}[H]
+\centering\small
+\begin{tabular}{llccc}
+\toprule
+$f$ [GeV] & スピン & 20--40$\Msun$ & 40--80$\Msun$ & 80--150$\Msun$\\
+\midrule
+$10^{11}$--$10^{13}$ & 1 世代目 & 3.21 → 3.21 & 0.78 → 0.78 & 0.00 → 0.00\\
+$10^{11}$--$10^{13}$ & 速く回る & 43.68 → 43.68 & 16.48 → 16.49 & 0.00 → 0.00\\
+$10^{13}$--$10^{16}$ & 1 世代目 & 3.91 → 5.14 & 3.09 → 3.53 & 0.00 → 0.00\\
+$10^{13}$--$10^{16}$ & 速く回る & 38.60 → 44.96 & 30.55 → 35.40 & 0.00 → 0.00\\
+$10^{16}$--$10^{19}$ & 1 世代目 & 1.77 → 1.84 & 3.82 → 3.82 & 0.36 → 0.36\\
+$10^{16}$--$10^{19}$ & 速く回る & 7.11 → 7.68 & 34.76 → 34.76 & 7.09 → 7.09\\
+\bottomrule
+\end{tabular}
+\caption{印 4 の標本の割合 [\%](規則の前 → 後)。$\mu=0.71\times10^{-12}\eV$、年齢は $10^7$--$10^{10}\yr$ の対数一様、升ごとに 40{,}000 個。1 世代目は Beta(0.69, 2.28)、速く回るは $\chi_0=0.6$--0.9。5--20$\Msun$ は $\alpha<0.134$ で、変わらない。80--150$\Msun$ はほとんどが印 3($\alpha>0.30$)である。$\mu=0.3$、$1.5\times10^{-12}\eV$ では、同じ $\alpha$ にあたる質量の升で同じ大きさの変化になる(\texttt{e21.json})。}
+\label{tab:e21flags}
+\end{table}
+$\alpha=0.12$--0.30 に一様にとった 100{,}000 個($M$ 1--300$\Msun$、$f$ $10^8$--$10^{19}\GeV$)では、規則の前に印 1 で、返す値が 211 の臨界より下の点(P2 にいる点)は 23{,}854 個ある。そのうち印 4 になるのは 853 個(3.6\%)で、残りの 23{,}001 個は、422 が育たないか、育っても値が 0.015 より変わらない点である。ほかに、印 5 だった 208 個が印 4 になる(規則は印 5 の判定の前に働く)。印 4 になった点の、二つの値の差は 0.015--0.037(中央値 0.023)。
+
+\subsection{ほかの $n\le5$ の準位}
+
+422 を見落としていたので、同じ方法でほかの準位も調べた。WM が運動論に入れている $n\le5$ の準位($\ell=m$)のうち、三準位の外にあるのは 311・411・422・433・511・522・533 である。422 以外の 6 個について、固定点で占有数の一次の項を作る過程を総当たりで拾い(共鳴する過程は式~\eqref{eq:e21kres})、増加率を $\alpha=0.05$--0.30 の 7 点 $\times$ スピン 8 点(P2 の側 4 点、P3 の側 4 点)で評価した。超放射の率は、その点での多倍長の連分数法の値である。411 と 433 の項は E15 の式と一致する。
+\begin{itemize}
+\item \textbf{P3 = $(211,322)$}: 主要項で育つのは 433 だけ($\alpha=0.30$。E15 と同じ)。$C_\mathrm{BH}$ 込みでは、411($\alpha\ge0.18$)、433($\ge0.18$)、311($\ge0.26$)、511($\ge0.22$)、533($\ge0.22$)が育つ($\alpha$ はこの格子での値)。育つ点はどれも、いまの印 4 の判定(411・433・544 の増加率の最大)が正の点で、増加率もその最大以下である(311 は 0.78 倍以下、511 は 0.07 倍以下、533 は 0.17 倍以下)。522 は育たない。
+\item \textbf{P2 = $(322,544)$}: 311・411・511 は超放射せず、433・533 は $433\times544\to322\times\infty$、$533\times544\to322\times\infty$ で抑えられて、育たない。522 だけは、$\alpha=0.30$(主要項。増加率は $\gamma_{322}$ の 0.04 倍以下)と $\alpha\ge0.26$($C_\mathrm{BH}$ 込み。0.13 倍以下)で増加率が正になる。
+\item \textbf{522 は 422 が抑える}: 522 の増加率が正になる $\alpha$ では、422 の増加率のほうが大きい($\gamma_{322}$ の 0.34--0.52 倍)ので、422 が先に育つ。422 が占有されると、522 は $422\times522\to322\times\infty$($\kappa=1.6\times10^{-9}$)で失われる。四準位の固定点 $(322,422,544)$ の上では、522 の増加率は $\gamma_{322}$ の $-0.57$ 倍以下で、育たない。433・533 も同じ固定点の上で育たない。
+\end{itemize}
+したがって、$n\le5$ の準位については、印 4 の判定に加えるものは 422 のほかにない。
+
+\subsection{照合}
+
+\paragraph{書き出しの確かめ}
+\texttt{export\_chisr.py} に確かめ 7 を加えた。$\alpha=0.12$--0.30 の 100{,}000 個で、単体版とプロジェクト版は値も印も一致する(規則を入れた版も、外した版も)。規則で変わるのは印 1・5 から印 4 への変更だけで、値は変わらない。印 4 になった点はすべて、年齢を 1.4 倍にした値との差が 0.015 を越える(か、その年齢の値を引けない)点である。端の入力(年齢 0 と $10^{-30}$--$10^{300}\yr$、$f$ $10^{-40}$--$10^{40}\GeV$ の 98{,}000 個)でも、警告も例外も出さずに一致する。E19・E20 の確かめ 1--6 もすべて通る。表 \texttt{chi\_sr\_tables.npz} で変わったのは、新しい配列 \texttt{J422} が加わったことだけである。
+
+\paragraph{E19 の照合の入力}
+E19 の照合(seed 1901・1902・1903、それぞれ 4{,}800 点)の入力で、規則を外した印は、保存してある E19 の版の出力(200 年齢、2{,}880{,}000 セル)と全セルで一致し、値も単精度で一致する。つまり、E21 で変わったのは 422 の規則だけである。規則を入れると、7{,}198 セル(0.25\%。4{,}800 点のうち 67、77、68 点)が印 4 に変わり、印 4 の割合は 2.7、2.6、2.3\% から 2.9、2.9、2.5\% になる。印 0・1・2 のセルは E19 の版の部分集合になるので、約束を越えるセルは 0 のままである。細かい年齢(2{,}382 年齢、種ごとに 11{,}433{,}600 セル)でも照らし直した。印 4 に変わるのは 25{,}326、34{,}299、26{,}253 セル。印 0・1・2 のセルで約束を越えるものは三つの種とも 0 で、誤差の最大は 0.0184、0.0175、0.0154 と、E19 の版と同じである。
+
+\paragraph{x86-64 の命令での確かめ}
+E20 と同じ方法(Rosetta 2 の上の x86-64 の Python 3.9.6、numpy 2.0.2、scipy 1.13.1。SIMD は SSE4.2 までと AVX2 までの二通り)で、E21 の版を走らせた。入力は 2{,}985{,}000 個: 422 の規則が働く標本 100{,}000 個(書き出しの確かめ 7 と同じ。15\% が印 4)、自己診断の 5{,}000 個、E19 の照合の入力 2{,}880{,}000 個。警告を例外にして呼び、x86-64 の二通りとも止まらない。Apple Silicon の出力との値の差は最大 $1.9\times10^{-14}$、印の違いは 0 である(値がビットまで同じでない入力は 1{,}625 個)。x86-64 の二通りどうしは、値がビットまで同じである。\texttt{selftest.py} は三つの実行のどれでも通る。この計算機のほかの環境(Apple Silicon、Python 3.12.15、numpy 2.5.3 と 2.5.4、scipy 1.18.1)でも通る。x86-64 版の numpy・scipy は、E20 のあとでゴミ箱に移した展開ずみのフォルダをその場所から読んだ(新しいダウンロードはしていない。作業ファイルは残していない)。
+
+\begin{result}
+\begin{itemize}
+\item 422 は P2 = $(322,544)$ の固定点で育つ: 主要項で $\alpha\ge0.210$、$C_\mathrm{BH}$ 込みで $\alpha\ge0.134$。P3 = $(211,322)$ では育たない(E19 のとおり)。
+\item 育った 422 は 322 の 0.30 倍までで飽和し、降下を最大 1.18 倍に速めるだけである。$\chi$ の変化は最大 0.019。
+\item 印 4 の規則: 422 が育ちうる点のうち、年齢 $T$ の値と $1.4\,T$ の値の差が 0.015 を越える点。値は変わらない。窓の $f$ では印は変わらず、$f=10^{13}$--$10^{16}\GeV$ の 20--80$\Msun$ で印 4 が 0.4--1.2 ポイント(速く回る BH では 5--6 ポイント)増える。
+\item $\kappa^{544\times\mathrm{BH}}_{322\times422}=1.2\times10^{-11}$、$\kappa^{322\times\infty}_{422\times544}=3.1\times10^{-11}$(WM の表は $1.3\times10^{-11}$、$2.5\times10^{-11}$)。自分の計算は、公表された表の 63 個のうち 54 個と 5\% 以内で合い、3 個は最低の部分波だけの値に合う。
+\item ほかの $n\le5$ の準位で、印 4 の判定に加えるものはない。522 は 422 が抑える。
+\item 印 0・1・2 の約束(E18・E19)は、E19 の照合の入力でそのまま成り立つ。x86-64 の命令でも、298.5 万個の入力で Apple Silicon と同じ印を返す(値の差は最大 $1.9\times10^{-14}$)。
+\end{itemize}
+\end{result}
+
+\begin{caveat}
+\begin{itemize}
+\item \textbf{率は主要項}。422 が育つ $\alpha$ の下限(0.134 か 0.210)は、BH が吸収する過程の有限 $\alpha$ の補正で決まる。補正には、$211\times211\to322\times\mathrm{BH}$ について WM の図から読んだ $C_\mathrm{BH}$(E7)を、ほかの過程にもそのまま使っている。$322\times322\to544\times\mathrm{BH}$ の補正は計算されていない。印の規則は、育ちやすい側($C_\mathrm{BH}$ 込み)で判定する。
+\item \textbf{$S=0.4$ は保証ではない}。降下の速さの比は $\gamma_c/\gamma_Q$ で決まり、$\gamma_Q$ が主要項の半分なら 1.35、3 分の 1 なら 1.51 である。$322\times422\to544\times\mathrm{BH}$ は打ち消しの大きい量(同じ終状態の過程の 160 分の 1)で、有限 $\alpha$ の補正で大きく変わりうるが、大きくなれば 422 は育ちにくくなる側で、小さくなっても式~\eqref{eq:e21p2} の第二項はすでに小さい。
+\item \textbf{約束は三準位の基準の運動論への忠実さである}(E18)。印 1 のまま残る P2 の点には、基準の運動論にない 422 の効果が最大 0.015 残る。なくすには、基準の運動論を四準位にして値の表を作り直す必要がある(未着手)。
+\item 四準位の運動論は BH の質量を固定し、重力波の過程を入れていない(E15 の五準位と同じ)。422 を含む重力波の遷移($544\to422$ など)は、固定点の領域では $(f/\Mpl)^2$ だけ小さい。
+\item ほかの準位の調べは $n\le5$、$\ell=m$ の準位だけで、評価したのは 56 点である。$n\ge6$ の準位は調べていない(WM は、$m\le2$ の降下には $n\le5$ で足りるとしている)。
+\item x86-64 での確かめは、E20 と同じく Rosetta 2 による命令の変換で、x86 の CPU の実機ではない。Linux の x86 の実機、AVX-512、numpy 1 系は未確認のままである。
+\end{itemize}
+\end{caveat}
+
+\subsection{率の式の導出}\label{sec:e21deriv}
+
+式~\eqref{eq:e21kbh}、\eqref{eq:e21kinf} を導く。出発点は BGLS の式 12、非相対論の場 $\psi$ の方程式である($\int|\psi|^2d^3r=N$、$\lambda=\mu^2/f^2$、$g\equiv\lambda/(8\mu^2)$)。
+\begin{equation}
+i\partial_t\psi=H_0\psi-g|\psi|^2\psi,\qquad H_0=-\frac{\nabla^2}{2\mu}-\frac{\alpha}{r}.
+\end{equation}
+準位の波動関数を $\psi_n=R_n(r)Y_{\ell m}$($\int|\psi_n|^2=1$)、エネルギーを $E_n=-\mu\alpha^2/(2n^2)$ とし、$\psi=\sum_nc_n\psi_ne^{-iE_nt}+\delta\psi$、$|c_n|^2=N_n$ と書く。
+
+\paragraph{源}
+$|\psi|^2\psi=\psi\,\psi\,\psi^*$ のうち、$\psi_i$ と $\psi_j$ を二つの $\psi$ から、$\psi_k^*$ を $\psi^*$ からとる項は
+\begin{equation}
+-g|\psi|^2\psi\ \ni\ S(\mathbf r)e^{-iEt},\qquad S=-g\,s_{ij}\,c_ic_jc_k^*\,F,\quad F\equiv\psi_i\psi_j\psi_k^*,\quad E=E_i+E_j-E_k
+\end{equation}
+である。$s_{ij}$ は $\psi_i$、$\psi_j$ の割り当て方の数で、$i\ne j$ なら 2、$i=j$ なら 1。この源が作る一次の応答を $\delta\psi=\chi_E(\mathbf r)e^{-iEt}$ と書くと、$(E-H_0)\chi_E=S$、つまり $\chi_E=G_ES$($G_E=(E-H_0)^{-1}$、外向きの境界条件)である。
+
+\paragraph{$N_k$ の増える率}
+$\psi_k$ への射影をとる。$|\psi|^2\psi$ のうち $\delta\psi$ について一次で、振動数が $E_k$ の項は、$\psi_i\psi_j\,\delta\psi^*$ の $s_{ij}$ 通りである($E_i+E_j-E=E_k$)。したがって
+\begin{equation}
+i\dot c_k=-g\,s_{ij}\,c_ic_j\int\psi_k^*\psi_i\psi_j\,\chi_E^*\,d^3r=g^2s_{ij}^2N_iN_j\,c_k\,\langle F|G_EF\rangle^*,
+\end{equation}
+$\dot N_k=2\,\mathrm{Re}(c_k^*\dot c_k)$ から
+\begin{equation}
+\dot N_k=-2g^2s_{ij}^2\,N_iN_jN_k\,\mathrm{Im}\langle F|G_EF\rangle.
+\label{eq:e21im}
+\end{equation}
+$\mathrm{Im}\langle F|G_EF\rangle$ は、応答 $\chi_E$ が外へ運ぶ粒子の流れである。$(E-H_0)\chi_E=S$ に $\chi_E^*$ を掛けて積分すると、$\mathrm{Im}\langle\chi_E|S\rangle=-\mathrm{Im}\langle\chi_E|H_0\chi_E\rangle=\frac12\dot N_X$ となる($\dot N_X$ は、$\chi_E$ のノルムが $H_0$ のもとで失われる率、つまり無限遠と地平線を通って出ていく粒子の数の率)。$\langle\chi_E|S\rangle=g^2s_{ij}^2N_iN_jN_k\langle F|G_EF\rangle^*$ なので、式~\eqref{eq:e21im} は
+\begin{equation}
+\dot N_k=\dot N_X
+\end{equation}
+を意味する。過程が 1 回起きるごとに、$X$ が 1 個出ていき、$k$ が 1 個増える。粒子の数とエネルギーの保存から、同時に $i$ と $j$ が 1 個ずつ減る。率の定数は $\dot N_k=\Gamma N_iN_jN_k$ で定義する。
+
+\paragraph{無限遠への放出($E>0$)}
+$E=k^2/(2\mu)$ の連続状態を、エネルギーで規格化した動径の関数 $u_{E\ell}(r)/r$ で書く。$u_{E\ell}=\sqrt{2\mu/(\pi k)}\,F_\ell(\eta,kr)$、$\eta=-\mu\alpha/k$ で、$F_\ell$ は遠方で振幅 1 の正弦波になる Coulomb 波である($\int_0^\infty\sin(kr)\sin(k'r)dr=(\pi/2)\delta(k-k')$ と $\delta(k-k')=(k/\mu)\delta(E-E')$ から)。$\mathrm{Im}\,G_E=-\pi\sum_{\ell m}|E\ell m\rangle\langle E\ell m|$ を式~\eqref{eq:e21im} に入れると
+\begin{equation}
+\Gamma=2\pi g^2s_{ij}^2\sum_\ell\Bigl|\int\frac{u_{E\ell}(r)}{r}Y^*_{\ell M}F\,d^3r\Bigr|^2,\qquad M=m_i+m_j-m_k.
+\end{equation}
+長さを $a_0=1/(\mu\alpha)$ で測る($r=a_0x$、$R_n=a_0^{-3/2}\tilde R_n$、$k=q/a_0$)。$E=-(\mu\alpha^2/2)e$ なので $q=\sqrt{-e}$、$\eta=-1/q$ である。積分は $A_\ell\,a_0^{-5/2}\sqrt{2\mu/(\pi k)}\,J_\ell$ になり、
+\begin{equation}
+\Gamma=2\pi\frac{\lambda^2}{64\mu^4}s_{ij}^2\,(\mu\alpha)^5\,\frac{2}{\pi q\alpha}\sum_\ell A_\ell^2J_\ell^2
+=\frac{s_{ij}^2}{16q}\sum_\ell A_\ell^2J_\ell^2\ \alpha^4\lambda^2\mu.
+\end{equation}
+$\varepsilon=N/(GM^2)$ の率に直すと $\gamma=\Gamma(GM^2)^2$ で、$\lambda^2(GM^2)^2=\alpha^4(\Mpl/f)^4$ から式~\eqref{eq:e21kinf} を得る($GM^2=\alpha^2\Mpl^2/\mu^2$)。
+
+\paragraph{BH による吸収($E<0$)}
+$E=-\kappa^2/(2\mu)$ で、$E$ が準位のエネルギーに一致しないとき、$\chi_E$ は束縛された強制振動である。$\ell=0$ の成分は原点で有限の値を持ち、BH に吸収される。吸収の率は、地平線の面積 $A_H=8\pi r_g^2\tilde r_+$($r_g=GM=\alpha/\mu$)を使って
+\begin{equation}
+\dot N_X=A_H|\chi_E(0)|^2
+\label{eq:e21abs}
+\end{equation}
+である(非相対論の $s$ 波の、地平線での吸収)。この式は、$n00$ の準位に使うと $A_H|\psi_{n00}(0)|^2=8\pi(\alpha/\mu)^2\tilde r_+\cdot4(\mu\alpha)^3/(4\pi n^3)=8\alpha^5\tilde r_+\mu/n^3$ を与え、\arxiv{1908.10370} の式 2.32 の $\ell=0$ の減衰の率($2|\mathrm{Im}\,\omega|$、$C_{n0}=2/n^3$)と一致する。
+
+原点での値は、Coulomb の Green 関数で求まる。$u=r\,w$ と置くと、$(\nabla^2+2\mu\alpha/r-\kappa^2)w=0$ の $\ell=0$ の式は Whittaker の方程式になり、遠方で減衰する解は $W_{\nu,1/2}(2\kappa r)$、$\nu=\mu\alpha/\kappa$ である。$W_{\nu,1/2}(z)\to1/\Gamma(1-\nu)$($z\to0$)なので、$w=\Gamma(1-\nu)W_{\nu,1/2}(2\kappa r)/r$ は原点で $1/r$ のようにふるまい、$(\nabla^2+2\mu\alpha/r-\kappa^2)w=-4\pi\delta^3(\mathbf r)$ を満たす。$E-H_0=(\nabla^2+2\mu\alpha/r-\kappa^2)/(2\mu)$ だから
+\begin{equation}
+G_E(0,\mathbf r)=-\frac{\mu}{2\pi r}\,\Gamma(1-\nu)\,W_{\nu,1/2}(2\kappa r).
+\end{equation}
+$G_E(0,\mathbf r)$ は球対称なので、$F$ の $\ell=0$ の成分だけが残る。$\kappa a_0=\sqrt e=1/\nu$ を使って
+\begin{equation}
+\chi_E(0)=\int G_E(0,\mathbf r)S\,d^3r=\frac{\mu}{2\pi}g\,s_{ij}\,c_ic_jc_k^*\,\Gamma(1-\nu)\,A\,a_0^{-5/2}J.
+\end{equation}
+式~\eqref{eq:e21abs} に入れると
+\begin{equation}
+\Gamma=8\pi\frac{\alpha^2}{\mu^2}\tilde r_+\cdot\frac{\mu^2}{4\pi^2}\cdot\frac{\lambda^2}{64\mu^4}\,s_{ij}^2\,\Gamma(1-\nu)^2A^2J^2(\mu\alpha)^5
+=\frac{s_{ij}^2}{32\pi}\Gamma(1-\nu)^2A^2J^2\ \alpha^7\lambda^2\tilde r_+\mu
+\end{equation}
+で、$\gamma=\Gamma(GM^2)^2$ から式~\eqref{eq:e21kbh} を得る。
+
+\paragraph{共鳴する過程($e=1/n^2$)}
+$\nu=n$ では $\Gamma(1-\nu)$ が発散する。強制振動の振動数が、主要項で $n00$ の準位のエネルギーに一致するためである。このとき Green 関数は $n00$ の極で決まる: $G_E(0,\mathbf r)\simeq\psi_{n00}(0)\psi_{n00}(\mathbf r)/(E-E_{n00})$。分母は微細構造のずれ $E-E_{n00}=\mu\alpha^4\delta$ で、$\delta=c_4(i)+c_4(j)-c_4(k)-c_4(n00)$、$c_4(n,\ell)=-1/(8n^4)+[2/n-6/(2\ell+1)]/n^3$(\arxiv{1908.10370} の式 2.28。$n00$ の幅は $\alpha^5$ で、落とす)。式~\eqref{eq:e21abs} から
+\begin{equation}
+\dot N_X=A_H|\psi_{n00}(0)|^2\frac{|\langle n00|S\rangle|^2}{(\mu\alpha^4\delta)^2},\qquad
+\kappa^\mathrm{res}=\frac{s_{ij}^2A^2I^2}{32\pi n^3\delta^2},\quad I=\int_0^\infty x^2\tilde R_{n0}\tilde R_i\tilde R_j\tilde R_k\,dx,
+\label{eq:e21kres}
+\end{equation}
+$\gamma=\kappa^\mathrm{res}\alpha^7(\Mpl/f)^4\tilde r_+\mu$ である。$\alpha$ のべきが 4 小さいのは、分母の $\alpha^8$ のためである。表~\ref{tab:e21calib} の共鳴する 14 個のうち 13 個を、この式が 1.4\% 以内で再現する。

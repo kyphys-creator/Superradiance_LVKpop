@@ -15,6 +15,10 @@
   6. f を下限 F_MIN_GEV(1e-40 GeV)まで小さくしても、警告なしで chi0 を返し(自己相互作用が強い極限)、両者が一致する。
      下限より小さい f は、どちらも ValueError で止まる(E20。約 1e-58 GeV より下では率の計算が倍精度をあふれ、
      以前は自由場の値を印 2 で返していた)。
+  7. 422 の規則(E21): (322, 544) の固定点を通る alpha 0.12--0.30 の 10 万個で、両者が値も印も一致する。規則を外した印とも
+     照らし、規則で変わるのは印 1・5 から印 4 への変更だけで、値は変わらないことを見る。印 4 になった点は、年齢を
+     (1 + S_422) 倍にした値との差が D_422 を越える(か、その年齢の値を引けない)点であること、規則のあとも印 1 の点は
+     その差が D_422 以下であることを、単体版を外から呼んで確かめる。定数も同じ。
 出力: share/chi_sr/chi_sr_tables.npz(中身が変わらないときは書き直さない)、
       share/chi_sr/selftest.npz(渡した先の計算機で値と印を照らすための入力 5000 個と出力。share/chi_sr/selftest.py が使う。E19)
 基準の表 out/reftab.npz(700 MB、git に入れない)がない計算機では、chisr.build() が書き出し済みの表から同じ数の辞書を作る
@@ -250,6 +254,68 @@ def checks(tab, model_raw):
                 raise AssertionError(f"f = {fv:g} が入力の検査を通った")
             except ValueError:
                 pass
+
+    # 7. 422 の規則(E21)
+    assert (pkg.S_422, pkg.D_422) == (chisr.S_422, chisr.D_422), "E21 の定数が単体版と違う"
+    n = 100000
+    rng = np.random.default_rng(21)
+    a = rng.uniform(0.12, 0.30, n)
+    M = np.exp(rng.uniform(np.log(1), np.log(300), n))
+    mu = a / sr.alpha_of(M, 1.0)
+    c0 = rng.uniform(0.0, 0.995, n)
+    T = np.minimum(10 ** rng.uniform(5, np.log10(1.4e10), n), 0.12 / mu)
+    f = 10 ** rng.uniform(8, 19, n)
+    c_ref, r_ref = chisr.chi_sr(tab, M, c0, T, mu, f)
+    c_pkg, r_pkg = model(M, c0, T, mu, f)
+    c_ref0, r_ref0 = chisr.chi_sr(tab, M, c0, T, mu, f, rule422=False)
+    c_pkg0, r_pkg0 = strict(lambda *x: model_raw._eval(*x, False))(M, c0, T, mu, f)
+    assert np.array_equal(c_ref, c_pkg) and np.array_equal(r_ref, r_pkg), "422 の規則: 単体版とプロジェクト版が違う"
+    assert np.array_equal(c_ref0, c_pkg0) and np.array_equal(r_ref0, r_pkg0), "422 の規則を外した版: 単体版とプロジェクト版が違う"
+    assert np.array_equal(c_pkg, c_pkg0), "422 の規則で値が変わった"
+    ch = r_pkg != r_pkg0
+    assert np.all(np.isin(r_pkg0[ch], (1, 5)) & (r_pkg[ch] == 4)), "422 の規則が、印 1・5 -> 4 のほかの変更をした"
+    # 規則の中身を外から確かめる: 年齢を延ばした値(規則を外した印つき)
+    c_late, r_late = strict(lambda *x: model_raw._eval(*x, False))(M, c0, T * (1 + pkg.S_422), mu, f)
+    wide = (c_pkg - c_late > pkg.D_422) | (r_late == 3)
+    assert np.all(wide[ch]), "印 4 にした点の中に、年齢を延ばしても値が D_422 より変わらない点がある"
+    # 規則のあとも印 1 の点: 422 が育ちえて幅が D_422 を越える点は残っていない(422 が育ちうる点は alpha >= 0.13 で 211 の臨界より下)
+    c1v = chisr.chic_vec(a, 1, tab=tab)
+    still1 = (r_pkg == 1) & (c_pkg < c1v) & wide
+    grow = np.zeros(n, bool)
+    if still1.any():                               # 残った点は、422 が年齢のうちに育たない点のはず(J422 の e-fold で確かめる)
+        i = np.flatnonzero(still1)
+        lnGM2 = np.log(sr.N0 * M[i] ** 2)
+        c2v = chisr.chic_vec(a[i], 2, tab=tab)
+        ia, t = chisr._alpha_nodes(a[i])
+        w0 = np.clip(chisr.w_of_chi(np.minimum(c0[i], c1v[i]), c1v[i], c2v), chisr.W[0], chisr.W[-1])
+        wT = np.clip(chisr.w_of_chi(c_pkg[i], c1v[i], c2v), chisr.W[0], chisr.W[-1])
+        J = tab["J422"]
+        dJ = ((1 - t) * chisr._fwd(J, ia, wT) + t * chisr._fwd(J, ia + 1, wT)) - ((1 - t) * chisr._fwd(J, ia, w0) + t * chisr._fwd(J, ia + 1, w0))
+        grow[i] = dJ / (f[i] / si.MPL_GEV) ** 2 > lnGM2 + 1.0       # 余裕 1 e-fold(始点の取り方の違い)
+    # 端の年齢と端の f: 422 が育ちうる alpha(0.13--0.30)で、年齢 0、極端に短い・長い年齢(E20 と同じく 1e300 yr まで。年を秒に
+    # 直す所は約 5.7e300 yr であふれる)、表の外の f。警告も例外も出さず、両者が一致する
+    m = 2000
+    ae = rng.uniform(0.13, 0.30, m)
+    Me = np.exp(rng.uniform(np.log(5), np.log(100), m))
+    mue = ae / sr.alpha_of(Me, 1.0)
+    ce = rng.uniform(0.0, 0.995, m)
+    nedge = 0
+    for Te in (0.0, 1e-30, 1.0, 1e9, 1e12, 1e100, 1e300):
+        for fe in (pkg.F_MIN_GEV, 1.0, 1e7, 1e12, 1e15, 1e19, 1e40):
+            cp, rp_ = model(Me, ce, Te, mue, fe)
+            with warnings.catch_warnings():
+                warnings.simplefilter("error")
+                cr, rr = chisr.chi_sr(tab, Me, ce, Te, mue, fe)
+            assert np.array_equal(cp, cr) and np.array_equal(rp_, rr), f"端の入力 T = {Te:g}, f = {fe:g}: 単体版とプロジェクト版が違う"
+            nedge += m
+    rep["rule422_edge_inputs"] = nedge
+    rep["rule422_n"] = n
+    rep["rule422_changed"] = {"1->4": int(np.sum(ch & (r_pkg0 == 1))), "5->4": int(np.sum(ch & (r_pkg0 == 5)))}
+    rep["rule422_regime_share"] = [round(float(np.mean(r_pkg == j)), 4) for j in range(6)]
+    rep["rule422_regime_share_without_rule"] = [round(float(np.mean(r_pkg0 == j)), 4) for j in range(6)]
+    rep["rule422_still1_wide"] = int(np.sum(still1))
+    rep["rule422_still1_wide_and_grows"] = int(np.sum(grow))
+    assert rep["rule422_changed"]["1->4"] > 100 and rep["rule422_still1_wide_and_grows"] == 0, rep
     return rep
 
 
@@ -287,7 +353,7 @@ def main():
     a211, c211, F211 = rel_F(2, 1, 1)
     a322, c322, F322 = rel_F(3, 2, 2)
     os.makedirs(PKG, exist_ok=True)
-    new = dict(ALPHAS=chisr.ALPHAS, W=chisr.W, CHI_TOP=chisr.CHI_TOP, lnI=tab["lnI"], J=tab["J"],
+    new = dict(ALPHAS=chisr.ALPHAS, W=chisr.W, CHI_TOP=chisr.CHI_TOP, lnI=tab["lnI"], J=tab["J"], J422=tab["J422"],
                thr_alpha=tab["thr_alpha"], thr1=tab["thr1"], thr2=tab["thr2"], thr3=tab["thr3"],
                rel211_alpha=a211, rel211_chi=c211, rel211_F=F211, rel211_range=np.array(sr._REL_RANGE[(2, 1, 1)]),
                rel322_alpha=a322, rel322_chi=c322, rel322_F=F322, rel322_range=np.array(sr._REL_RANGE[(3, 2, 2)]),
@@ -296,12 +362,14 @@ def main():
                ALPHA_MAX=chisr.ALPHA_MAX, F_FP_MAX=chisr.F_FP_MAX, **rt_arrays(tab["rt"]))
     path = os.path.join(PKG, "chi_sr_tables.npz")
     unchanged = False
+    diff = sorted(new)
     if os.path.exists(path):                     # 中身が同じなら書き直さない(zip の時刻だけが変わって git に差分が出るのを防ぐ)
         with np.load(path) as old:
-            unchanged = set(old.files) == set(new) and all(_same(old[k], new[k]) for k in new)
+            diff = sorted(k for k in set(old.files) | set(new) if k not in old.files or k not in new or not _same(old[k], new[k]))
+            unchanged = not diff
     if not unchanged:
         np.savez_compressed(path, **new)
-    print("chi_sr_tables.npz: " + ("unchanged (not rewritten)" if unchanged else "written"))
+    print("chi_sr_tables.npz: " + ("unchanged (not rewritten)" if unchanged else f"written (changed arrays: {', '.join(diff)})"))
     sys.path.insert(0, PKG)
     import chi_sr as pkg  # noqa: E402
     model = pkg.ChiSR(path)
