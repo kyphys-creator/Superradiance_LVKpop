@@ -29,6 +29,7 @@ research/calc/out/work/
 research/calc/out/reftab.npz
 research/calc/out/reftab_partial.npz
 research/calc/out/e18_refs_*.npz
+research/calc/out/e19_refs_*.npz
 research/figs/png/
 
 # ダウンロードした論文(arXiv のソース・PDF。抜き書きは Refs/notes/ に残す)

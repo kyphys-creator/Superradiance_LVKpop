@@ -31,6 +31,9 @@ THR_ALPHAS = np.unique(np.concatenate([np.geomspace(0.003, 0.6, 2000)]
 ALPHA_MAX = 0.5                       # これより上は印 3(211 は超放射できず、m >= 3 が効く)
 F_FP_MAX = 1e17                       # 自由場の側で、211 の飽和のあと固定点の降下を使う f の上限 [GeV](E12)
 REFTAB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", "reftab.npz")   # 値の表(E18)
+# 単体版に書き出した値の表(12 MB、git にある)。基準の表がない計算機では、ここから同じ数の辞書を作る(E19)
+EXPORTED_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "share", "chi_sr", "chi_sr_tables.npz")
+LOW_MARGIN = 7.0                      # E19: 値の表で引けない固定点の点を chi0 のままにする条件(育つ時刻の何 e-fold 前か)
 
 _E = np.geomspace(1e-13, 1e-2, 110, endpoint=False)
 W_LO = np.concatenate([_E, np.linspace(1e-2, 1 - 1e-2, 300, endpoint=False), 1 - _E[::-1]])   # (0, 1): 322 の臨界から 211 の臨界
@@ -101,6 +104,19 @@ def extra_growth(alpha, chi):
     return np.where((r["g2"] > 0) & np.isfinite(lmax), lmax, 0.0)
 
 
+def switch_cell(a_nodes, alpha):
+    """値の表の alpha のセルのうち、超放射の率が連分数法の表と解析式で切り替わる alpha(sr._REL_RANGE の端。211 は 0.03、
+    322 は 0.1)を内側に挟むセルにいるか(E19)。基準の運動論はそこで alpha について不連続(表の率は解析式に対して
+    322 で -31% から +14%、211 で -12% から +2%)なので、セルの両端の節を結ぶ補間は段差の時刻を誤る(印 5 の判定は
+    reftab.compute_ks が表から測る折れで行う。この関数は報告のためだけに使う)。"""
+    alpha = np.asarray(alpha, float)
+    cell = np.zeros(len(a_nodes) - 1, bool)
+    for b in _THR_EDGES:
+        cell |= (a_nodes[:-1] < b) & (b < a_nodes[1:])
+    i = np.clip(np.searchsorted(a_nodes, alpha, side="right") - 1, 0, len(a_nodes) - 2)
+    return cell[i] & (alpha >= a_nodes[0]) & (alpha <= a_nodes[-1])
+
+
 # ---------- 臨界スピン ----------
 def _zero(alpha, n, l, m):
     """準位 (n, l, m) の率が 0 になるスピン(質量固定、相対論的な率の表と同じもの)。どのスピンでも超放射しなければ 1。
@@ -168,10 +184,17 @@ def build(cbh=False, mass_corr=False, use_reftab=True, reftab_path=None):
     if use_reftab:
         import reftab
         path = reftab_path or REFTAB_PATH
-        if not os.path.exists(path):              # 表は git に入れていない(700 MB): 黙って半解析に戻さない
+        if os.path.exists(path):
+            tab["rt"] = reftab.load3(path)
+            tab["rt_source"] = "reftab"
+        elif reftab_path is None and os.path.exists(EXPORTED_PATH):
+            # 基準の表(700 MB、git に入れない)がない計算機: 単体版に書き出した表から同じ数の辞書を作る(E19)。
+            # プロジェクト版は量子化した値を使うので、値は基準の表から読んだときと同じ。
+            tab["rt"] = reftab.load_exported(EXPORTED_PATH)
+            tab["rt_source"] = "exported"
+        else:                                     # 黙って半解析に戻さない
             raise FileNotFoundError(f"値の表 {path} がない。calc/e18_reftab_build.py で作るか、"
                                     "半解析だけで使うなら build(use_reftab=False)(E17 までの版、E18 の約束の外)")
-        tab["rt"] = reftab.load3(path)
     return tab
 
 
@@ -346,22 +369,32 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
     半解析の領域の判定から付ける。
     約束(E18、照合した範囲は M 2--200 Msun、mu 1e-13--1e-11 eV、f 1e6--1e22 GeV、T 1e5--1.4e10 yr、alpha <= 0.5):
     印 0・1・2 の値は、基準の運動論と |chi_SR(T) - chi_ref(T')| <= 0.03 を満たす T' が |ln(T'/T)| <= 0.02 の中にある
-    (速い段差の時刻は 2% までずれてよい)。独立な 3000 点 x 40 年齢で最大 0.023、越えた点なし。
+    (速い段差の時刻は 2% までずれてよい)。照合の結果(越えたセルの数と最大の誤差)は E18・E19 と calc/e19_validate.py。
 
     印: 0 = 超放射しない(chi0 が 211 と 322 の臨界以下で、433 も年齢のうちに飽和しない)。chi0 を返す
         1 = 自己相互作用の固定点(三準位 211・322・544)。211 から育つ BH も 322 から育つ BH も、322 の臨界まで
             下がりうる。三準位の外の準位(411、433 など)は年齢のうちに育たない
         2 = 自由場(211 が飽和して臨界へ、そのあと 322 の段階)、または 322 から育つ BH で自己相互作用が飽和までに
             効かず、322 が飽和する場合
-        3 = この模型の外。chi0 を返す: 固定点で alpha が半解析の表の外(alpha < 0.01 または > 0.30)、alpha > 0.5、
+        3 = この模型の外。chi0 を返す: 固定点で alpha > 0.30(印 4 の判定の表の外)、値の表の下(alpha < 0.008。固定点では
+            alpha < 0.01 で f < 1e8 GeV の点も)で雲が年齢のうちに育ちうる点(E19。固定点の占有数まで育つ時刻、自由場では
+            飽和の時刻の 7 e-fold 前より若い点は、印 1・2 で chi0)、alpha > 0.5、
             211・322 は超放射しないが 433(m = 3)が年齢のうちに飽和しうる(E17)、表の範囲の中なのに値を引けない
             (M が 1--300 Msun の外、mu T > 0.13 eV yr、重みのある節がその年齢まで解けていない)、
             chi0 > 0.995 で超放射する(E18)
         4 = 値は返すが、模型の外の準位が年齢のうちに育ちうるので近似は粗い: 固定点で 411、433、211 の臨界より上の
-            544 が育ちうる(有限 alpha の補正込みで判定、E15)、または自由場で止まったスピンから 433 が飽和しうる(E17)。
+            544 が育ちうる(有限 alpha の補正込みで判定、E15)、自由場で止まったスピンから 433 が飽和しうる(E17)、
+            または自由場で 544 の超放射まで進んで 433 の臨界より下にいる(その前に 433 が飽和しているはず。E19)。
             約束の外(照合で最大 0.17)
-        5 = 値は表の補間だが、速い段差の時刻が表の節のあいだで急に変わる所(E18): 角の節の値の幅が 0.06 を越え、
-            しかも段差の時刻の曲がりが 0.05 dex を越える。約束の外(照合で 3% が 0.03 を越え、最大 0.27)
+        5 = 値は表の補間だが、段差の時刻を表の節のあいだで補間できない所。約束の外。
+            (a) 速い段差の時刻が節のあいだで急に変わる所(E18): 角の節の値の幅が 0.06 を越え、しかも段差の時刻の
+                曲がりが 0.05 dex を越える
+            (b) 段差の時刻が alpha の節のあいだで折れている所(E19): 表から測った折れ(reftab.compute_ks)が時刻の許容 2% を
+                越え、しかも時刻を折れの分だけ前後にずらすと値が 0.015 より変わる。折れの原因は、超放射の率が連分数法の
+                表と解析式で切り替わる alpha(211 は 0.03、322 は 0.1。基準の運動論がそこで不連続)と、322 の率の表の
+                alpha 0.10--0.125 の節の誤差(倍精度の限界、最大 9%)。E18 の版ではここが印 1・2 のまま最大 0.86 ずれた
+            (c) 段のあとの平らな所で、補間が止まっていて(次の準位に届かない角の節がある)、角の節の値の幅が 0.02 を
+                越える点(E19)。値は進みのいちばん遅い節の値に引かれるので、その幅までずれうる
     領域の判定(BGLS の B|C の境界、式 53・56): 準平衡の占有数 eps_eq と行き過ぎの占有数 eps_th が、
     どちらも自由場で飽和する量 eps_max = chi0 - chi_c より小さければ準平衡。
     準平衡では、1 個の量子から eps_eq まで育つ時間 t_grow を年齢から引き、行き過ぎで失う eps_th を初期スピンから引く
@@ -391,6 +424,7 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
     use_t = np.zeros(len(M), bool)
     out_rt = np.zeros(len(M), bool)
     sharp_t = np.zeros(len(M), bool)
+    kink_t = np.zeros(len(M), bool)              # 段差の時刻が alpha の節のあいだで折れていて、値がそれに敏感な点(E19)
     if rt is not None:
         import reftab
         cand_t = (chi0 > c2) & ~big
@@ -398,10 +432,11 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
             it = np.flatnonzero(cand_t)
             lfmax = rt["LF_NODES"][-1]
             ff = np.minimum(f_gev[it], 10 ** lfmax)
-            v, ok, sh = reftab.lookup_rt3(rt, T_yr[it], a[it], chi0[it], ff, M[it], mu_eV[it], c1[it], c2[it])
+            v, ok, sh, kk = reftab.lookup_rt3(rt, T_yr[it], a[it], chi0[it], ff, M[it], mu_eV[it], c1[it], c2[it])
             tv[it] = v
             use_t[it] = ok
             sharp_t[it] = sh & ok
+            kink_t[it] = kk & ok
             below = (np.log10(f_gev[it]) < rt["LF_NODES"][0]) | (a[it] < rt["A_NODES"][0])
             out_rt[it] = ~ok & ~below            # 表の範囲の中なのに引けない、または M・mu T が範囲の外
 
@@ -417,7 +452,7 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
         eeq = 2 / np.sqrt(3) * np.sqrt(g1 * ginf) / gbh
         eth = np.sqrt(2 * g1 * lnGM2 / gbh)
     si_reg = sr211 & (g1 > 0) & (eeq < emax) & (eth < emax)
-    inval = si_reg & ((a > ALPHAS[-1]) | (a < ALPHAS[0]))
+    inval = si_reg & (a > ALPHAS[-1])                   # 固定点で alpha > 0.30: 印 4 の判定の表(J)の外
     reg[inval] = 3
     reg[sr211 & (g1 <= 0) & (chi0 > CHI_TOP)] = 3       # 臨界が率の表の端(0.995)より上: 率を引けないので模型の外(E16)
     q = si_reg & ~inval
@@ -429,11 +464,25 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
         out[q] = np.where(Teff > 0, chi_after(tab, a[q], c0eff, tau), chi0[q])
         out[q] = np.where(use_t[q], tv[q], out[q])
         reg[q] = flag_fp(tab, a[q], np.maximum(c0eff, out[q]), out[q], (f_gev[q] / si.MPL_GEV) ** 2, Teff, mu_s[q], lnGM2[q])
+        # alpha < 0.01(半解析の固定点の表の下、E19)。値の表で引けた点(alpha >= 0.008、f >= 1e8 GeV)はその値で、印は上の
+        # flag_fp(J の表は alpha <= 0.038 で 0 なので、外の準位は育たない)。引けない点には半解析の値がない: 雲が固定点の
+        # 占有数に届く時刻 t_grow の LOW_MARGIN e-fold 前より若ければ chi0 のまま(失うスピンは e^-7 eps_eq 以下。上で
+        # Teff = 0 なので out = chi0、印 1)、そうでなければ模型の外(印 3、chi0 を返す)。
+        iq = np.flatnonzero(q)
+        late = (a[q] < ALPHAS[0]) & ~use_t[q] & (g1[q] * (tgrow - T[q]) < LOW_MARGIN)
+        out[iq[late]] = chi0[iq[late]]
+        reg[iq[late]] = 3
     fr = sr211 & ~si_reg & (g1 > 0)
     if fr.any():
         out[fr] = _free_branch(tab, M[fr], chi0[fr], a[fr], mu_eV[fr], mu_s[fr], T[fr], f_gev[fr], g1[fr])
         out[fr] = np.where(use_t[fr], tv[fr], out[fr])
         reg[fr] = 2
+        if rt is not None:
+            # 値の表の下(alpha < 0.008)の自由場の点(E19)。半解析の飽和の時刻は約束の 2% より粗いことがある(照合で最大 0.08)
+            # ので、雲が飽和する時刻の LOW_MARGIN e-fold 前より若い点だけ chi0(印 2)にし、ほかは模型の外(印 3)。
+            late = fr & (a < rt["A_NODES"][0]) & (g1 * T > lnGM2 + np.log(np.maximum(emax, 1e-300)) - LOW_MARGIN)
+            out[late] = chi0[late]
+            reg[late] = 3
 
     # ---- 211 は超放射しないが 322 はする BH(chi_c322 < chi0 <= chi_c211)、E14 ----
     # 322 が 1 個の量子から育ち、322 x 322 -> 544 x BH と 544 x 544 -> 322 x inf の (322, 544) の固定点に入る(211 は空のまま)。
@@ -456,7 +505,7 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
             eth2 = np.sqrt(2 * np.maximum(g2, 0) * lnGM2[i3] / gc)
             tgrow2 = (np.log(np.maximum(eeq2, 1e-300)) + lnGM2[i3]) / g2
         fpq = (g2 > 0) & (eeq2 < emax2) & (eth2 < emax2)
-        ok = fpq & (a3 >= ALPHAS[0]) & (a3 <= ALPHAS[-1])
+        ok = fpq & (a3 <= ALPHAS[-1])                   # alpha > 0.30 は印 3(下の rg の初期値)
         res = x0.copy()
         rg = np.where((g2 > 0) | (x0 > CHI_TOP), 3, 0)
         if ok.any():
@@ -467,6 +516,11 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
             res[ok] = np.where(use_t[i3][ok], tv[i3][ok], res[ok])
             rg[ok] = flag_fp(tab, a3[ok], np.maximum(c0eff, res[ok]), res[ok], (f3[ok] / si.MPL_GEV) ** 2, Teff, m3[ok],
                              lnGM2[i3][ok])
+            # alpha < 0.01 で値の表を引けない点(E19、211 から育つ BH と同じ扱い)
+            jo = np.flatnonzero(ok)
+            late = (a3[ok] < ALPHAS[0]) & ~use_t[i3][ok] & (g2[ok] * (tgrow2[ok] - T3[ok]) < LOW_MARGIN)
+            res[jo[late]] = x0[jo[late]]
+            rg[jo[late]] = 3
         free = (g2 > 0) & ~fpq
         if free.any():
             Mf2, cf2 = _sat_state(M3[free], x0[free], u3[free], 2, 3, tab)
@@ -475,6 +529,10 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
             res[free] = np.where(T3[free] >= lnN2 / g2[free], cf2, x0[free])
             res[free] = np.where(use_t[i3][free], tv[i3][free], res[free])
             rg[free] = 2
+            if rt is not None:                          # 値の表の下の自由場の点(E19、211 から育つ BH と同じ扱い)
+                late = free & (a3 < rt["A_NODES"][0]) & (g2 * T3 > lnGM2[i3] + np.log(np.maximum(emax2, 1e-300)) - LOW_MARGIN)
+                res[late] = x0[late]
+                rg[late] = 3
         out[i3] = res
         reg[i3] = rg
 
@@ -498,6 +556,12 @@ def chi_sr(tab, M, chi0, T_yr, mu_eV, f_gev):
         lnN3 = np.log(np.maximum((out[i4] - c3[i4]) / 3, 1e-300)) + lnGM2[i4]
         grows = (g433 > 0) & (g433 * T[i4] > lnN3)
         reg[i4[grows]] = np.where(reg[i4[grows]] == 0, 3, 4)
+    # 自由場で、返すスピンが 433 の臨界より下の点(E19)。三準位の運動論では、322 の臨界で止まったあと 544(m = 4)の超放射で
+    # さらに下がる(alpha ~ 0.45 以上の古い BH)。しかし 433(m = 3)の率は 544 の率より大きく、同じスピンから先に飽和するはず
+    # なので、ここまで進んだ点の値は粗い。上の判定は返すスピンしか見ないので、この点を印 2 に戻していた。印 4 にする。
+    reg[(reg == 2) & (out < c3) & ~big] = 4
     # 速い段差の時刻が表の節のあいだで急に変わる所(E18): 値は表の補間のまま、印 5
     reg[np.isin(reg, (1, 2)) & sharp_t] = 5
+    # 段差の時刻が alpha の節のあいだで折れていて、値がそれに敏感な所(E19): 値は表の補間のまま、印 5
+    reg[np.isin(reg, (1, 2)) & kink_t] = 5
     return out.reshape(shape), reg.reshape(shape)

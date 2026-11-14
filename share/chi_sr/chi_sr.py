@@ -4,26 +4,32 @@
     from chi_sr import ChiSR
     model = ChiSR("chi_sr_tables.npz")
     chi_T, regime = model(M_msun, chi0, T_yr, mu_eV, f_GeV)   # どれも配列でよい(ブロードキャスト)
+M_msun は生まれたときの BH の質量(超放射で減る前)。観測された質量を渡すと、f >= 1e17 GeV で最大 0.04 ずれる(README)。
 
 regime(印):
     0 = 超放射しない(chi0 が 211 と 322 の臨界以下で、433 も年齢のうちに飽和しない)。chi0 を返す
     1 = 自己相互作用の固定点(211・322・544 の三準位)。211 から育つ BH も 322 から育つ BH も、322 の臨界まで
-        下がりうる。三準位の外の準位(411、433 など)は年齢のうちに育たない
+        下がりうる。三準位の外の準位(411、433)は年齢のうちに育たない(422 は調べていない。README の限界 2)
     2 = 自由場(211 が飽和して臨界へ、そのあと 322 の段階)、または 322 から育つ BH で自己相互作用が飽和までに効かない場合
-    3 = この模型の外。chi0 を返す: 固定点で alpha < 0.01 または > 0.30、alpha > 0.5、211・322 は超放射しないが
+    3 = この模型の外。chi0 を返す(予言ではない): 固定点で alpha > 0.30、値の表の下(alpha < 0.008。固定点では
+        alpha < 0.01 で f < 1e8 GeV の点も)で雲が年齢のうちに育ちうる点、alpha > 0.5、211・322 は超放射しないが
         433(m = 3)が年齢のうちに飽和しうる、表の範囲の中なのに値を引けない(M が 1--300 Msun の外、mu T > 0.13 eV yr、
         重みのある節がその年齢まで解けていない)、chi0 > 0.995 で超放射する
     4 = 値は返すが、模型の外の準位が年齢のうちに育ちうるので近似は粗い: 固定点で 411、433、211 の臨界より上の
-        544 が育ちうる、または自由場で止まったスピンから 433 が飽和しうる。約束の外
-    5 = 値は表の補間だが、速い段差の時刻が表の節のあいだで急に変わる所。約束の外
+        544 が育ちうる、自由場で止まったスピンから 433 が飽和しうる、または自由場で 544 の超放射まで進んで
+        433 の臨界より下にいる。約束の外
+    5 = 値は表の補間だが、表の節のあいだで補間できない所。約束の外: 速い段差の時刻が節のあいだで急に変わる所(E18)、
+        段差の時刻が alpha の節のあいだで折れていて値がそれに敏感な所、段のあとの平らな所で角の節の値が割れている所(E19)
 
 約束(照合した範囲は M 2--200 Msun、mu 1e-13--1e-11 eV、f 1e6--1e22 GeV、T 1e5--1.4e10 yr、alpha <= 0.5):
   印 0・1・2 の値は、基準の運動論(三準位、BH の質量と角運動量の変化、重力波の過程)と
   |chi_SR(T) - chi_ref(T')| <= 0.03 を満たす T' が |ln(T'/T)| <= 0.02 の中にある。
+  これは標本で確かめた統計的な主張である(照合の点の数、越えたセルの数、最大の誤差は README.md)。
 
 模型の要点(詳しくは README.md):
   値: 超放射する点の値は、基準の運動論を alpha 0.008--0.5、f 1e8--10^20.5 GeV、M 1、300 Msun の節で解いた表から引く
-  (進み具合の準位ごとの時刻を節のあいだで補間する)。f < 1e8 GeV と alpha < 0.008 は以下の半解析の値。
+  (進み具合の準位ごとの時刻を節のあいだで補間する)。f < 1e8 GeV は以下の半解析の値。alpha < 0.008 は、雲が育つ前の
+  点だけ chi0 を返す。
   固定点は Baryakhtar+ 2011.11646 の式 34--36 に 544 を加えた三準位(Table V・VI の率)。211 の臨界より上は (211, 322)、
   下は 211 が空の (322, 544)。
   dchi/dt = mu (f/M_pl)^2 H(alpha, chi) なので、I(alpha, chi) = int_chi^0.995 dchi'/|H| を表にし、
@@ -33,7 +39,11 @@ regime(印):
   準平衡では、1 個の量子から eps_eq まで育つ時間 t_grow を年齢から引き、行き過ぎで失う eps_th を初期スピンから引く。
 超放射の率は Kerr 時空の連分数法(Dolan 0705.2880)の表(211: alpha >= 0.03、322: 0.1 <= alpha <= 0.52)、
 範囲の外と 433 は解析式(Baumann+ 1908.10370 の式 2.32--2.34)。自己相互作用の率は主要項(相対論的な補正なし)。
+
+別のプロセスで使うとき(multiprocessing など): ChiSR は pickle できる。中身は表の場所だけで、受け取った側が同じ表を
+一度だけ読む(メモリは 1 プロセスあたり約 0.4 GB)。
 """
+import os
 from math import factorial
 
 import numpy as np
@@ -45,6 +55,13 @@ LT_LO, LT_HI = -17.0, 1.0
 LT_STEP = (LT_HI - LT_LO) / 65533
 KI_BLOCK = 4
 KI_STEP = 0.01
+LOW_MARGIN = 7.0      # 値の表で引けない固定点の点を chi0 のままにする条件: 雲が育つ時刻の何 e-fold 前か(E19)
+# alpha の方向の折れ(E19): 段差の時刻(log10 tau)が alpha の節のあいだで折れている所を、表そのものから測る
+KS_STEP = 0.002                    # [dex]、uint8(255 = 0.51 dex 以上)
+KS_MIN = 0.02 / np.log(10.0)       # 約束が許す時刻のずれ 2% [dex]。これより小さい折れは見ない
+KS_CAP = 0.3                       # 時刻をずらす幅の上限 [dex]
+THETA_SW = 0.015                   # 折れの分だけ時刻をずらしたときの値の変化がこれを越えたら印 5
+THETA_P = 0.02                     # 補間が止まった所(平らな所)で、角の節の値の幅がこれを越えたら印 5
 
 
 def _dequantize_lt(q):
@@ -52,6 +69,62 @@ def _dequantize_lt(q):
     v[q == 0] = -np.inf
     v[q == 65535] = np.nan
     return v
+
+
+class _LTCodes:
+    """log10 tau の表を uint16 の符号のまま持ち、引いた要素だけを実数に直す(実数で持つより 4 倍小さい。値は同じ)。E19"""
+    __slots__ = ("q",)
+
+    def __init__(self, q):
+        self.q = q
+
+    @property
+    def shape(self):
+        return self.q.shape
+
+    def __getitem__(self, idx):
+        return _dequantize_lt(self.q[idx])
+
+
+def _compute_ks(LT, x_alpha):
+    """alpha の方向の、段差の時刻の折れ KS[セル i, js, kf, iL, block](KS_STEP [dex] 刻みの uint8)。
+    セル (i, i+1) の準位ごとに、d1 = 下の 2 節 (i-1, i) を結ぶ直線を節 i+1 まで延ばした値と節 i+1 の log10 tau の差、
+    d2 = 上の 2 節 (i+2, i+1) を結ぶ直線を節 i まで延ばした値と節 i の差を測る。折れがこのセルの中にあれば両方が大きく、
+    隣のセルにあれば片方だけが大きい(延ばした直線が折れをまたぐ)。そこで小さいほうが KS_MIN を越える準位だけを折れと
+    みなし、大きいほうを持つ(セルの中の本当の時刻がどちらかの直線の延長の上にあるなら、節 i と i+1 を結ぶ補間の時刻の
+    誤差はこの値以下)。片方しか測れないときはその値、どちらも測れない(外の節が届いていない)ときは上限(255)。
+    両方の節が届いている準位だけ測り、準位 KI_BLOCK 個ずつの最大を持つ。"""
+    nA, K = LT.shape[0], LT.shape[-1]
+    nb = -(-K // KI_BLOCK)
+    out = np.zeros((nA - 1,) + tuple(LT.shape[1:-1]) + (nb,), np.uint8)
+    node = {}                                            # alpha の節ごとの log10 tau(使い終わった節は捨てる)
+
+    def lt(i):
+        if i not in node:
+            node[i] = np.asarray(LT[i], float)
+        return node[i]
+
+    for i in range(nA - 1):
+        node.pop(i - 2, None)
+        lo, hi = lt(i), lt(i + 1)
+        both = np.isfinite(lo) & np.isfinite(hi)
+        d1 = np.full(lo.shape, np.nan)
+        d2 = np.full(lo.shape, np.nan)
+        with np.errstate(invalid="ignore"):
+            if i >= 1:
+                l0 = lt(i - 1)
+                d1 = np.abs(hi - (lo + (lo - l0) * (x_alpha[i + 1] - x_alpha[i]) / (x_alpha[i] - x_alpha[i - 1])))
+            if i + 2 < nA:
+                l3 = lt(i + 2)
+                d2 = np.abs(lo - (hi + (hi - l3) * (x_alpha[i] - x_alpha[i + 1]) / (x_alpha[i + 1] - x_alpha[i + 2])))
+            d1 = np.where(np.isfinite(d1), d1, np.nan)        # 外の節が始めの準位(-inf)のときも「測れない」
+            d2 = np.where(np.isfinite(d2), d2, np.nan)
+            dmin, dmax = np.fmin(d1, d2), np.fmax(d1, d2)      # 片方が NaN ならもう片方
+            code = np.where(np.isfinite(dmax), np.where(dmin > KS_MIN, np.minimum(np.ceil(dmax / KS_STEP), 255), 0), 255)
+        code = np.where(both, code, 0)
+        pad = np.zeros(code.shape[:-1] + (nb * KI_BLOCK - K,))
+        out[i] = np.concatenate([code, pad], axis=-1).reshape(code.shape[:-1] + (nb, KI_BLOCK)).max(-1).astype(np.uint8)
+    return out
 
 
 def _b_of_w(w, s):
@@ -82,12 +155,12 @@ def _bracket(x, nodes):
 
 def _lt_corner(LT, a_, s_, f_, il, tl, k):
     v0, v1 = LT[a_, s_, f_, il, k], LT[a_, s_, f_, il + 1, k]
-    with np.errstate(over="ignore", invalid="ignore"):
+    with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
         return np.where(tl <= 0, v0, np.where(tl >= 1, v1, np.log10((1 - tl) * 10.0 ** v0 + tl * 10.0 ** v1)))
 
 
 def _core2(ctx, T, alpha, s, f_gev, M, mu_eV, c1, c2, LT, RG, a_nodes, sig_nodes, lf_nodes, L_nodes, piece_hi):
-    """第 2 の形の引き方。返り値: (chi, b_env, Rz)。"""
+    """第 2 の形の引き方。返り値: (chi, blocked, Rz)。"""
     T, alpha, s, f_gev, M, mu_eV, c1, c2 = (np.asarray(x, float) for x in (T, alpha, s, f_gev, M, mu_eV, c1, c2))
     n = len(T)
     lq = np.log10(np.maximum(mu_eV * T, 1e-300))
@@ -107,7 +180,7 @@ def _core2(ctx, T, alpha, s, f_gev, M, mu_eV, c1, c2, LT, RG, a_nodes, sig_nodes
     def lt_corner(a_, s_, f_, k):
         """節の log10 tau(L について tau を線形に混ぜる)。"""
         v0, v1 = LT[a_, s_, f_, il, k], LT[a_, s_, f_, il + 1, k]
-        with np.errstate(over="ignore", invalid="ignore"):
+        with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
             return np.where(tl <= 0, v0, np.where(tl >= 1, v1, np.log10((1 - tl) * 10.0 ** v0 + tl * 10.0 ** v1)))
 
     def at(k):
@@ -149,7 +222,9 @@ def _core2(ctx, T, alpha, s, f_gev, M, mu_eV, c1, c2, LT, RG, a_nodes, sig_nodes
             tn = LT[a_, s_, f_, il_, nxt]
             tc = tk + d
             tc = np.where(np.isfinite(tn) & (nxt > kk), np.minimum(tc, tn), tc)
-            j = np.clip((tc - ctx.G_LT[0]) / (ctx.G_LT[1] - ctx.G_LT[0]), 0, len(ctx.G_LT) - 1.000001)
+            # 重みが 0 の節では tc が NaN になりうる(準位に届いていない節)。NaN を整数に直した結果は CPU で違い
+            # (Apple Silicon は 0、x86 は INT64_MIN で添字の範囲の外になり IndexError)、0 にそろえる(E19。値は変わらない)
+            j = np.nan_to_num(np.clip((tc - ctx.G_LT[0]) / (ctx.G_LT[1] - ctx.G_LT[0]), 0, len(ctx.G_LT) - 1.000001), nan=0.0)
             j0 = np.floor(j).astype(int)
             u = j - j0
             r0 = RG[a_, s_, f_, il_, j0]
@@ -158,7 +233,8 @@ def _core2(ctx, T, alpha, s, f_gev, M, mu_eV, c1, c2, LT, RG, a_nodes, sig_nodes
             rz += np.where(pos, wc * wl * rv, 0.0)
     b = benv - rz
     w = _w_of_b(b, s)
-    return np.asarray(ctx.chi_of_w(w, c1, c2), float), benv, rz
+    # blocked: 次の準位に届かない角の節があって、補間の進み具合がここで止まる(E19。平らな所の値の判定に使う)
+    return np.asarray(ctx.chi_of_w(w, c1, c2), float), np.isnan(l1) & (nxt > kk), rz
 
 
 def _corner_b(ctx, LT, RG, a_, s_, f_, il, tl, lq):
@@ -189,10 +265,13 @@ def _corner_b(ctx, LT, RG, a_, s_, f_, il, tl, lq):
 
 
 def lookup_rt3(ctx, rt, T, alpha, chi0, f_gev, M, mu_eV, c1, c2, theta_v=0.06, theta_k=0.05, margin=10.0):
-    """表からスピンを引く。返り値: (chi, valid, sharp)。
+    """表からスピンを引く。返り値: (chi, valid, sharp, kink)。
     valid: 表の範囲の中で、重みのある節がどれも tau_q の margin 倍まで解けている。
     sharp: 速い段差の時刻が節のあいだで急に変わる所(印 5)。角の節それぞれの、問いの時刻での値の幅が theta_v を越え、
-           しかもその時刻に角の節がいる準位で、段差の時刻が両隣を結ぶ直線から theta_k [dex] 以上ずれている。"""
+           しかもその時刻に角の節がいる準位で、段差の時刻が両隣を結ぶ直線から theta_k [dex] 以上ずれている。
+    kink: 節のあいだで補間できない所(印 5、E19)。(1) 段差の時刻が alpha の節のあいだで折れている所。問いのセルの折れ KS(_compute_ks、角の節と、その時刻に
+          角の節がいる準位での最大)が KS_MIN を越え、しかも時刻を折れの分だけ前後にずらすと値が THETA_SW より変わる。
+          (2) 補間が止まった所(次の準位に届かない角の節がある)で、角の節の値の幅が THETA_P を越える。"""
     T, alpha, chi0, f_gev, M, mu_eV, c1, c2 = np.broadcast_arrays(*[np.asarray(x, float) for x in
                                                                     (T, alpha, chi0, f_gev, M, mu_eV, c1, c2)])
     s = np.asarray(ctx.w_of_chi(chi0, c1, c2), float)
@@ -204,17 +283,18 @@ def lookup_rt3(ctx, rt, T, alpha, chi0, f_gev, M, mu_eV, c1, c2, theta_v=0.06, t
     chi = chi0.copy()
     valid = np.zeros(len(T), bool)
     sharp = np.zeros(len(T), bool)
+    kink = np.zeros(len(T), bool)
     Ln = ctx.L_of_M(Mn)
     for piece, snodes in ((0, rt["SA"]), (1, rt["SB"])):
         q = np.flatnonzero(inside & ((s > 1) if piece else (s <= 1)))
         if len(q) == 0:
             continue
-        LT, RG, KI = rt["LT"][piece], rt["RG"][piece], rt["KI"][piece]
+        LT, RG, KI, KS = rt["LT"][piece], rt["RG"][piece], rt["KI"][piece], rt["KS"][piece]
         ST, TV = rt["status"][piece], rt["tau_valid"][piece]
         sq = s[q]
         sig = np.log(np.maximum(sq - 1, 1e-300)) if piece else np.log(np.maximum(sq, 1e-300))
-        c, _, _ = _core2(ctx, T[q], alpha[q], sq, f_gev[q], M[q], mu_eV[q], c1[q], c2[q], LT, RG, an, np.log(snodes), lfn, Ln,
-                         bool(piece))
+        c, blocked, _ = _core2(ctx, T[q], alpha[q], sq, f_gev[q], M[q], mu_eV[q], c1[q], c2[q], LT, RG, an, np.log(snodes), lfn, Ln,
+                               bool(piece))
         ia, ta = _bracket(np.log(alpha[q]), np.log(an))
         js, ts = _bracket(sig, np.log(snodes))
         kf, tf = _bracket(lf[q], lfn)
@@ -253,16 +333,57 @@ def lookup_rt3(ctx, rt, T, alpha, chi0, f_gev, M, mu_eV, c1, c2, theta_v=0.06, t
                     bb = np.minimum(b0 + d, b1)
                     v = KI[a_, s_, f_, il_, bb] * KI_STEP
                     kmaxv = np.where(pos, np.maximum(kmaxv, v), kmaxv)
+        # alpha の方向の折れ(E19): 問いのセルの KS の最大(角の s・f の節、M の両方の節、角の節がいる準位のブロック)
+        dq = np.zeros(len(q))
+        for ds in (0, 1):
+            for df in (0, 1):
+                pos = ((ts if ds else 1 - ts) * (tf if df else 1 - tf)) > 0
+                for il_ in (il, il + 1):
+                    for d in range(nblk):
+                        bb = np.minimum(b0 + d, b1)
+                        dq = np.where(pos, np.maximum(dq, KS[ia, js + ds, kf + df, il_, bb] * KS_STEP), dq)
+        kq = np.zeros(len(q), bool)
+        mk = np.flatnonzero(dq > KS_MIN)
+        if len(mk):
+            sh = 10.0 ** np.minimum(dq[mk], KS_CAP)
+            dv = np.zeros(len(mk))
+            for Ts in (T[q][mk] * sh, T[q][mk] / sh):
+                cs_, _, _ = _core2(ctx, Ts, alpha[q][mk], sq[mk], f_gev[q][mk], M[q][mk], mu_eV[q][mk], c1[q][mk], c2[q][mk],
+                                   LT, RG, an, np.log(snodes), lfn, Ln, bool(piece))
+                dv = np.fmax(dv, np.abs(cs_ - c[mk]))
+            kq[mk] = ~(dv <= THETA_SW)                    # 値を引けない(NaN)ときは印をつける側
         chi[q] = c
         valid[q] = ok & np.isfinite(c)
         sharp[q] = ((vmax - vmin) > theta_v) & (kmaxv > theta_k)
-    return chi, valid, sharp
+        # 平らな所の値(E19): 補間は、準位ごとの時刻を節のあいだで混ぜるので、重みのある角の節のうち一つでも次の準位に
+        # 届かないと、そこで止まる。止まった所での角の節の値の幅が THETA_P を越えていれば、値は進みのいちばん遅い節の値に
+        # 引かれて、その幅までずれうる(BH の質量が減ったあとの臨界の値が、節によって違うときなど)。印 5 にする。
+        kink[q] = kq | (blocked & ((vmax - vmin) > THETA_P))
+    return chi, valid, sharp, kink
+
+
+_MODELS = {}
+
+
+def _load_cached(path):
+    """pickle から戻すときに使う: 同じプロセスでは同じ表を一度だけ読む。"""
+    if path not in _MODELS:
+        _MODELS[path] = ChiSR(path)
+    return _MODELS[path]
 
 
 class ChiSR:
     def __init__(self, path):
-        z = np.load(path)
-        self.z = z
+        self.path = os.path.abspath(path)
+        with np.load(self.path) as z:
+            self._read(z)
+
+    def __reduce__(self):
+        # pickle には表の場所だけを入れる(表そのものはメモリの上で約 0.4 GB)。multiprocessing などで別のプロセスに
+        # 渡すと、受け取った側が同じファイルを一度だけ読む。別の計算機に渡すときは、同じ場所に表が要る。
+        return (_load_cached, (self.path,))
+
+    def _read(self, z):
         for k in ["HBAR_EVS", "TSUN", "N0", "YR", "MPL_GEV", "KAPPA_BH", "KAPPA_INF", "K_C", "K_D", "CHI_TOP",
                   "ALPHA_MAX", "F_FP_MAX"]:
             setattr(self, k, float(z[k]))
@@ -278,23 +399,23 @@ class ChiSR:
             self._rel[key] = RegularGridInterpolator((np.log(z[f"rel{key}_alpha"]), z[f"rel{key}_chi"]), z[f"rel{key}_F"],
                                                      method="cubic", bounds_error=False, fill_value=None)
             self._range[key] = tuple(z[f"rel{key}_range"])
-        # 値の表(E18)。log10 tau は準位の差を uint16 で持つ(届いた準位の数 rt_nreach より先は届かない)
+        # 値の表(E18)。ファイルでは log10 tau を準位の差の uint16 で持つ(届いた準位の数 rt_nreach より先は届かない)。
+        # メモリの上では、log10 tau は uint16 の符号、戻りは float16 のまま持つ(全体で約 0.4 GB。実数に直して持つと 1.4 GB。E19)
         self.rt = None
         if "rt_LTd" in z.files:
-            d = z["rt_LTd"].astype(np.int64)
             nr = z["rt_nreach"].astype(np.int64)
-            codes = np.cumsum(d, axis=-1)
-            kk = np.arange(codes.shape[-1])
-            codes = np.where(kk < nr[..., None], codes, 65535)
+            codes = np.cumsum(z["rt_LTd"], axis=-1, dtype=np.uint16)       # 符号は 65534 以下なので、あふれない
+            codes[np.arange(codes.shape[-1]) >= nr[..., None]] = 65535
             codes[..., 0] = np.where(nr > 0, 0, 65535)
-            self.rt = {"LT": _dequantize_lt(codes.astype(np.uint16)), "RG": z["rt_RG"].astype(float), "KI": z["rt_KI"],
+            self.rt = {"LT": tuple(_LTCodes(c) for c in codes), "RG": z["rt_RG"], "KI": z["rt_KI"],
                        "status": z["rt_status"], "tau_valid": z["rt_tau_valid"]}
             for k in ("A_NODES", "SA", "SB", "LF_NODES", "M_NODES"):
                 self.rt[k] = z[f"rt_{k}"]
             self.rt["TAU_MAX"] = float(z["rt_TAU_MAX"])
             self.P_LEV2 = z["rt_P_LEV"]
             self.G_LT = z["rt_G_LT"]
-            del d, codes
+            # 段差の時刻の、alpha の方向の折れ(E19)。表から一度だけ測る
+            self.rt["KS"] = [_compute_ks(lt, np.log(self.rt["A_NODES"])) for lt in self.rt["LT"]]
 
     # 表の引き方に渡す文脈(calc/reftab.py の関数と同じ名前)
     def chi_of_w(self, w, c1, c2):
@@ -504,16 +625,18 @@ class ChiSR:
         use_t = np.zeros(len(M), bool)
         out_rt = np.zeros(len(M), bool)
         sharp_t = np.zeros(len(M), bool)
+        kink_t = np.zeros(len(M), bool)
         if self.rt is not None:
             cand_t = (chi0 > c2) & ~big
             if cand_t.any():
                 it = np.flatnonzero(cand_t)
                 lfmax = self.rt["LF_NODES"][-1]
                 ff = np.minimum(f_gev[it], 10 ** lfmax)
-                v, ok, sh = lookup_rt3(self, self.rt, T_yr[it], a[it], chi0[it], ff, M[it], mu_eV[it], c1[it], c2[it])
+                v, ok, sh, kk = lookup_rt3(self, self.rt, T_yr[it], a[it], chi0[it], ff, M[it], mu_eV[it], c1[it], c2[it])
                 tv[it] = v
                 use_t[it] = ok
                 sharp_t[it] = sh & ok
+                kink_t[it] = kk & ok
                 below = (np.log10(f_gev[it]) < self.rt["LF_NODES"][0]) | (a[it] < self.rt["A_NODES"][0])
                 out_rt[it] = ~ok & ~below
         sr211 = (chi0 > c1) & ~big
@@ -527,7 +650,7 @@ class ChiSR:
             eeq = 2 / np.sqrt(3) * np.sqrt(g1 * ginf) / gbh
             eth = np.sqrt(2 * g1 * lnGM2 / gbh)
         si_reg = sr211 & (g1 > 0) & (eeq < emax) & (eth < emax)
-        inval = si_reg & ((a > self.ALPHAS[-1]) | (a < self.ALPHAS[0]))
+        inval = si_reg & (a > self.ALPHAS[-1])
         reg[inval] = 3
         reg[sr211 & (g1 <= 0) & (chi0 > self.CHI_TOP)] = 3
         q = si_reg & ~inval
@@ -540,11 +663,23 @@ class ChiSR:
             out[q] = np.where(use_t[q], tv[q], out[q])
             reg[q] = self._flag_fp(a[q], np.maximum(c0eff, out[q]), out[q], (f_gev[q] / self.MPL_GEV) ** 2, Teff, mu_s[q],
                                    lnGM2[q])
+            # alpha < 0.01 で値の表を引けない点(alpha < 0.008 か f < 1e8 GeV): 雲が固定点の占有数に届く時刻の
+            # LOW_MARGIN e-fold 前より若ければ chi0 のまま(印 1)、そうでなければ模型の外(印 3)。E19
+            iq = np.flatnonzero(q)
+            late = (a[q] < self.ALPHAS[0]) & ~use_t[q] & (g1[q] * (tgrow - T[q]) < LOW_MARGIN)
+            out[iq[late]] = chi0[iq[late]]
+            reg[iq[late]] = 3
         fr = sr211 & ~si_reg & (g1 > 0)
         if fr.any():
             out[fr] = self._free(M[fr], chi0[fr], a[fr], mu_eV[fr], mu_s[fr], T[fr], f_gev[fr], g1[fr])
             out[fr] = np.where(use_t[fr], tv[fr], out[fr])
             reg[fr] = 2
+            if self.rt is not None:
+                # 値の表の下(alpha < 0.008)の自由場の点: 雲が飽和する時刻の LOW_MARGIN e-fold 前より若い点だけ chi0(印 2)、
+                # ほかは模型の外(印 3)。半解析の飽和の時刻は約束の 2% より粗いことがある(E19)
+                late = fr & (a < self.rt["A_NODES"][0]) & (g1 * T > lnGM2 + np.log(np.maximum(emax, 1e-300)) - LOW_MARGIN)
+                out[late] = chi0[late]
+                reg[late] = 3
         only322 = (~sr211) & (chi0 > c2) & ~big
         if only322.any():
             i3 = np.flatnonzero(only322)
@@ -560,7 +695,7 @@ class ChiSR:
                 eth2 = np.sqrt(2 * np.maximum(g2, 0) * lnGM2[i3] / gc)
                 tgrow2 = (np.log(np.maximum(eeq2, 1e-300)) + lnGM2[i3]) / g2
             fpq = (g2 > 0) & (eeq2 < emax2) & (eth2 < emax2)
-            ok = fpq & (a3 >= self.ALPHAS[0]) & (a3 <= self.ALPHAS[-1])
+            ok = fpq & (a3 <= self.ALPHAS[-1])
             res = x0.copy()
             rg = np.where((g2 > 0) | (x0 > self.CHI_TOP), 3, 0)
             if ok.any():
@@ -571,6 +706,10 @@ class ChiSR:
                 res[ok] = np.where(use_t[i3][ok], tv[i3][ok], res[ok])
                 rg[ok] = self._flag_fp(a3[ok], np.maximum(c0eff, res[ok]), res[ok], (f3[ok] / self.MPL_GEV) ** 2, Teff,
                                        m3[ok], lnGM2[i3][ok])
+                jo = np.flatnonzero(ok)
+                late = (a3[ok] < self.ALPHAS[0]) & ~use_t[i3][ok] & (g2[ok] * (tgrow2[ok] - T3[ok]) < LOW_MARGIN)
+                res[jo[late]] = x0[jo[late]]
+                rg[jo[late]] = 3
             free = (g2 > 0) & ~fpq
             if free.any():
                 Mf2, cf2 = self._sat_state(M3[free], x0[free], u3[free], 2)
@@ -579,6 +718,10 @@ class ChiSR:
                 res[free] = np.where(T3[free] >= lnN2 / g2[free], cf2, x0[free])
                 res[free] = np.where(use_t[i3][free], tv[i3][free], res[free])
                 rg[free] = 2
+                if self.rt is not None:
+                    late = free & (a3 < self.rt["A_NODES"][0]) & (g2 * T3 > lnGM2[i3] + np.log(np.maximum(emax2, 1e-300)) - LOW_MARGIN)
+                    res[late] = x0[late]
+                    rg[late] = 3
             out[i3] = res
             reg[i3] = rg
         # 表の範囲の中なのに値を引けない点は印 3、初期スピンが 0.995 より上で超放射する点も印 3(E18)
@@ -597,6 +740,11 @@ class ChiSR:
             lnN3 = np.log(np.maximum((out[i4] - c3[i4]) / 3, 1e-300)) + lnGM2[i4]
             grows = (g433 > 0) & (g433 * T[i4] > lnN3)
             reg[i4[grows]] = np.where(reg[i4[grows]] == 0, 3, 4)
+        # 自由場で、返すスピンが 433 の臨界より下の点(E19): 三準位の運動論で 544(m = 4)の超放射まで進んだ点。433(m = 3)の
+        # 率のほうが大きく、同じスピンから先に飽和するはずなので、値は粗い(印 4)
+        reg[(reg == 2) & (out < c3) & ~big] = 4
         # 速い段差の時刻が表の節のあいだで急に変わる所(E18): 値は表の補間のまま、印 5
         reg[np.isin(reg, (1, 2)) & sharp_t] = 5
+        # 段差の時刻が alpha の節のあいだで折れていて、値がそれに敏感な所(E19): 値は表の補間のまま、印 5
+        reg[np.isin(reg, (1, 2)) & kink_t] = 5
         return out.reshape(shape), reg.reshape(shape)

@@ -1,0 +1,24 @@
+% E19: 超放射の率の切り替えと、段差の時刻の折れ。データは calc/e19_review.py rates(figs/data/e19_jump.dat、e19_step.dat)
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=3 by 1, horizontal sep=1.45cm}, note, width=0.345\linewidth, height=0.33\linewidth,
+  title style={font=\small, yshift=-3pt}]
+\nextgroupplot[title={(a) 切り替えでの率の飛び}, xlabel={BH のスピン $\chi$}, ylabel={表の率 / 解析式の率}, xmin=0.2, xmax=1.0, ymin=0.65, ymax=1.2,
+  legend style={font=\scriptsize, at={(0.03,0.05)}, anchor=south west, fill=white, fill opacity=0.85, text opacity=1, draw=none}, legend cell align=left]
+  \addplot[ink2, line width=0.4pt, forget plot] coordinates {(0.2,1) (1.0,1)};
+  \addplot[cA, line width=1.0pt] table[x=chi, y=r322] {figs/data/e19_jump.dat}; \addlegendentry{322、$\alpha=0.1$}
+  \addplot[cB, line width=1.0pt] table[x=chi, y=r211] {figs/data/e19_jump.dat}; \addlegendentry{211、$\alpha=0.03$}
+\nextgroupplot[title={(b) 段差の時刻: 表の補間 / 基準}, xlabel={$\alpha$}, ylabel={時刻の比}, xmin=0.0915, xmax=0.128, ymin=0.92, ymax=1.16,
+  xtick={0.10,0.11,0.12}, xticklabel style={/pgf/number format/fixed, /pgf/number format/precision=2}]
+  \fill[cM!18] (axis cs:0.0915,0.98) rectangle (axis cs:0.128,1.02);
+  \foreach \a in {0.09914,0.10846,0.11866} {\edef\temp{\noexpand\draw[ink2, dashed, line width=0.4pt] (axis cs:\a,0.92) -- (axis cs:\a,1.16);}\temp}
+  \draw[cB, line width=0.6pt] (axis cs:0.1,0.92) -- (axis cs:0.1,1.16);
+  \addplot[cA, line width=0.9pt, mark=*, mark size=0.9pt] table[x=alpha, y=ratio] {figs/data/e19_step.dat};
+\nextgroupplot[title={(c) 印 0・1・2 の誤差の最大}, xlabel={$\alpha$}, ylabel={$|\Delta\chi|$(時刻の 2\% を許す)}, xmin=0.0915, xmax=0.128, ymin=0, ymax=0.2,
+  xtick={0.10,0.11,0.12}, xticklabel style={/pgf/number format/fixed, /pgf/number format/precision=2},
+  yticklabel style={/pgf/number format/fixed, /pgf/number format/precision=2},
+  legend style={font=\scriptsize, at={(0.97,0.95)}, anchor=north east, fill=white, fill opacity=0.85, text opacity=1, draw=none}, legend cell align=left]
+  \addplot[ink2, line width=0.4pt, dashed, forget plot] coordinates {(0.0915,0.03) (0.128,0.03)};
+  \addplot[cB, line width=0.9pt, mark=*, mark size=0.9pt] table[x=alpha, y=err_old] {figs/data/e19_step.dat}; \addlegendentry{E18 の版}
+  \addplot[cC, line width=0.9pt, mark=*, mark size=0.9pt] table[x=alpha, y=err_new] {figs/data/e19_step.dat}; \addlegendentry{E19 の版}
+\end{groupplot}
+\end{tikzpicture}

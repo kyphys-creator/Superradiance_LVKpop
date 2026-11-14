@@ -6,7 +6,7 @@
 雲の占有数は n = N / N0 で持つ。BH の角運動量は J~ = chi (M/Msun)^2 (単位 G Msun^2 / c)。
 
 式の典拠(式番号は Refs/notes/theory_rates.md に原文と照合して書く):
-  成長率 Gamma_nlm   Baumann, Chia, Porto, Stout, arXiv:1908.10370 (Detweiler 型の解析式)
+  成長率 Gamma_nlm   Baumann, Chia, Stout, ter Haar, arXiv:1908.10370 (Detweiler 型の解析式)
   エネルギー omega_nlm 同上(alpha^5 まで)
 """
 import numpy as np
