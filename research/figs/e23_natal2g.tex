@@ -1,0 +1,25 @@
+% E23: (a) 2 世代目の生まれたときのスピンの分布、(b) 生まれたときのスピンと年齢について周辺化した、0.69 以上にとどまる確率。
+% データは calc/e23_natal2g.py
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1, horizontal sep=17mm}, width=0.48\linewidth, height=0.44\linewidth, note]
+\nextgroupplot[xmin=0.55, xmax=0.85, ymin=0, ymax=16, xlabel={生まれたときのスピン $\chi_b$}, ylabel={$dP/d\chi_b$},
+  title={\small (a) 2 世代目の生まれたときのスピン},
+  legend style={font=\scriptsize, at={(0.5,-0.30)}, anchor=north, fill=white, draw=none}, legend columns=1,
+  legend cell align=left]
+  \addplot[draw=none, fill=cM, fill opacity=0.18, forget plot] coordinates {(0.69,0) (0.69,16) (0.85,16) (0.85,0)} \closedcycle;
+  \addplot[cA, line width=1.0pt] table[x=chi, y=beta_all] {figs/data/e23_hist.dat}; \addlegendentry{ボソンなし(基準の組)}
+  \addplot[cA, line width=1.0pt, dashed] table[x=chi, y=beta_v100] {figs/data/e23_hist.dat}; \addlegendentry{そのうち星団に残るもの($v_\mathrm{esc}=100$ km/s)}
+  \addplot[cB, line width=1.0pt] table[x=chi, y=lf12] {figs/data/e23_hist_boson.dat}; \addlegendentry{親が超放射を受ける、$f=10^{12}$ GeV}
+  \addplot[cB, line width=1.0pt, dashed] table[x=chi, y=lf14] {figs/data/e23_hist_boson.dat}; \addlegendentry{親が超放射を受ける、$f=10^{14}$ GeV}
+\nextgroupplot[xmode=log, xmin=1e10, xmax=1e14, ymin=0, ymax=1.05, xlabel={$f$ [GeV]}, ylabel={確率 $/$ ボソンなしの確率},
+  title={\small (b) 0.69 以上にとどまる確率},
+  legend style={font=\scriptsize, at={(0.5,-0.30)}, anchor=north, fill=white, draw=none}, legend columns=2,
+  legend cell align=left]
+  \addplot[cB, line width=1.0pt] table[x=f, y=wide] {figs/data/e23_keep.dat}; \addlegendentry{分布: 広い}
+  \addplot[cM, line width=0.8pt] table[x=f, y=wide_fix078] {figs/data/e23_keep.dat}; \addlegendentry{0.78 に固定: 広い}
+  \addplot[cB, line width=1.0pt, dashed] table[x=f, y=peak] {figs/data/e23_keep.dat}; \addlegendentry{分布: 星団の目安}
+  \addplot[cM, line width=0.8pt, dashed] table[x=f, y=peak_fix078] {figs/data/e23_keep.dat}; \addlegendentry{0.78 に固定: 星団の目安}
+  \addplot[cB, line width=1.0pt, densely dotted] table[x=f, y=slow] {figs/data/e23_keep.dat}; \addlegendentry{分布: 遅い}
+  \addplot[cM, line width=0.8pt, densely dotted] table[x=f, y=slow_fix078] {figs/data/e23_keep.dat}; \addlegendentry{0.78 に固定: 遅い}
+\end{groupplot}
+\end{tikzpicture}
