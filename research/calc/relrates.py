@@ -22,15 +22,19 @@ R_up から、Green 関数の解は地平線で Z R_in、Z = (1/W) int R_up T dr
 放出(omega_X > mu、rate_inf): 無限遠で外向きの解 R_up ~ r^{-1 + i eta} e^{i k r}(k = sqrt(omega^2 - mu^2)、
 eta = (2 omega^2 - mu^2)/k)を、漸近級数(asym_series)で k r1 >= 400 の所から始めて内向きに積分する。無限遠への数の流れは
 2 |Z_inf|^2 Im(R_up^* P_up)、Z_inf = (1/W) int R_in T dr(R_up の規格化によらない)、地平線への流れは BH の過程と同じ式。
-kappa_eff = Gamma_hat/alpha^5(hyd.kappa_inf と同じ規約)。部分波は l = |m_X| から l_i + l_j + l_k + 2 まで。
+kappa_eff = Gamma_hat/alpha^5(hyd.kappa_inf と同じ規約)。部分波は l = |m_X| から l_i + l_j + l_k + 2 まで(ells を渡さないときは
+l の小さい方から足し、寄与が和の ELL_TOL = 1e-9 より小さくなったら止め、a^2 cos^2 theta の項だけの l_i + l_j + l_k + 2 は飛ばす。
+alpha = 0.52、chi = 0.995 で全部の部分波と 1.2e-9)。
+まとめて解く(point、relcorr.py の表): 8 準位の束縛状態を共通の格子で 1 回だけ作り、過程で使い回す(過程ごとの計算と 5e-11)。
 確かめ(2026-11-16): 9 個の過程で alpha -> 0 の切片が hyd.kappa_inf と 1.6e-5 以内(python3 calc/relrates.py inf)。
 格子の点の数を倍、地平線の切り方 1e-8 -> 1e-11、始める k r1 を 4 倍、部分波を 4 つ増やしても、alpha <= 0.4 で率は 3e-5 以内。
 """
+import math
 import os
 import sys
 
 import numpy as np
-from scipy.integrate import solve_ivp, simpson
+from scipy.integrate import cumulative_simpson, solve_ivp, simpson
 from scipy.special import gammaln, lpmv
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -39,6 +43,7 @@ import sr  # noqa: E402
 
 DELTA0 = 1e-8          # 地平線から内側の端までの r - r+(r+ を掛ける)
 NX = 24000             # x の格子の点の数
+ELL_TOL = 1e-9         # ells を渡さないとき、部分波は l の小さい方から足し、最後の l の寄与が和のこれより小さくなったら止める
 
 
 class Kerr:
@@ -84,24 +89,35 @@ def r_of_x(K, x):
 
 
 def rhs(K, omega, l, m, src=None):
-    """y = (R, P) の x についての右辺。src(r) は (r - r+) を掛ける前の源(複素)。"""
+    """y = (R, P) の x についての右辺。src(r) は (r - r+) を掛ける前の源(複素)。
+    U = K^2/(r - r-) + (r - r+)(2 a m omega - a^2 omega^2 - mu^2 r^2 - Lambda) を、遠方で K^2 と mu^2 r^2 Delta の
+    打ち消しが起きない形に展開して使う(omega ~ mu では大きな項どうしが 6 桁以上消え、解法の刻みが潰れて止まっていた):
+        U = [c4 r^4 + c3 r^3 + c2 r^2 + c0]/(r - r-) + (r - r+) cst、
+        c4 = omega^2 - mu^2、c3 = 2 mu^2、c2 = (2 omega^2 - mu^2) a^2 - 2 a m omega、c0 = omega^2 a^4 - 2 a^3 m omega + a^2 m^2。
+    解法の時間のほとんどが右辺なので、numpy のスカラーでなく Python の float と complex で計算する。"""
     mu, a = K.mu, K.a
+    omega = complex(omega)
     k2 = omega * omega - mu * mu
-    c2 = a * a * k2
-    L_ = Lam(l, m, c2)
+    L_ = Lam(l, m, a * a * k2)
     cst = 2 * a * m * omega - a * a * omega * omega - L_
+    c4, c3 = k2, 2.0 * mu * mu
+    c2 = (2 * omega * omega - mu * mu) * a * a - 2 * a * m * omega
+    c0 = omega * omega * a ** 4 - 2 * a ** 3 * m * omega + a * a * m * m
+    rp, rm = float(K.rp), float(K.rm)
+    exp = math.exp
 
     def f(x, y):
-        r = K.rp + np.exp(x)
-        d = r - K.rp
-        # U = K^2/(r - r-) + d (2 a m omega - a^2 omega^2 - mu^2 r^2 - Lambda) を、遠方で K^2 と mu^2 r^2 Delta の打ち消しが
-        # 起きない形に展開する(omega ~ mu では大きな項どうしが 6 桁以上消え、解法の刻みが潰れて止まっていた)
-        num = (k2 * r ** 4 + 2 * mu * mu * r ** 3 + (2 * omega * omega - mu * mu) * a * a * r * r + omega * omega * a ** 4
-               - 2 * a * m * omega * (r * r + a * a) + a * a * m * m)
-        U = num / (r - K.rm) + d * cst
-        R, P = y[0] + 1j * y[1], y[2] + 1j * y[3]
-        dR = P / (r - K.rm)
-        dP = -U * R + (d * src(r) if src is not None else 0.0)
+        d = exp(x)
+        r = rp + d
+        r2 = r * r
+        irm = 1.0 / (r - rm)
+        U = (c4 * r2 * r2 + c3 * r2 * r + c2 * r2 + c0) * irm + d * cst
+        y0, y1, y2, y3 = y.tolist()
+        R, P = complex(y0, y1), complex(y2, y3)
+        dR = P * irm
+        dP = -U * R
+        if src is not None:
+            dP += d * src(r)
         return [dR.real, dR.imag, dP.real, dP.imag]
     return f
 
@@ -213,50 +229,99 @@ def decay_check(alpha, chi, n):
                 Aout_over_Ain=abs(b.A_out / b.A_in), match_err=b.match_err)
 
 
-def rate_bh(alpha, chi, i, j, k, ells=(0, 2, 4), states=None, details=False):
-    """i x j -> k x BH(m_X = 0、omega_X < mu)の kappa_eff。i, j, k は (n, l, m)。"""
-    K = Kerr(alpha, chi)
-    levs = (i, j, k)
-    mX = i[2] + j[2] - k[2]
-    if mX != 0:
-        raise ValueError("m_X != 0")
-    # 束縛状態(同じ格子で)
-    omegas = [bound_omega(K, *lv) for lv in levs]
-    wX = omegas[0].real + omegas[1].real - omegas[2].real
-    kapX = kappa_decay(K, wX).real
-    kaps = [kappa_decay(K, w.real).real for w in omegas]
-    r_max = max(r_max_for(K, kappa_decay(K, wX)), max(r_max_for(K, kappa_decay(K, w.real), lv[0]) for w, lv in zip(omegas, levs)))
-    xg = grid(K, r_max)
-    r = r_of_x(K, xg)
-    B = states or {}
+def _spread(v, ref, scale=None):
+    """格子の中ほど(NX/10 から 9 NX/10)で、一定のはずの量 v の ref からのずれの最大(|ref| で割る)。scale(|R||P| など)を
+    渡すと、scale > 1e3 |ref| の点(障壁の内側や地平線の近くの強い反射で、流れが |R||P| の打ち消しの差になる所。そこでは解法の
+    相対誤差 1e-11 が |R||P|/|ref| 倍に増える)は除く。無限遠への流れは格子の外の端の値を使うので、そこが一定なら足りる。"""
+    sel = slice(NX // 10, 9 * NX // 10)
+    dv = np.abs(v[sel] / ref - 1)
+    if scale is not None:
+        dv = dv[scale[sel] < 1e3 * abs(ref)]
+    return float(dv.max()) if dv.size else np.nan
+
+
+def _setup(K, levs, omegas, states, xg, r_need):
+    """三つの準位の (omega, 格子, 束縛状態)。xg と states を渡すと使い回す(格子の外の端が r_need より内側なら例外)。"""
+    if omegas is None:
+        omegas = [bound_omega(K, *lv) for lv in levs]
+    r_need = max(r_need, max(r_max_for(K, kappa_decay(K, w.real), lv[0]) for w, lv in zip(omegas, levs)))
+    if xg is None:
+        xg = grid(K, r_need)
+        if states:
+            raise ValueError("states を渡すときは、その格子 xg も渡す")
+    elif r_of_x(K, xg[-1]) < r_need * (1 - 1e-12):
+        raise ValueError(f"格子の外の端 {r_of_x(K, xg[-1]):.4g} が要る半径 {r_need:.4g} より内側")
+    B = dict(states) if states else {}
     for lv, w in zip(levs, omegas):
         if lv not in B:
             B[lv] = Bound(K, *lv, xg, omega=w)
+    return omegas, xg, B
+
+
+def _ells(i, j, k, mX):
+    lsum = i[1] + j[1] + k[1]
+    return [ell for ell in range(abs(mX), lsum + 3) if (ell + lsum) % 2 == 0]
+
+
+def _forced_charge(K, wX, ell, mX, xg, Rin, Rup, T, Wm):
+    """強制振動の解 R_X = [R_in int_r^inf R_up T dr' + R_up int_{r+}^r R_in T dr'] / W の KG 電荷(束縛の X、omega_X < mu)。
+    int_r^inf は外の端から内向きに足す(R_in は外で e^{kappa r} で増えるので、全体から引くと桁が落ちる)。"""
+    r = r_of_x(K, xg)
+    d = r - K.rp
+    I_in = cumulative_simpson(Rin * T * d, x=xg, initial=0)
+    I_up = cumulative_simpson((Rup * T * d)[::-1], x=-xg[::-1], initial=0)[::-1]       # u = -x で外から内へ
+    RX = (Rin * I_up + Rup * I_in) / Wm
+    dens = 2 * np.abs(RX) ** 2 * (((r * r + K.a ** 2) ** 2 * wX - 2 * K.a * r * mX) / (r - K.rm)
+                                  - d * K.a ** 2 * wX * (1 - cos2(ell, mX)))
+    return float(simpson(dens, x=xg))
+
+
+def rate_bh(alpha, chi, i, j, k, ells=None, states=None, xg=None, omegas=None, details=False):
+    """i x j -> k x BH(omega_X < mu)の kappa_eff = Gamma_hat/(alpha^8 r+)。i, j, k は (n, l, m)。
+    m_X = 0 が主要項の過程。m_X != 0(主要項で 0、閾値を越えた放出の過程)も同じ式で、地平線への流れは
+    2 (omega_X - m_X Omega_H)(r+^2 + a^2)|Z|^2(超放射の m_X では負)。部分波は l = |m_X| から l_i + l_j + l_k + 2 まで。
+    details の tau_X = (強制振動の X の KG 電荷)/Gamma_hat は X が雲にとどまる時間(M の単位)。BGLS の式 A14 の摂動の条件は
+    (この過程が作る準位 k の 1 個あたりの率) x tau_X << 1(N_X/N_k = tau_X Gamma_k)。"""
+    K = Kerr(alpha, chi)
+    levs = (i, j, k)
+    mX = i[2] + j[2] - k[2]
+    if omegas is None:
+        omegas = [bound_omega(K, *lv) for lv in levs]
+    wX = omegas[0].real + omegas[1].real - omegas[2].real
+    if wX >= K.mu:
+        raise ValueError("omega_X >= mu(放出。rate_inf で扱う)")
+    omegas, xg, B = _setup(K, levs, omegas, states, xg, r_max_for(K, kappa_decay(K, wX)))
+    r = r_of_x(K, xg)
     Ri, Rj, Rk = B[i].R, B[j].R, B[k].R
     sij = 1 if i == j else 2
-    parity = (i[1] + j[1] + k[1]) % 2
+    adaptive = ells is None
+    if adaptive:
+        ells = _ells(i, j, k, mX)
     out = {}
-    total = 0.0
+    total = charge = 0.0
     for ell in ells:
-        if ell % 2 != parity:
-            continue
-        A = ang([(i[1], i[2]), (j[1], j[2]), (k[1], -k[2]), (ell, 0)])
-        Bc = ang([(i[1], i[2]), (j[1], j[2]), (k[1], -k[2]), (ell, 0)], extra_cos2=True)
-        if abs(A) < 1e-14 and abs(Bc) < 1e-14:
-            continue
+        A = ang([(i[1], i[2]), (j[1], j[2]), (k[1], -k[2]), (ell, -mX)])
+        Bc = ang([(i[1], i[2]), (j[1], j[2]), (k[1], -k[2]), (ell, -mX)], extra_cos2=True)
+        if abs(A) < 1e-14 and (adaptive or abs(Bc) < 1e-14):
+            continue            # 適応のときは a^2 cos^2 theta の項だけの l(l_i + l_j + l_k + 2)も飛ばす(alpha = 0.45 で 3e-11 以下)
         T = -0.5 * sij * Ri * Rj * np.conj(Rk) * (r * r * A + K.a ** 2 * Bc)
-        Rin, Pin = solve_in(K, wX, ell, 0, xg)
-        Rup, Pup = solve_up(K, wX, ell, 0, xg)
+        Rin, Pin = solve_in(K, wX, ell, mX, xg)
+        Rup, Pup = solve_up(K, wX, ell, mX, xg)
         W = Rin * Pup - Rup * Pin
         Wm = W[NX // 2]
         Z = simpson(Rup * T * (r - K.rp), x=xg) / Wm
-        flux = 2 * wX * (K.rp ** 2 + K.a ** 2) * abs(Z) ** 2
+        flux = 2 * (wX - mX * K.OmH) * (K.rp ** 2 + K.a ** 2) * abs(Z) ** 2
         total += flux
-        out[ell] = dict(A=A, B=Bc, flux=flux, W_spread=float(np.std(W[NX // 10: 9 * NX // 10]) / abs(Wm)))
+        q = _forced_charge(K, wX, ell, mX, xg, Rin, Rup, T, Wm) if details else np.nan
+        charge += q
+        out[ell] = dict(A=A, B=Bc, flux=flux, charge=q, W_spread=_spread(W, Wm))
+        if adaptive and len(out) >= 2 and abs(flux) < ELL_TOL * abs(total) and not abs(q) > 1e-4 * abs(charge):
+            break
     kap = total / (alpha ** 8 * K.rp)
     if details:
-        return dict(kappa=kap, ells=out, omegaX=wX, mu=K.mu, nodes={lv: B[lv].nodes for lv in levs},
-                    norm={lv: B[lv].norm_integral for lv in levs}, r_max=r_max)
+        return dict(kappa=kap, Gamma=total, tau_X=charge / total, ells=out, omegaX=wX, mu=K.mu,
+                    nodes={lv: B[lv].nodes for lv in levs}, match_err={lv: B[lv].match_err for lv in levs},
+                    norm={lv: B[lv].norm_integral for lv in levs}, r_max=float(r_of_x(K, xg[-1])))
     return kap
 
 
@@ -339,7 +404,7 @@ def solve_out(K, omega, l, m, xg, kr1=None):
     return y[0] + 1j * y[1], y[2] + 1j * y[3], err
 
 
-def rate_inf(alpha, chi, i, j, k, ells=None, states=None, details=False, kr1=None):
+def rate_inf(alpha, chi, i, j, k, ells=None, states=None, xg=None, omegas=None, details=False, kr1=None):
     """i x j -> k x inf(omega_X > mu)の kappa_eff = Gamma_hat/alpha^5(hyd.kappa_inf と同じ規約、gamma = kappa alpha^8
     (M_pl/f)^4 mu)。Green 関数の解は、源の外で無限遠に Z_inf R_up、地平線で Z_H R_in:
         Z_inf = (1/W) int R_in T dr、 Z_H = (1/W) int R_up T dr。
@@ -349,29 +414,25 @@ def rate_inf(alpha, chi, i, j, k, ells=None, states=None, details=False, kr1=Non
     K = Kerr(alpha, chi)
     levs = (i, j, k)
     mX = i[2] + j[2] - k[2]
-    omegas = [bound_omega(K, *lv) for lv in levs]
+    if omegas is None:
+        omegas = [bound_omega(K, *lv) for lv in levs]
     wX = omegas[0].real + omegas[1].real - omegas[2].real
     if wX <= K.mu:
         raise ValueError("omega_X <= mu(束縛。rate_bh で扱う)")
-    r_max = max(r_max_for(K, kappa_decay(K, w.real), lv[0]) for w, lv in zip(omegas, levs))
-    xg = grid(K, r_max)
+    omegas, xg, B = _setup(K, levs, omegas, states, xg, 0.0)
     r = r_of_x(K, xg)
-    B = states or {}
-    for lv, w in zip(levs, omegas):
-        if lv not in B:
-            B[lv] = Bound(K, *lv, xg, omega=w)
     Ri, Rj, Rk = B[i].R, B[j].R, B[k].R
     sij = 1 if i == j else 2
-    lsum = i[1] + j[1] + k[1]
-    if ells is None:
-        ells = [ell for ell in range(abs(mX), lsum + 3) if (ell + lsum) % 2 == 0]
+    adaptive = ells is None
+    if adaptive:
+        ells = _ells(i, j, k, mX)
     out = {}
     tot_inf = tot_h = 0.0
     for ell in ells:
         A = ang([(i[1], i[2]), (j[1], j[2]), (k[1], -k[2]), (ell, -mX)])
         Bc = ang([(i[1], i[2]), (j[1], j[2]), (k[1], -k[2]), (ell, -mX)], extra_cos2=True)
-        if abs(A) < 1e-14 and abs(Bc) < 1e-14:
-            continue
+        if abs(A) < 1e-14 and (adaptive or abs(Bc) < 1e-14):
+            continue            # 適応のときは a^2 cos^2 theta の項だけの l(l_i + l_j + l_k + 2)も飛ばす(alpha = 0.45 で 3e-11 以下)
         T = -0.5 * sij * Ri * Rj * np.conj(Rk) * (r * r * A + K.a ** 2 * Bc)
         Rin, Pin = solve_in(K, wX, ell, mX, xg)
         Rup, Pup, aerr = solve_out(K, wX, ell, mX, xg, kr1=kr1)
@@ -384,15 +445,63 @@ def rate_inf(alpha, chi, i, j, k, ells=None, states=None, details=False, kr1=Non
         f_h = 2 * (wX - mX * K.OmH) * (K.rp ** 2 + K.a ** 2) * abs(Zh) ** 2
         tot_inf += f_inf
         tot_h += f_h
-        sel = slice(NX // 10, 9 * NX // 10)
         out[ell] = dict(A=A, B=Bc, kappa_inf=f_inf / alpha ** 5, kappa_h=f_h / alpha ** 5,
-                        W_spread=float(np.std(W[sel]) / abs(Wm)), J_spread=float(np.std(Jup[sel]) / abs(Jup[-1])),
+                        W_spread=_spread(W, Wm), J_spread=_spread(Jup, Jup[-1], scale=np.abs(Rup) * np.abs(Pup)),
                         asym_err=float(aerr))
+        if adaptive and len(out) >= 2 and abs(f_inf + f_h) < ELL_TOL * abs(tot_inf + tot_h):
+            break
     kap = (tot_inf + tot_h) / alpha ** 5
     if details:
         return dict(kappa=kap, kappa_inf=tot_inf / alpha ** 5, kappa_h=tot_h / alpha ** 5, ells=out, omegaX=wX, mu=K.mu,
-                    nodes={lv: B[lv].nodes for lv in levs}, match_err={lv: B[lv].match_err for lv in levs}, r_max=r_max)
+                    nodes={lv: B[lv].nodes for lv in levs}, match_err={lv: B[lv].match_err for lv in levs},
+                    r_max=float(r_of_x(K, xg[-1])))
     return kap
+
+
+def point(alpha, chi, procs, omegas, eta_max=30.0):
+    """一つの (alpha, chi) で過程をまとめて解く。束縛状態は準位ごとに 1 回だけ、共通の格子で作って使い回す(格子の外の端は
+    準位の減衰で決める。束縛の X の減衰がそれより長い過程だけ、自分の格子で作り直す)。
+    procs: [(i, j, k), ...]、omegas: {準位: 複素の M omega}(呼ぶ側で根を確かめたもの)。
+    返り値: 過程ごとの dict(G_inf、G_h(Gamma_hat の無限遠と地平線の分)、tau_X(束縛の X だけ)、omegaX、確かめの量)と、
+    準位ごとの dict(nodes、match_err)。omega_X が閾値のすぐ上(eta = (2 omega^2 - mu^2)/k > eta_max)の過程は解かない
+    (外向きの解を始める半径が k^-3 で遠くなる)。"""
+    K = Kerr(alpha, chi)
+    levels = sorted(omegas)
+    r_max = max(r_max_for(K, kappa_decay(K, omegas[lv].real), lv[0]) for lv in levels)
+    xg = grid(K, r_max)
+    B = {lv: Bound(K, *lv, xg, omega=omegas[lv]) for lv in levels}
+    lev_out = {lv: dict(nodes=B[lv].nodes, match_err=B[lv].match_err) for lv in levels}
+    out = []
+    for i, j, k in procs:
+        om = [omegas[i], omegas[j], omegas[k]]
+        wX = om[0].real + om[1].real - om[2].real
+        res = dict(omegaX=wX, G_inf=np.nan, G_h=np.nan, tau_X=np.nan, W_spread=np.nan, J_spread=np.nan, asym_err=np.nan,
+                   note="")
+        try:
+            if wX > K.mu:
+                kX = np.sqrt(wX * wX - K.mu ** 2)
+                if (2 * wX * wX - K.mu ** 2) / kX > eta_max:
+                    res["note"] = "near threshold"
+                    out.append(res)
+                    continue
+                d = rate_inf(alpha, chi, i, j, k, states=B, xg=xg, omegas=om, details=True)
+                res.update(G_inf=d["kappa_inf"] * alpha ** 5, G_h=d["kappa_h"] * alpha ** 5,
+                           W_spread=max(v["W_spread"] for v in d["ells"].values()),
+                           J_spread=max(v["J_spread"] for v in d["ells"].values()),
+                           asym_err=max(v["asym_err"] for v in d["ells"].values()))
+            else:
+                own = r_max_for(K, kappa_decay(K, wX)) > r_max
+                d = (rate_bh(alpha, chi, i, j, k, omegas=om, details=True) if own
+                     else rate_bh(alpha, chi, i, j, k, states=B, xg=xg, omegas=om, details=True))
+                res.update(G_inf=0.0, G_h=d["Gamma"], tau_X=d["tau_X"],
+                           W_spread=max(v["W_spread"] for v in d["ells"].values()), note="own grid" if own else "")
+                if own:      # 作り直した束縛状態の確かめ
+                    res["match_err"] = max(d["match_err"].values())
+                    res["nodes_ok"] = all(d["nodes"][lv] == lv[0] - lv[1] - 1 for lv in (i, j, k))
+        except Exception as e:                       # 例外は記録して、その点だけ NaN にする
+            res["note"] = "error: " + str(e)[:120]
+        out.append(res)
+    return out, lev_out
 
 
 if __name__ == "__main__":
