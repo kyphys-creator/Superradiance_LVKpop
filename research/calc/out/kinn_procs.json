@@ -1,0 +1,1122 @@
+{
+"211x211->322": {
+"kappa": 4.209097017669193e-07,
+"kind": "BH",
+"res_n": null
+},
+"211x211->411": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x211->422": {
+"kappa": 1.5262958311000918e-07,
+"kind": "BH",
+"res_n": null
+},
+"211x211->433": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x211->511": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x211->533": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x211->544": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x322->411": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x322->422": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x322->433": {
+"kappa": 9.05926514502995e-08,
+"kind": "BH",
+"res_n": null
+},
+"211x322->511": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x322->533": {
+"kappa": 3.084922770672607e-08,
+"kind": "BH",
+"res_n": null
+},
+"211x322->544": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x411->322": {
+"kappa": 2.4600943021421147e-08,
+"kind": "BH",
+"res_n": null
+},
+"211x411->422": {
+"kappa": 3.223960614942626e-11,
+"kind": "BHres",
+"res_n": 2
+},
+"211x411->433": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 2
+},
+"211x411->511": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x411->533": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x411->544": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x422->322": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x422->411": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 2
+},
+"211x422->433": {
+"kappa": 7.828805297575198e-11,
+"kind": "BHres",
+"res_n": 2
+},
+"211x422->511": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x422->533": {
+"kappa": 1.1477730908301237e-07,
+"kind": "BH",
+"res_n": null
+},
+"211x422->544": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x433->322": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x433->411": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 2
+},
+"211x433->422": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 2
+},
+"211x433->511": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x433->533": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x433->544": {
+"kappa": 1.1209281875733538e-09,
+"kind": "BH",
+"res_n": null
+},
+"211x511->322": {
+"kappa": 2.9285463927629756e-08,
+"kind": "BH",
+"res_n": null
+},
+"211x511->411": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x511->422": {
+"kappa": 2.0251392153315375e-10,
+"kind": "BH",
+"res_n": null
+},
+"211x511->433": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x511->533": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 2
+},
+"211x511->544": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 2
+},
+"211x533->322": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x533->411": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x533->422": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x533->433": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x533->511": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 2
+},
+"211x533->544": {
+"kappa": 4.583237864868378e-13,
+"kind": "BHres",
+"res_n": 2
+},
+"211x544->322": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x544->411": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x544->422": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x544->433": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"211x544->511": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 2
+},
+"211x544->533": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 2
+},
+"322x322->211": {
+"kappa": 1.1350205311894154e-08,
+"kind": "inf",
+"res_n": null
+},
+"322x322->411": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"322x322->422": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"322x322->433": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"322x322->511": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"322x322->533": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"322x322->544": {
+"kappa": 1.9288364241604735e-09,
+"kind": "BH",
+"res_n": null
+},
+"322x411->211": {
+"kappa": 3.7777756429290505e-09,
+"kind": "inf",
+"res_n": null
+},
+"322x411->422": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 3
+},
+"322x411->433": {
+"kappa": 3.808907970717985e-11,
+"kind": "BHres",
+"res_n": 3
+},
+"322x411->511": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"322x411->533": {
+"kappa": 2.0587678101146278e-08,
+"kind": "BH",
+"res_n": null
+},
+"322x411->544": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"322x422->211": {
+"kappa": 1.6201503047760746e-08,
+"kind": "inf",
+"res_n": null
+},
+"322x422->411": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 3
+},
+"322x422->433": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 3
+},
+"322x422->511": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"322x422->533": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"322x422->544": {
+"kappa": 1.2080210389623912e-11,
+"kind": "BH",
+"res_n": null
+},
+"322x433->211": {
+"kappa": 2.62096653935321e-09,
+"kind": "inf",
+"res_n": null
+},
+"322x433->411": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 3
+},
+"322x433->422": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 3
+},
+"322x433->511": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"322x433->533": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"322x433->544": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"322x511->211": {
+"kappa": 1.7052914767553152e-09,
+"kind": "inf",
+"res_n": null
+},
+"322x511->411": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"322x511->422": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"322x511->433": {
+"kappa": 2.7359989746587526e-09,
+"kind": "BH",
+"res_n": null
+},
+"322x511->533": {
+"kappa": 6.259561452036205e-12,
+"kind": "BHres",
+"res_n": 3
+},
+"322x511->544": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 3
+},
+"322x533->211": {
+"kappa": 1.8221199956649155e-09,
+"kind": "inf",
+"res_n": null
+},
+"322x533->411": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"322x533->422": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"322x533->433": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"322x533->511": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 3
+},
+"322x533->544": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 3
+},
+"322x544->211": {
+"kappa": 6.12903878777508e-11,
+"kind": "inf",
+"res_n": null
+},
+"322x544->411": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"322x544->422": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"322x544->433": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"322x544->511": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 3
+},
+"322x544->533": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 3
+},
+"411x411->211": {
+"kappa": 1.7248531504845902e-09,
+"kind": "inf",
+"res_n": null
+},
+"411x411->322": {
+"kappa": 1.5171650113982267e-11,
+"kind": "BH",
+"res_n": null
+},
+"411x411->422": {
+"kappa": 2.192862729093173e-11,
+"kind": "BHres",
+"res_n": 4
+},
+"411x411->433": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"411x411->511": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"411x411->533": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"411x411->544": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"411x422->211": {
+"kappa": 2.211198576643264e-09,
+"kind": "inf",
+"res_n": null
+},
+"411x422->322": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"411x422->433": {
+"kappa": 2.2788536238541845e-11,
+"kind": "BHres",
+"res_n": 4
+},
+"411x422->511": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"411x422->533": {
+"kappa": 9.393844033149514e-10,
+"kind": "BH",
+"res_n": null
+},
+"411x422->544": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"411x433->211": {
+"kappa": 1.168634290656299e-10,
+"kind": "inf",
+"res_n": null
+},
+"411x433->322": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"411x433->422": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"411x433->511": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"411x433->533": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"411x433->544": {
+"kappa": 5.2109661655446596e-09,
+"kind": "BH",
+"res_n": null
+},
+"411x511->211": {
+"kappa": 3.3282195187623726e-09,
+"kind": "inf",
+"res_n": null
+},
+"411x511->322": {
+"kappa": 8.7172121547345e-11,
+"kind": "inf",
+"res_n": null
+},
+"411x511->422": {
+"kappa": 2.6379335028236703e-11,
+"kind": "BHres",
+"res_n": 5
+},
+"411x511->433": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"411x511->533": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"411x511->544": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"411x533->211": {
+"kappa": 5.018078285454407e-11,
+"kind": "inf",
+"res_n": null
+},
+"411x533->322": {
+"kappa": 4.3739695894410616e-11,
+"kind": "inf",
+"res_n": null
+},
+"411x533->422": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"411x533->433": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"411x533->511": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"411x533->544": {
+"kappa": 6.566642638082292e-12,
+"kind": "BHres",
+"res_n": 4
+},
+"411x544->211": {
+"kappa": 1.8395618755551615e-11,
+"kind": "inf",
+"res_n": null
+},
+"411x544->322": {
+"kappa": 2.9798153867785206e-10,
+"kind": "inf",
+"res_n": null
+},
+"411x544->422": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"411x544->433": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"411x544->511": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"411x544->533": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"422x422->211": {
+"kappa": 1.5806622315918359e-09,
+"kind": "inf",
+"res_n": null
+},
+"422x422->322": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"422x422->411": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"422x422->433": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"422x422->511": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"422x422->533": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"422x422->544": {
+"kappa": 2.2699586570785798e-09,
+"kind": "BH",
+"res_n": null
+},
+"422x433->211": {
+"kappa": 6.072062242918265e-10,
+"kind": "inf",
+"res_n": null
+},
+"422x433->322": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"422x433->411": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"422x433->511": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"422x433->533": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"422x433->544": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"422x511->211": {
+"kappa": 1.0075644927088553e-09,
+"kind": "inf",
+"res_n": null
+},
+"422x511->322": {
+"kappa": 5.339148898264548e-10,
+"kind": "inf",
+"res_n": null
+},
+"422x511->411": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"422x511->433": {
+"kappa": 4.9073063676941736e-12,
+"kind": "BHres",
+"res_n": 5
+},
+"422x511->533": {
+"kappa": 6.382849640645535e-13,
+"kind": "BHres",
+"res_n": 4
+},
+"422x511->544": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"422x533->211": {
+"kappa": 4.64009430161232e-10,
+"kind": "inf",
+"res_n": null
+},
+"422x533->322": {
+"kappa": 1.246843026013657e-09,
+"kind": "inf",
+"res_n": null
+},
+"422x533->411": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"422x533->433": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"422x533->511": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"422x533->544": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"422x544->211": {
+"kappa": 4.724186457528455e-12,
+"kind": "inf",
+"res_n": null
+},
+"422x544->322": {
+"kappa": 3.0683678784331643e-11,
+"kind": "inf",
+"res_n": null
+},
+"422x544->411": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"422x544->433": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"422x544->511": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"422x544->533": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"433x433->211": {
+"kappa": 9.213545908769137e-11,
+"kind": "inf",
+"res_n": null
+},
+"433x433->322": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"433x433->411": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"433x433->422": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"433x433->511": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"433x433->533": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"433x433->544": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"433x511->211": {
+"kappa": 6.25628081962794e-11,
+"kind": "inf",
+"res_n": null
+},
+"433x511->322": {
+"kappa": 2.259081494238504e-11,
+"kind": "inf",
+"res_n": null
+},
+"433x511->411": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"433x511->422": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"433x511->533": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"433x511->544": {
+"kappa": 5.9646720926616925e-12,
+"kind": "BHres",
+"res_n": 4
+},
+"433x533->211": {
+"kappa": 2.187932006832814e-10,
+"kind": "inf",
+"res_n": null
+},
+"433x533->322": {
+"kappa": 2.8186655717340262e-09,
+"kind": "inf",
+"res_n": null
+},
+"433x533->411": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"433x533->422": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"433x533->511": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"433x533->544": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"433x544->211": {
+"kappa": 1.861468537484607e-11,
+"kind": "inf",
+"res_n": null
+},
+"433x544->322": {
+"kappa": 7.837367281146564e-10,
+"kind": "inf",
+"res_n": null
+},
+"433x544->411": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"433x544->422": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"433x544->511": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"433x544->533": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 4
+},
+"511x511->211": {
+"kappa": 4.015410589352547e-10,
+"kind": "inf",
+"res_n": null
+},
+"511x511->322": {
+"kappa": 8.370533788902114e-12,
+"kind": "inf",
+"res_n": null
+},
+"511x511->411": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"511x511->422": {
+"kappa": 4.950930853089474e-13,
+"kind": "BH",
+"res_n": null
+},
+"511x511->433": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"511x511->533": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"511x511->544": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"511x533->211": {
+"kappa": 2.8380513704055265e-11,
+"kind": "inf",
+"res_n": null
+},
+"511x533->322": {
+"kappa": 1.768535404933782e-11,
+"kind": "inf",
+"res_n": null
+},
+"511x533->411": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"511x533->422": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"511x533->433": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"511x533->544": {
+"kappa": 2.0645722519083582e-12,
+"kind": "BHres",
+"res_n": 5
+},
+"511x544->211": {
+"kappa": 8.622725792127194e-12,
+"kind": "inf",
+"res_n": null
+},
+"511x544->322": {
+"kappa": 1.216970690453303e-10,
+"kind": "inf",
+"res_n": null
+},
+"511x544->411": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"511x544->422": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"511x544->433": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"511x544->533": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"533x533->211": {
+"kappa": 3.393105577114195e-11,
+"kind": "inf",
+"res_n": null
+},
+"533x533->322": {
+"kappa": 3.178199748083917e-10,
+"kind": "inf",
+"res_n": null
+},
+"533x533->411": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"533x533->422": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"533x533->433": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"533x533->511": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"533x533->544": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"533x544->211": {
+"kappa": 8.909102944151785e-12,
+"kind": "inf",
+"res_n": null
+},
+"533x544->322": {
+"kappa": 1.8264864141191324e-10,
+"kind": "inf",
+"res_n": null
+},
+"533x544->411": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"533x544->422": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"533x544->433": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"533x544->511": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"544x544->211": {
+"kappa": 4.2016027991147703e-13,
+"kind": "inf",
+"res_n": null
+},
+"544x544->322": {
+"kappa": 4.356230377862333e-11,
+"kind": "inf",
+"res_n": null
+},
+"544x544->411": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"544x544->422": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"544x544->433": {
+"kappa": 0.0,
+"kind": "BH",
+"res_n": null
+},
+"544x544->511": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+},
+"544x544->533": {
+"kappa": 0.0,
+"kind": "BHres",
+"res_n": 5
+}
+}
