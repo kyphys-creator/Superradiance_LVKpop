@@ -19,6 +19,12 @@ R_up から、Green 関数の解は地平線で Z R_in、Z = (1/W) int R_up T dr
     kappa_eff(alpha, chi) = Gamma_hat / (alpha^8 r+)(hyd.py の kappa と同じ規約)、 補正 C = kappa_eff / kappa_hyd。
 計算: x = ln(r - r+) を変数にする(dR/dx = P/(r - r-)、dP/dx = -(r - r+) V R + (r - r+) T。(r - r+) V は地平線で有限)。
 角度の関数は球面調和関数(|c^2| <= a^2 alpha^4/n^2 で、扁平の補正は 1e-3 程度)、Lambda = l(l+1) - c^2 <cos^2 theta>。
+放出(omega_X > mu、rate_inf): 無限遠で外向きの解 R_up ~ r^{-1 + i eta} e^{i k r}(k = sqrt(omega^2 - mu^2)、
+eta = (2 omega^2 - mu^2)/k)を、漸近級数(asym_series)で k r1 >= 400 の所から始めて内向きに積分する。無限遠への数の流れは
+2 |Z_inf|^2 Im(R_up^* P_up)、Z_inf = (1/W) int R_in T dr(R_up の規格化によらない)、地平線への流れは BH の過程と同じ式。
+kappa_eff = Gamma_hat/alpha^5(hyd.kappa_inf と同じ規約)。部分波は l = |m_X| から l_i + l_j + l_k + 2 まで。
+確かめ(2026-11-16): 9 個の過程で alpha -> 0 の切片が hyd.kappa_inf と 1.6e-5 以内(python3 calc/relrates.py inf)。
+格子の点の数を倍、地平線の切り方 1e-8 -> 1e-11、始める k r1 を 4 倍、部分波を 4 つ増やしても、alpha <= 0.4 で率は 3e-5 以内。
 """
 import os
 import sys
@@ -80,19 +86,32 @@ def r_of_x(K, x):
 def rhs(K, omega, l, m, src=None):
     """y = (R, P) の x についての右辺。src(r) は (r - r+) を掛ける前の源(複素)。"""
     mu, a = K.mu, K.a
-    c2 = a * a * (omega * omega - mu * mu)
+    k2 = omega * omega - mu * mu
+    c2 = a * a * k2
     L_ = Lam(l, m, c2)
+    cst = 2 * a * m * omega - a * a * omega * omega - L_
 
     def f(x, y):
         r = K.rp + np.exp(x)
         d = r - K.rp
-        Kk = (r * r + a * a) * omega - a * m
-        U = Kk * Kk / (r - K.rm) + d * (2 * a * m * omega - a * a * omega * omega - mu * mu * r * r - L_)
+        # U = K^2/(r - r-) + d (2 a m omega - a^2 omega^2 - mu^2 r^2 - Lambda) を、遠方で K^2 と mu^2 r^2 Delta の打ち消しが
+        # 起きない形に展開する(omega ~ mu では大きな項どうしが 6 桁以上消え、解法の刻みが潰れて止まっていた)
+        num = (k2 * r ** 4 + 2 * mu * mu * r ** 3 + (2 * omega * omega - mu * mu) * a * a * r * r + omega * omega * a ** 4
+               - 2 * a * m * omega * (r * r + a * a) + a * a * m * m)
+        U = num / (r - K.rm) + d * cst
         R, P = y[0] + 1j * y[1], y[2] + 1j * y[3]
         dR = P / (r - K.rm)
         dP = -U * R + (d * src(r) if src is not None else 0.0)
         return [dR.real, dR.imag, dP.real, dP.imag]
     return f
+
+
+def _ivp(f, span, y0, t_eval=None):
+    """solve_ivp(DOP853、rtol 1e-11)。途中で止まったら例外にする(止まっても返る値は途中までなので、黙って使わない)。"""
+    sol = solve_ivp(f, span, y0, method="DOP853", t_eval=t_eval, rtol=1e-11, atol=1e-30)
+    if sol.status != 0:
+        raise RuntimeError(f"積分が止まった: {sol.message}(x = {sol.t[-1]:.4g}、目標 {span[1]:.4g})")
+    return sol
 
 
 def kappa_decay(K, omega):
@@ -118,8 +137,7 @@ def solve_up(K, omega, l, m, xg):
     R1 = 1.0 + 0j
     D1 = (r1 - K.rp) * (r1 - K.rm)
     P1 = D1 * R1 * (-kap + (nu - 1) / r1)
-    sol = solve_ivp(rhs(K, omega, l, m), (xg[-1], xg[0]), [R1.real, R1.imag, P1.real, P1.imag], method="DOP853",
-                    t_eval=xg[::-1], rtol=1e-11, atol=1e-30)
+    sol = _ivp(rhs(K, omega, l, m), (xg[-1], xg[0]), [R1.real, R1.imag, P1.real, P1.imag], t_eval=xg[::-1])
     y = sol.y[:, ::-1]
     return y[0] + 1j * y[1], y[2] + 1j * y[3]
 
@@ -130,8 +148,7 @@ def solve_in(K, omega, l, m, xg):
     d0 = np.exp(xg[0])
     R0 = np.exp(-1j * sig * xg[0])
     P0 = (d0 + K.rp - K.rm) * (-1j * sig) * R0
-    sol = solve_ivp(rhs(K, omega, l, m), (xg[0], xg[-1]), [R0.real, R0.imag, P0.real, P0.imag], method="DOP853",
-                    t_eval=xg, rtol=1e-11, atol=1e-30)
+    sol = _ivp(rhs(K, omega, l, m), (xg[0], xg[-1]), [R0.real, R0.imag, P0.real, P0.imag], t_eval=xg)
     return sol.y[0] + 1j * sol.y[1], sol.y[2] + 1j * sol.y[3]
 
 
@@ -156,10 +173,13 @@ class Bound:
         Rd, Pd = solve_up(K, self.omega_c, l, m, xg)         # 複素の固有値で(幅の広い n00 でも、つなぎ目で合う)
         Rh, Ph = solve_in(K, self.omega_c, l, m, xg)
         r = r_of_x(K, xg)
-        sel = np.flatnonzero(r > 4 * K.rp)
+        # つなぐのは雲のいちばん外の山。減衰の解は、固有値の丸めの誤差で地平線の近くに r^{-l-1} の解を拾い、小さい alpha
+        # では雲の山より大きくなる(alpha = 0.01 の 322 で山が r = 6 に出た)ので、水素型の半径 n^2 a0 の 1/4 より外で探す。
+        sel = np.flatnonzero(r > max(4 * K.rp, 0.25 * n * n / K.mu ** 2))
         jm = sel[np.argmax(np.abs(Rd[sel]))]
         cc = Rd[jm] / Rh[jm]
-        self.match_err = float(abs(Pd[jm] - cc * Ph[jm]) / abs(Pd[jm]))
+        # P の食い違いを、P の自然な大きさ Delta R / r で測る(山では P がほぼ 0 なので P 自身では割らない)
+        self.match_err = float(abs(Pd[jm] - cc * Ph[jm]) / abs((r[jm] - K.rp) * (r[jm] - K.rm) * Rd[jm] / r[jm]))
         R = np.where(np.arange(len(xg)) < jm, cc * Rh, Rd)
         P = np.where(np.arange(len(xg)) < jm, cc * Ph, Pd)
         d = r - K.rp
@@ -240,6 +260,141 @@ def rate_bh(alpha, chi, i, j, k, ells=(0, 2, 4), states=None, details=False):
     return kap
 
 
+def _ser_div(num, den, n):
+    """t のべき級数の割り算 num/den の最初の n 個の係数(den[0] != 0)。"""
+    num = np.concatenate([np.asarray(num, complex), np.zeros(n)])
+    out = np.zeros(n, complex)
+    for i in range(n):
+        acc = num[i]
+        for j in range(1, min(i, len(den) - 1) + 1):
+            acc -= den[j] * out[i - j]
+        out[i] = acc / den[0]
+    return out
+
+
+def asym_series(K, omega, l, m, s, nmax=80):
+    """無限遠での解 R = e^{s r} r^rho sum_n c_n r^{-n}(s^2 = mu^2 - omega^2。s = +i k が外向き、-kappa が減衰)の
+    rho と c_n。R'' + p R' + q R = 0、p = Delta'/Delta、q = V/Delta を t = 1/r の級数にして、係数の漸化式で解く:
+        2 s N c_N = (N-1) N c_{N-1} - sum_{j=1}^{N} P_j (N-j) c_{N-j} + sum_{j=2}^{N+1} Q_j c_{N+1-j}、
+        P_1 = 2 rho + p_1、P_j = p_j、Q_j = s p_j + rho p_{j-1} + q_j + [j = 2](rho^2 - rho)、rho = -p_1/2 - q_1/(2 s)。"""
+    mu, a = K.mu, K.a
+    c2 = a * a * (omega * omega - mu * mu)
+    c0 = 2 * a * m * omega - a * a * omega * omega - Lam(l, m, c2)
+    D = np.array([1.0, -2.0, a * a])
+    n = nmax + 3
+    p = _ser_div([0.0, 2.0, -2.0], D, n)
+    kt = np.array([omega, 0.0, omega * a * a - a * m], complex)
+    num = np.convolve(kt, kt) + np.convolve(np.array([-mu * mu, 0.0, c0], complex), D)
+    q = _ser_div(num, np.convolve(D, D), n)
+    rho = -p[1] / 2 - q[1] / (2 * s)
+    P = p.copy()
+    P[1] = 2 * rho + p[1]
+    Q = s * p + rho * np.concatenate([[0.0], p[:-1]]) + q
+    Q[2] += rho * rho - rho
+    c = np.zeros(nmax + 1, complex)
+    c[0] = 1.0
+    with np.errstate(over="ignore", invalid="ignore"):
+        for N in range(1, nmax + 1):
+            acc = (N - 1) * N * c[N - 1]
+            acc -= sum(P[j] * (N - j) * c[N - j] for j in range(1, N + 1))
+            acc += sum(Q[j] * c[N + 1 - j] for j in range(2, N + 2))
+            c[N] = acc / (2 * s * N)
+            if not np.isfinite(c[N]):              # 漸近級数は発散する。あふれたらそこで切る
+                return rho, c[:N]
+    return rho, c
+
+
+def asym_bc(K, omega, l, m, s, r1):
+    """r1 での (R, P) = (1, Delta R'/R)(漸近級数を、項が小さくなるあいだだけ足す)と、切った項の大きさ。"""
+    rho, c = asym_series(K, omega, l, m, s)
+    S, dS, last = 1.0 + 0j, 0j, 1.0
+    for N in range(1, len(c)):
+        term = c[N] * r1 ** (-N)
+        if not np.isfinite(term) or abs(term) > last:
+            break
+        S += term
+        dS += -N * c[N] * r1 ** (-N - 1)
+        last = abs(term)
+        if last < 1e-17:
+            break
+    D1 = (r1 - K.rp) * (r1 - K.rm)
+    return 1.0 + 0j, D1 * (s + rho / r1 + dS / S), last
+
+
+def solve_out(K, omega, l, m, xg, kr1=None):
+    """無限遠で外向き(R ~ r^{-1 + i eta} e^{i k r}、omega > mu)の解。k r1 の所から漸近級数で始めて、格子の外の端まで
+    積分し(出力なし)、格子の上を内向きに積分する。返り値: (R, P, 切った項の大きさ)。"""
+    k = np.sqrt(omega * omega - K.mu ** 2)
+    eta = (2 * omega * omega - K.mu ** 2) / k
+    if kr1 is None:
+        kr1 = max(400.0, 4.0 * (l * (l + 1) + eta * eta))
+    r1 = max(kr1 / k, 2.0 * r_of_x(K, xg[-1]))
+    R1, P1, err = asym_bc(K, omega, l, m, 1j * k, r1)
+    f = rhs(K, omega, l, m)
+    x1 = np.log(r1 - K.rp)
+    sol = _ivp(f, (x1, xg[-1]), [R1.real, R1.imag, P1.real, P1.imag])
+    y0 = sol.y[:, -1]
+    sol = _ivp(f, (xg[-1], xg[0]), y0, t_eval=xg[::-1])
+    y = sol.y[:, ::-1]
+    return y[0] + 1j * y[1], y[2] + 1j * y[3], err
+
+
+def rate_inf(alpha, chi, i, j, k, ells=None, states=None, details=False, kr1=None):
+    """i x j -> k x inf(omega_X > mu)の kappa_eff = Gamma_hat/alpha^5(hyd.kappa_inf と同じ規約、gamma = kappa alpha^8
+    (M_pl/f)^4 mu)。Green 関数の解は、源の外で無限遠に Z_inf R_up、地平線で Z_H R_in:
+        Z_inf = (1/W) int R_in T dr、 Z_H = (1/W) int R_up T dr。
+    無限遠への数の流れは 2 |Z_inf|^2 Im(R_up^* P_up)(実の omega では r によらない。R_up の規格化にもよらない)、
+    地平線への流れは 2 (omega - m Omega_H)(r+^2 + a^2) |Z_H|^2(超放射の条件を満たす m_X では負)。
+    過程の率は二つの和(X の数の正味の生成)。返り値は kappa(和)、details では無限遠と地平線の内訳と確かめの量も。"""
+    K = Kerr(alpha, chi)
+    levs = (i, j, k)
+    mX = i[2] + j[2] - k[2]
+    omegas = [bound_omega(K, *lv) for lv in levs]
+    wX = omegas[0].real + omegas[1].real - omegas[2].real
+    if wX <= K.mu:
+        raise ValueError("omega_X <= mu(束縛。rate_bh で扱う)")
+    r_max = max(r_max_for(K, kappa_decay(K, w.real), lv[0]) for w, lv in zip(omegas, levs))
+    xg = grid(K, r_max)
+    r = r_of_x(K, xg)
+    B = states or {}
+    for lv, w in zip(levs, omegas):
+        if lv not in B:
+            B[lv] = Bound(K, *lv, xg, omega=w)
+    Ri, Rj, Rk = B[i].R, B[j].R, B[k].R
+    sij = 1 if i == j else 2
+    lsum = i[1] + j[1] + k[1]
+    if ells is None:
+        ells = [ell for ell in range(abs(mX), lsum + 3) if (ell + lsum) % 2 == 0]
+    out = {}
+    tot_inf = tot_h = 0.0
+    for ell in ells:
+        A = ang([(i[1], i[2]), (j[1], j[2]), (k[1], -k[2]), (ell, -mX)])
+        Bc = ang([(i[1], i[2]), (j[1], j[2]), (k[1], -k[2]), (ell, -mX)], extra_cos2=True)
+        if abs(A) < 1e-14 and abs(Bc) < 1e-14:
+            continue
+        T = -0.5 * sij * Ri * Rj * np.conj(Rk) * (r * r * A + K.a ** 2 * Bc)
+        Rin, Pin = solve_in(K, wX, ell, mX, xg)
+        Rup, Pup, aerr = solve_out(K, wX, ell, mX, xg, kr1=kr1)
+        W = Rin * Pup - Rup * Pin
+        Wm = W[NX // 2]
+        Zinf = simpson(Rin * T * (r - K.rp), x=xg) / Wm
+        Zh = simpson(Rup * T * (r - K.rp), x=xg) / Wm
+        Jup = np.imag(np.conj(Rup) * Pup)
+        f_inf = 2 * abs(Zinf) ** 2 * Jup[-1]
+        f_h = 2 * (wX - mX * K.OmH) * (K.rp ** 2 + K.a ** 2) * abs(Zh) ** 2
+        tot_inf += f_inf
+        tot_h += f_h
+        sel = slice(NX // 10, 9 * NX // 10)
+        out[ell] = dict(A=A, B=Bc, kappa_inf=f_inf / alpha ** 5, kappa_h=f_h / alpha ** 5,
+                        W_spread=float(np.std(W[sel]) / abs(Wm)), J_spread=float(np.std(Jup[sel]) / abs(Jup[-1])),
+                        asym_err=float(aerr))
+    kap = (tot_inf + tot_h) / alpha ** 5
+    if details:
+        return dict(kappa=kap, kappa_inf=tot_inf / alpha ** 5, kappa_h=tot_h / alpha ** 5, ells=out, omegaX=wX, mu=K.mu,
+                    nodes={lv: B[lv].nodes for lv in levs}, match_err={lv: B[lv].match_err for lv in levs}, r_max=r_max)
+    return kap
+
+
 if __name__ == "__main__":
     import json
     what = sys.argv[1] if len(sys.argv) > 1 else "decay"
@@ -250,3 +405,14 @@ if __name__ == "__main__":
         for a in [0.01, 0.02, 0.05, 0.1]:
             d = rate_bh(a, 0.9, (2, 1, 1), (2, 1, 1), (3, 2, 2), details=True)
             print(a, d["kappa"], {k: (v["flux"], v["W_spread"]) for k, v in d["ells"].items()}, d["nodes"])
+    elif what == "inf":
+        # 放出の過程の alpha -> 0 の極限: kappa_inf の補正 C = kappa/kappa_hyd を alpha^2 まで当てはめた切片が 1 になるはず
+        import hyd
+        procs = [((3, 2, 2), (3, 2, 2), (2, 1, 1)), ((4, 1, 1), (4, 1, 1), (2, 1, 1)), ((3, 2, 2), (4, 1, 1), (2, 1, 1)),
+                 ((4, 1, 1), (5, 1, 1), (3, 2, 2)), ((5, 1, 1), (5, 1, 1), (3, 2, 2)), ((4, 3, 3), (5, 4, 4), (3, 2, 2)),
+                 ((5, 4, 4), (5, 4, 4), (2, 1, 1)), ((4, 2, 2), (5, 4, 4), (3, 2, 2)), ((4, 1, 1), (5, 3, 3), (3, 2, 2))]
+        als = np.array([0.005, 0.01, 0.02])
+        for pr in procs:
+            kh = float(hyd.kappa_inf(*pr)["kappa"])
+            C = np.array([rate_inf(a, 0.9, *pr, details=True)["kappa_inf"] / kh for a in als])
+            print(pr, "C", np.round(C, 6), "intercept", np.polyfit(als, C, 2)[-1])
