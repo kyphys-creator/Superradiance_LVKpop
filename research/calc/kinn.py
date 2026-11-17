@@ -93,9 +93,14 @@ def procs_evolve3m():
             dict(i=1, j=2, k=0, kappa=fp3.K_E, kind="inf", res_n=None), dict(i=2, j=2, k=0, kappa=fp3.K_F, kind="inf", res_n=None)]
 
 
-def sr_default(alpha, chi, levels):
-    """超放射の率 / mu(占有数の率)。evolve3m と同じ関数(表の範囲は表、外は解析式)。手順 2 で多倍長の表に替える。"""
+def sr_e4(alpha, chi, levels):
+    """超放射の率 / mu(占有数の率)。evolve3m と同じ関数(E4 の倍精度の表、範囲の外は解析式)。今の値の表(E18)の基準。"""
     return np.array([fp3.g_rel(alpha, chi, *lev) for lev in levels])
+
+
+def sr_default(alpha, chi, levels):
+    """超放射の率 / mu(占有数の率)。多倍長の Leaver の表(sr.gamma_mp_over_mu、D18 の手順 2、2026-11-17)。新しい表の基準。"""
+    return np.array([sr.gamma_mp_over_mu(alpha, chi, *lev, sr.NORM_N) for lev in levels])
 
 
 class System:
@@ -642,7 +647,7 @@ def a14(sysN, sol, mu_eV, f_gev):
 # ---------- 確かめ ----------
 def check_evolve3m():
     """三準位・evolve3m と同じ係数で、evolve3m を再現するか(12 例 x 60 年齢)。"""
-    sys3 = System([(2, 1, 1), (3, 2, 2), (5, 4, 4)], procs_evolve3m())
+    sys3 = System([(2, 1, 1), (3, 2, 2), (5, 4, 4)], procs_evolve3m(), sr_rate=sr_e4)     # evolve3m と同じ率
     cases = [(19.6, 0.78, 0.71e-12, 1e12), (19.6, 0.78, 0.71e-12, 1e16), (19.6, 0.78, 0.71e-12, 1e18),
              (45.0, 0.70, 0.71e-12, 1e14), (30.0, 0.50, 0.71e-12, 1e15), (8.0, 0.95, 1e-12, 1e13),
              (60.0, 0.29, 0.71e-12, 5e18), (25.0, 0.86, 1.0e-12, 3e17), (12.0, 0.6, 3e-12, 1e11),

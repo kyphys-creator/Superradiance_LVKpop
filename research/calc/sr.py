@@ -8,6 +8,8 @@
 式の典拠(式番号は Refs/notes/theory_rates.md に原文と照合して書く):
   成長率 Gamma_nlm   Baumann, Chia, Stout, ter Haar, arXiv:1908.10370 (Detweiler 型の解析式)
   エネルギー omega_nlm 同上(alpha^5 まで)
+相対論的な率: gamma_rel_over_mu(E4 の倍精度の表、今の値の表 E18 の基準)と gamma_mp_over_mu(多倍長の Leaver の表、
+D18 の手順 2、2026-11-17。N 準位の運動論と新しい表の基準。確かめは python3 calc/rates_mp.py check)。
 """
 import numpy as np
 from math import factorial
@@ -225,3 +227,70 @@ def gamma_rel_over_mu(alpha, chi, n, l, m, norm=1.0):
         return gamma_over_mu(alpha, chi, n, l, m, norm)
     F = _rel_table(n, l, m)((np.log(alpha), chi))
     return norm * float(F) * alpha ** (4 * l + 5) / alpha
+
+
+# ---------- 相対論的な率(多倍長の Leaver の表、DESIGN.md D18 の手順 2、2026-11-17) ----------
+# out/rates_mp_<nlm>.npz(rates_mp.py、8 準位、alpha は下端 ALPHA_LO から 0.52、chi は 0-0.995 の 110 点、40 桁)。
+# 表の範囲は、臨界の因子を除いた G = Im(M omega) / [alpha^(4l+5) (m Omega_H - Re M omega)] と Re(M omega) を、それぞれ
+# (log alpha, chi) の 3 次のスプライン(格子の点を厳密に通る)で引き、Im = alpha^(4l+5) G (m Omega_H - Re) に戻す。
+# Im を直接補間するより、臨界(率が 0 を通る所)の近くの急な変化を因子が受け持つので、補間の誤差が小さい(rates_mp.py check)。
+# 下端より下は解析式(gamma_over_mu)。下端から 1.25 分の 1 までは、相対論の補正 Q を下端の値からなめらかに 1 へつなぐ。
+# Q は臨界の因子を除いた比 Q = [Im / (m Omega_H - Re omega)]_表 / [Gamma / (m Omega_H - omega)]_解析式 で、臨界スピンを
+# またいでもなめらか(全体の率の比は、表と解析式で臨界がわずかにずれるので臨界の近くで発散する)。
+# 今の値の表(E18)と単体版は gamma_rel_over_mu(E4 の表)のまま。新しい表は N 準位の運動論(kinn)とこの関数で作る。
+_MP = {}
+MP_BLEND = 1.25
+
+
+def _g_an(alpha, chi, n, l, m):
+    """解析式の率から臨界の因子 (m Omega_H - omega) と alpha^(4l+5) を除いたもの: 2 r+ C_nl g_lm(G M = 1)。"""
+    rp = rplus(chi)
+    w = alpha * omega_over_mu(alpha, n, l, m, chi)
+    g = 1.0
+    for k in range(1, l + 1):
+        g = g * (k ** 2 * (1.0 - chi ** 2) + (chi * m - 2.0 * rp * w) ** 2)
+    return 2.0 * rp * C_nl(n, l) * g
+
+
+def _mp_table(n, l, m):
+    import os
+    from scipy.interpolate import CubicSpline, RectBivariateSpline
+    key = (n, l, m)
+    if key not in _MP:
+        z = np.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", f"rates_mp_{n}{l}{m}.npz"))
+        al, ch, re, im = z["alpha"], z["chi"], z["re"], z["im"]
+        if not (np.all(np.isfinite(im)) and np.all(np.isfinite(re))) or z["bad"].any() or not z["done"].all():
+            raise ValueError(f"rates_mp_{n}{l}{m}.npz に解けていない点がある")
+        p = 4 * l + 5
+        s_all = m * omegaH(ch)[None, :] - re
+        with np.errstate(divide="ignore", invalid="ignore"):
+            G = im / (al[:, None] ** p * s_all)
+        # 臨界のごく近く(Im と m Omega_H - Re がどちらも丸めの大きさ)は、chi の両隣から埋める
+        for i in range(len(al)):
+            good = np.isfinite(G[i]) & (np.abs(s_all[i]) > 1e-6 * al[i])
+            G[i] = np.interp(ch, ch[good], G[i][good])
+        la = np.log(al)
+        splG = RectBivariateSpline(la, ch, G, kx=3, ky=3, s=0)
+        splR = RectBivariateSpline(la, ch, re, kx=3, ky=3, s=0)
+        Q = G[0] / np.array([_g_an(al[0], c, n, l, m) for c in ch])
+        _MP[key] = dict(splG=splG, splR=splR, alo=float(al[0]), ahi=float(al[-1]), p=p, m=m, Qlo=CubicSpline(ch, Q))
+    return _MP[key]
+
+
+def gamma_mp_over_mu(alpha, chi, n, l, m, norm=1.0):
+    """相対論的な Gamma / mu(多倍長の表。norm=1 で振幅の率、2 で占有数の率)。
+    表の下端より下は解析式、下端の 1.25 分の 1 から下端までは補正 Q をなめらかに(3u^2 - 2u^3)1 へつなぐ。
+    上端(0.52)の 1.05 倍を越える alpha は扱わない(値の表は alpha <= 0.5)。chi > 0.995 は 3 次の外挿。"""
+    T = _mp_table(n, l, m)
+    if alpha >= T["alo"]:
+        if alpha > 1.05 * T["ahi"]:
+            raise ValueError(f"alpha = {alpha} は多倍長の表({n}{l}{m}、<= {T['ahi']})の外")
+        la = np.log(alpha)
+        im = alpha ** T["p"] * float(T["splG"].ev(la, chi)) * (T["m"] * omegaH(chi) - float(T["splR"].ev(la, chi)))
+        return norm * im / alpha
+    a_b = T["alo"] / MP_BLEND
+    if alpha <= a_b:
+        return gamma_over_mu(alpha, chi, n, l, m, norm)
+    u = np.log(alpha / a_b) / np.log(MP_BLEND)
+    s = u * u * (3.0 - 2.0 * u)
+    return gamma_over_mu(alpha, chi, n, l, m, norm) * (1.0 + (float(T["Qlo"](chi)) - 1.0) * s)
