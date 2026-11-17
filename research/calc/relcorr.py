@@ -22,10 +22,15 @@ alpha <= 0.02 に 3 次を当てはめた切片が 1 と 1.2e-3。格子の外�
 除いて最大 0.9%(閾値の 0.03 以内の放出の側では 5%)。節の数は、強く減衰する準位(alpha >= 0.425 で超放射しない chi の
 211・411・511)で波動関数の位相が回って数え方が崩れる(59 点)が、根は多倍長の表と同じ枝。
 限界: 二つの過程の幅の狭い共鳴は解けず背景の値を使う(そこでは A14 も破れうる)。閾値を越えた 411x511->322(alpha 0.365-0.42)・
-411x533->322(0.455-0.485)・411x544->322(0.465-0.495)の束縛の側は、極で平均した率。
-2026-11-17: 独立な監査で relrates の誤り 2 件(tau_X、減衰する準位の規格化)を直し、表を作り直す(上の数値は 2026-11-16 の版、
-古い表は out/relcorr_v1_20261116.npz)。閾値の先の埋め方は、X の部分波が l >= 2 で極が孤立しているので前提が成り立たず、
-扱いは未決(DESIGN.md D19 の追記)。
+411x533->322(0.455-0.485)・411x544->322(0.465-0.495)の束縛の側は、計算した値をそのまま使う(2026-11-17 のユーザー決定。
+X の主な部分波は l = 2-4 で極が孤立しているので、2026-11-16 の版の「極で平均した率」の前提は成り立たない。運動論への影響は
+alpha0 0.30-0.45 の 20 例で最大 1.8e-3。clean の threshold="average" で前の扱いも選べる)。
+2026-11-17: 独立な監査で relrates の誤り 2 件(tau_X、減衰する準位の規格化)を直し、表を作り直した(12 並列で 1.4 時間。
+古い表は out/relcorr_v1_20261116.npz)。確かめ: 1474 点が解け、解けなかった点は閾値の近くの 3 過程の 69 点(前と同じ数)、根は
+多倍長の表と準位の間隔の 1.5% 以内、Wronskian 8.9e-6、切片が 1 と 1.2e-3、格子の外の照合は中央値 2.8e-6(閾値の先を計算した値にした既定で。前の扱いでは 2.4e-6)・99% で 4.4e-3・
+幅の狭い共鳴の 2 過程を除いて最大 0.84%。前の版からの C の変化は alpha <= 0.2 で 7e-6、0.2-0.3 で 1.6e-3、0.3-0.4 で最大
+9.7%、0.4-0.45 で 42%、その上で 3.2 倍(どれも chi が小さく準位が強く減衰する所)。tau_X は中央値で 1.09 倍、95% で 3.4 倍以内。
+閾値の先は計算した値に切り替えた(上の「限界」と DESIGN.md D19 の追記)。
 実行: cd research && ~/miniforge3/bin/python3 calc/relcorr.py build [--resume] [並列の数]
 """
 import os
@@ -237,10 +242,14 @@ def m_of_X(name):
     return int(name[2]) + int(name[6]) - int(name[11])
 
 
-def clean(T, spike=1.5):
+def clean(T, spike=1.5, threshold="computed", resonance="background"):
     """補間に渡す前の表の整理。返り値: (C の全体 tot, 地平線の割合 fH, 埋めた点の印 filled, とがりの一覧)。
-    (1) 放出の過程で X が束縛になった点(omegaX <= alpha。note は使わない: 2026-11-16 の版の build は自分の格子で解いた点に
-        bound X をつけていなかった): Rydberg の極が密に並ぶので、極で平均した率(閾値の上の放出の率の続き)を使い、
+    threshold: 閾値を越えた点で、計算した値をそのまま使う("computed"、既定。2026-11-17 のユーザー決定「Use computed values」)か、
+        (1) の極で平均した率で埋める("average"、2026-11-16 の版。影響を比べるために残す)。
+    resonance: (3) のとがりを除いて背景の値にする("background"、既定)か、計算した値のまま残す("keep")。
+    二つの切り替えは、扱いの影響を運動論で測るため(DESIGN.md D19 の追記、2026-11-17)。
+    (1) threshold = "average" のとき、放出の過程で X が束縛になった点(omegaX <= alpha。note は使わない: 2026-11-16 の版の
+        build は自分の格子で解いた点に bound X をつけていなかった): 極で平均した率(閾値の上の放出の率の続き)を使い、
         束縛の区間を閾値の上の最後の点の値で埋める。X の行き先は、m_X = 0 なら n00 の準位を経て地平線(fH = 1)、
         m_X != 0 なら長く生きる準位に残って BH に入らない(fH = 0、BH の勘定は無限遠へ出るのと同じ)。
     (2) 解けなかった点(閾値のすぐ上、例外)は、同じ chi の列で alpha の両隣から C を線形に埋める。
@@ -261,7 +270,7 @@ def clean(T, spike=1.5):
             t, f, b = tot[:, ic, q], fH[:, ic, q], xbound[:, ic, q]
             # (1) 束縛の区間ごとに
             ia = 0
-            while ia < len(A):
+            while threshold == "average" and ia < len(A):
                 if b[ia]:
                     ib = ia
                     while ib < len(A) and b[ib]:
@@ -272,6 +281,8 @@ def clean(T, spike=1.5):
                     ia = ib
                 else:
                     ia += 1
+            if threshold == "computed":                 # 束縛の X は無限遠へ出ないので、計算した率はすべて地平線の分
+                f[b] = 1.0
             # (2) 解けなかった点
             bad = ~np.isfinite(t)
             if bad.any():
@@ -284,12 +295,13 @@ def clean(T, spike=1.5):
             peak = np.zeros(len(A), bool)               # 両隣の spike 倍を越える 1 点の山(端の近くも)
             peak[1:-1] = t[1:-1] > spike * np.maximum(t[:-2], t[2:])
             sp = (((t > spike * med) & (med > 0)) | peak) & ~filled[:, ic, q]
-            if sp.any():
+            if resonance == "background" and sp.any():
                 for k in np.flatnonzero(sp):
                     spikes.append((str(names[q]), float(A[k]), float(T["chi"][ic]), float(t[k]), float(med[k])))
                 t[sp] = np.interp(u[sp], u[~sp], t[~sp])
                 f[sp] = np.interp(u[sp], u[~sp], f[~sp])
                 filled[sp, ic, q] = True
+            f[~np.isfinite(f)] = 0.0                    # 全体が 0 の点(0/0)。分け方は効かない
     return tot, fH, filled, spikes
 
 
@@ -300,10 +312,10 @@ class Corr:
     負になったら 0 にする。表の外: alpha < ALPHA[0] では C - 1 を alpha に比例して 0 へ、alpha > ALPHA[-1] と chi の外は
     端の値。tau_X は別に log で補間する(tau(alpha, chi)、束縛の X の過程だけ)。"""
 
-    def __init__(self, T):
+    def __init__(self, T, threshold="computed", resonance="background"):
         from scipy.interpolate import RegularGridInterpolator
         A, X = T["alpha"], T["chi"]
-        tot, fH, self.filled, self.spikes = clean(T)
+        tot, fH, self.filled, self.spikes = clean(T, threshold=threshold, resonance=resonance)
         self.A, self.X, self.P = A, X, tot.shape[2]
         self.names = [str(s) for s in T["names"]]          # kinn.System はこれで過程を対応させる
         self.ip = RegularGridInterpolator((np.log(A), X), np.concatenate([tot, fH], axis=2), method="cubic")

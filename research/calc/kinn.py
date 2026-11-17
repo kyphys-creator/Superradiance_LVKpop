@@ -18,7 +18,7 @@
 確かめ(python3 calc/kinn.py check): 三準位で evolve3m と同じ率を渡すと evolve3m を再現する、BH の質量を固定すると
 evolve5・evolve4 と合う、無限遠への過程と重力波を切ると角運動量とエネルギーが保存する。
 補正の確かめ(python3 calc/kinn.py corrcheck、2026-11-16): 恒等の補正で corr なしと同じ解(差 0)、右辺の保存則
-3e-16(地平線の経路)、M0 = 30・chi0 = 0.95 の alpha0 0.03-0.45 x f 1e13-1e17 の 55 例で A14 の x は 4e-4 以下。
+3e-16(地平線の経路)、M0 = 30・chi0 = 0.95 の alpha0 0.03-0.45 x f 1e13-1e17 の 55 例で A14 の x は有効な年齢で 0.053 以下(tau_X を直した表、2026-11-17)。
 雲が大きく振動する(バースト、周期 0.02-5e4 年)区間では解法が止まる(右辺の形や積分法では直らない)ので、振動を平均して
 解く(evolveN_avg、DESIGN.md D20)。表には evolveN_checked を使う: 計算に上限を置き、平均を使った点は細かい設定でもう一度
 解いて比べ、両方が届き差が 5e-3 以内の年齢までを有効とする(確かめ: python3 calc/kinn.py avgcheck [--refs])。
@@ -309,9 +309,10 @@ def evolveN_avg(sysN, M0, chi0, mu_eV, f_gev, T_yr, t_eval_yr, rtol=1e-8, atol=1
           傾きが合わない準位(振動が窓で平均しきれない)は進めない(次のバーストでなじむ)。
       (3) 跳びの検査: 跳んだ先のバーストで測った M・J の傾きが、跳びに使った傾きと(揺れを除いて)3 割より違えば、
           跳びを半分にしてやり直し、係数も半分にする(雲がなじまない中間の速さの成分があると、傾きで進めるのは前進
-          Euler と同じで振れが育つ。曲がりの強い所も同じ)。1 割以内なら係数を 1.5 倍(1 まで)。
+          Euler と同じで振れが育つ。曲がりの強い所も同じ)。1 割以内なら係数を 1.5 倍(1 まで)。跳ぶ得がなくてふつうに
+          戻るときに、係数だけが跳びを止めていれば、係数を 4 倍(少なくとも窓の 2 倍は跳べるように)に戻す。
       バーストが jump_frac t を楽に越えるか、D が窓より短ければ、ふつうの解き方に戻る。解法が失敗したら LSODA、
-      小さい初めの歩の LSODA、Radau、BDF の順に替える。
+      小さい初めの歩の LSODA、Radau、BDF の順に替える(失敗しても時刻が進んでいれば続け、進まない失敗が 4 回続いたらやめる)。
     出力の年齢: ふつうの区間は解そのもの。平均の区間は当てはめた直線(雲の振動を平均した値)。
     返り値: evolveN と同じ y、t、status に、avg(年齢ごとの印: 0 ふつう、1 平均、2 平均で M・J の傾きが前半と後半で
     合わないまま)、chi_amp(平均した区間の chi の振れの半分)、njump、nrej(やり直した跳び)、nfev を加える。"""
@@ -383,8 +384,8 @@ def evolveN_avg(sysN, M0, chi0, mu_eV, f_gev, T_yr, t_eval_yr, rtol=1e-8, atol=1
         k = kk
         return t_new, y_new
 
-    attempt, prev, dscale, nrej = 0, None, 1.0, 0
-    while t < T_end and total < max_nfev and k < len(te) and attempt < 4:
+    attempt, stuck, prev, dscale, nrej = 0, 0, None, 1.0, 0     # attempt: 解法の順番、stuck: 進まない失敗の続いた回数
+    while t < T_end and total < max_nfev and k < len(te) and stuck < 4:
         if mode == "normal":
             sol = new_solver(t, y, attempt)
             hist = []
@@ -399,13 +400,24 @@ def evolveN_avg(sysN, M0, chi0, mu_eV, f_gev, T_yr, t_eval_yr, rtol=1e-8, atol=1
                 if len(hist) > stall_steps and hist[-stall_steps - 1] > 0 and \
                         np.log(hist[-1] / hist[-stall_steps - 1]) < stall_dlnt:
                     mode = "avg"
+                    if trace is not None:
+                        trace.append(dict(event="stall", t=float(sol.t), steps=len(hist), calls=total + sol.nfev))
                     break
             for kk, v in buf.items():
                 out[:, kk] = v
             prev = None
             total += sol.nfev
+            # 失敗: 進まなければ次の方法に替え、4 回続けて進まなければやめる。進んでいれば、100 歩より多ければ LSODA から、
+            # 少なければ同じ方法で続ける(床に張りついた準位で式が極端に硬いと、Radau・BDF も少し進んでは失敗する。
+            # 0.45・1e16 の細かい設定、2026-11-17)
+            if sol.status == "failed":
+                if t_ok > t * (1 + 1e-12):
+                    stuck, attempt = 0, (0 if len(hist) > 100 else attempt)
+                else:
+                    stuck, attempt = stuck + 1, attempt + 1
+            else:
+                stuck, attempt = 0, 0
             t, y = t_ok, y_ok                               # 失敗した解法の y は使わない
-            attempt = (0 if len(hist) > 100 else attempt + 1) if sol.status == "failed" else 0
             continue
         # ---- 平均の区間 ----
         span_max = jump_frac * t if t > 0 else T_end
@@ -413,31 +425,36 @@ def evolveN_avg(sysN, M0, chi0, mu_eV, f_gev, T_yr, t_eval_yr, rtol=1e-8, atol=1
         k0 = k
         lim_calls = burst_calls
         easy = False
-        used, batt = 0, 0
+        used, bm, bstuck = 0, 0, 0                          # bm: 解法の順番、bstuck: 進まない失敗の続いた回数
         bsol = new_solver(t, y, 0, rtol_b)
+        b_t0 = t
         while True:
-            while used + bsol.nfev < lim_calls and ts[-1] - t < span_max and bsol.status != "finished" and batt < 4:
+            while used + bsol.nfev < lim_calls and ts[-1] - t < span_max and bsol.status != "finished" and bstuck < 4:
                 if not step(bsol):                          # 失敗: 最後の状態から次の方法で続ける
                     used += bsol.nfev
-                    batt += 1
-                    bsol = new_solver(ts[-1], ys[-1], batt, rtol_b)
+                    if ts[-1] > b_t0 * (1 + 1e-12):         # 進んでいれば同じ方法で続ける(ふつうの解き方と同じ規則)
+                        bstuck = 0
+                    else:
+                        bstuck, bm = bstuck + 1, bm + 1
+                    b_t0 = ts[-1]
+                    bsol = new_solver(ts[-1], ys[-1], bm, rtol_b)
                     continue
                 ts.append(bsol.t)
                 ys.append(bsol.y.copy())
                 collect(bsol, buf)
-            if bsol.status == "finished" or ts[-1] - t >= span_max or batt >= 4:
-                easy = True
+            if bsol.status == "finished" or ts[-1] - t >= span_max or bstuck >= 4:
+                easy = "finished" if bsol.status == "finished" else ("span" if ts[-1] - t >= span_max else "solver")
                 break
             T_, Y_ = np.array(ts), np.array(ys).T
             sel = T_ >= T_[0] + relax * (T_[-1] - T_[0])
             Ts, Ys = T_[sel], Y_[:, sel]
             if not np.all(np.isfinite(Ys)) or Ts[-1] <= Ts[0] * (1 + 1e-12):   # 進まないバースト(歩が時刻の刻みより小さい)
-                easy = True
+                easy = "no progress"
                 break
             if len(Ts) < 50:
                 lim_calls *= 2
                 if lim_calls > burst_max:
-                    easy = True
+                    easy = "few steps"
                     break
                 continue
             tc, m, s = _hann_fit(Ts, Ys)
@@ -445,7 +462,7 @@ def evolveN_avg(sysN, M0, chi0, mu_eV, f_gev, T_yr, t_eval_yr, rtol=1e-8, atol=1
             _, _, sa = _hann_fit(Ts[:h], Ys[:, :h])
             _, _, sb = _hann_fit(Ts[h:], Ys[:, h:])
             if not (np.all(np.isfinite(s)) and np.all(np.isfinite(sa)) and np.all(np.isfinite(sb))):
-                easy = True
+                easy = "bad fit"
                 break
             ok_slow = np.all(np.abs(sa[N:] - sb[N:]) <= 0.3 * np.abs(s[N:]) + 1e-30)
             if ok_slow or lim_calls >= burst_max:
@@ -454,10 +471,12 @@ def evolveN_avg(sysN, M0, chi0, mu_eV, f_gev, T_yr, t_eval_yr, rtol=1e-8, atol=1
         used += bsol.nfev
         total += used
         if easy:
+            if trace is not None:
+                trace.append(dict(event="back to normal", why=easy, t=float(ts[-1]), W=float(ts[-1] - t), calls=used))
             for kk, v in buf.items():
                 out[:, kk] = v
             if len(ts) == 1:                                # バーストが 1 歩も進めない
-                attempt += 1
+                attempt, stuck = attempt + 1, stuck + 1
             t, y = ts[-1], ys[-1].copy()
             mode, prev = "normal", None
             continue
@@ -470,6 +489,8 @@ def evolveN_avg(sysN, M0, chi0, mu_eV, f_gev, T_yr, t_eval_yr, rtol=1e-8, atol=1
             q = float(np.max((np.abs(s[chk] - prev["s"][chk]) - np.abs(sa[chk] - sb[chk]))
                              / (np.maximum(np.abs(s[chk]), np.abs(prev["s"][chk])) + 1e-300)))
             if q > 0.3:
+                if trace is not None:
+                    trace.append(dict(event="reject", t=float(T_[-1]), q=q, D=float(prev["D"])))
                 nrej += 1
                 dscale *= 0.5
                 D_new = 0.5 * prev["D"]
@@ -506,6 +527,11 @@ def evolveN_avg(sysN, M0, chi0, mu_eV, f_gev, T_yr, t_eval_yr, rtol=1e-8, atol=1
                 lim.append(min(dln_small, max(dln, lnmax - 10.0 - y_end[i])) / s[i])
         D = dscale * max(min(lim), 0.0)
         if D < W:                                           # 跳ぶ得がない: ふつうに続ける
+            if trace is not None:
+                trace.append(dict(event="back to normal", why="D < W", t=float(t_end), W=float(W), D=float(D),
+                                  binding=int(np.argmin(lim)), lim=[float(x) for x in lim], calls=used))
+            if min(lim) > W:                                # 係数だけが跳びを止めている: 係数を戻す(跳ばないと (3) の検査で
+                dscale = min(1.0, max(4.0 * dscale, 2.0 * W / min(lim)))   # 戻らない。0.35・1e15 で 2.5e-5 に張りついた)
             for kk, v in buf.items():
                 out[:, kk] = v
             t, y = t_end, y_end.copy()
@@ -519,13 +545,14 @@ def evolveN_avg(sysN, M0, chi0, mu_eV, f_gev, T_yr, t_eval_yr, rtol=1e-8, atol=1
                     W=W, D=D, k0=k0, k_end=k, buf=buf)
         t, y = jump(prev, D)
         if trace is not None:
-            trace.append(dict(t=t_end, W=W, D=D, dscale=dscale, lim=[float(x) for x in lim], chi0=float(y_end[N + 1] / y_end[N] ** 2),
+            trace.append(dict(event="jump", t=t_end, W=W, D=D, dscale=dscale, lim=[float(x) for x in lim], chi0=float(y_end[N + 1] / y_end[N] ** 2),
                               chi1=float(y[N + 1] / y[N] ** 2), proj=proj.tolist(), s=s.tolist(), ok=bool(ok_slow), y_end=y_end.tolist()))
         njump += 1
     done = int(np.sum(np.all(np.isfinite(out), axis=0)))
     ok = done == len(te)
     return SimpleNamespace(status=0 if ok else -1, y=out[:, :done], t=te[:done], avg=flag[:done], chi_amp=camp[:done],
-                           njump=njump, nrej=nrej, nfev=total, message="ok" if ok else f"stopped at t = {t / sr.YR:.3e} yr")
+                           njump=njump, nrej=nrej, nfev=total, t_stop=t, y_stop=y.copy(),
+                           message="ok" if ok else f"stopped at t = {t / sr.YR:.3e} yr")
 
 
 # 平均の確かめに使う細かい設定: 跳びを半分、少なく育つ準位も dln で縛る(緩めた規則を使わない)、バーストの許容誤差を 1e-7
@@ -548,7 +575,7 @@ def evolveN_checked(sysN, M0, chi0, mu_eV, f_gev, T_yr, t_eval_yr, tol=5e-3, dt_
     """evolveN_avg に計算の上限と、平均の確かめの印をつけたもの(DESIGN.md D20、2026-11-17 のユーザー決定「Cap and flag」)。
     既定の設定で解き(呼び出し max_nfev 回まで)、平均を使ったら細かい設定(AVG_FINE)でもう一度解いて chi を比べる。
     年齢ごとの差は時刻のずれ dt_rel を許して測る(_tol_dist)。n_valid は、両方が届き差が tol 以内の、初めから続く年齢の数で、
-    表ではこの年齢までを使う(reftab の tau_valid)。平均を使わなければ解そのもので、届いた年齢まで有効。
+    表ではこの年齢までを使う(reftab の tau_valid)。一度も跳ばなければ解そのもので、届いた年齢まで有効。
     tol = 5e-3 と dt_rel = 0.5% は、表の約束(|Δχ| ≤ 0.03、段差の時刻 2%)の 6 分の 1 と 4 分の 1(表の補間の誤差 0.015-0.018
     に足しても約束の中)。
     返り値: y、t は細かい方の解(届かない年齢は既定の解。平均を使わなければ既定の解)、status(0 = 最後の年齢まで有効)、
@@ -557,7 +584,8 @@ def evolveN_checked(sysN, M0, chi0, mu_eV, f_gev, T_yr, t_eval_yr, tol=5e-3, dt_
     a = evolveN_avg(sysN, M0, chi0, mu_eV, f_gev, T_yr, t_eval_yr, max_nfev=max_nfev, **kw)
     na = a.y.shape[1]
     runs = [dict(status=a.status, njump=a.njump, nrej=a.nrej, nfev=a.nfev)]
-    if not np.any(a.avg > 0):
+    if a.njump == 0:                                     # 跳ばなければ解そのもの(出力の年齢に平均の印がなくても、跳びが
+                                                         # 年齢のあいだにだけ入った解は確かめる)
         return SimpleNamespace(status=a.status, y=a.y, t=a.t, n_valid=na, dchi=np.zeros(na), avg=a.avg, chi_amp=a.chi_amp,
                                reason="" if a.status == 0 else ("cap" if a.nfev >= max_nfev else "fail"), runs=runs,
                                message=a.message)

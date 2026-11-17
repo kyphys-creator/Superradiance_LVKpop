@@ -23,6 +23,7 @@ LIGO–Virgo–KAGRA(LVK)の GWTC-5 の BH スピンの集団で、自己相互�
 research/research_note.tex   研究ノート本体(日付つきエントリ entries/e0N_*.tex を \input)
 research/entries/            エントリ(過去のエントリは書き換えず、訂正は新しいエントリで)
 research/calc/               計算。エントリ N は calc/e0N_*.py、共通部品は calc/*.py、出力は calc/out/
+research/calc/h2/            Hoffman2(UCLA の計算機クラスタ、Slurm)で計算を流すジョブ配列のスクリプト(env.sh・submit.sh・array.sh・run.py・compare.py)
 research/figs/               pgfplots の図(データは figs/data/、calc が生成)
 data/                        公開データ(本体は git に入れない。出どころ・取得手順・サイズは data/README.md)
 Refs/notes/                  論文の本文からの抜き書き(式番号つき): population_papers、theory_rates、astro_inputs、window_consistency
@@ -38,12 +39,13 @@ study/study_note.tex         勉強ノート(学部の物理から、この研�
 ## 実行環境
 - 推論用の Python 環境は未作成(2026-11-03)。作るときはユーザーに確認する(候補: jax、numpyro、h5py、fsspec)。相対論的な超放射の率は自前の連分数法で計算するので SuperRad は要らない(DESIGN.md D5)。PBH_LVKpop と共用にするかもそのとき決める。
 - 雲の運動論など numpy・scipy だけで済む計算は `~/miniforge3/bin/python3`(numpy 2.2、scipy 1.16)。
+- 重い計算(値の表の作り直し)は Hoffman2 の Slurm のクラスタ(`hoffman2.oarc.ucla.edu`)で流す。環境は Hoffman2 の `~/envs/srlvk`(Mac Studio と同じ python 3.12.10・numpy 2.2.6・scipy 1.16.0)、スクリプトは `research/calc/h2/`。作法(ログインノードは軽い作業だけ、`--mem` を必ず書く、`conda init` しない)と、**リモートに秘密鍵を置かない**ことは SESSION.md の手順 5。
 - ノート: `cd research && latexmk -lualatex research_note.tex`
 - 計算機は Mac Studio(14 コア、36 GB)。重い並列計算の前に、1 本だけ走らせてメモリ(RSS)を測る。
 - MacBook(Apple M3、8 コア、16 GB)では、base の `~/miniforge3/bin/python3` が numpy を読めない(libgfortran の rpath の重複)。`~/miniforge3/envs/python313/bin/python`(numpy 2.3、scipy 1.16、mpmath)を使う。E19 の計算はこれで行い、E18 の保存した出力を完全に再現する。
 - x86-64 での確かめ(E20)は MacBook の Rosetta 2 で行う: Command Line Tools の Python 3.9 の x86-64 の部分(`arch -x86_64 /usr/bin/python3`)と、PyPI の x86-64 版の numpy・scipy の wheel を展開したフォルダを使う(手順は `research/calc/e20_x86.py` の冒頭。wheel は git にも conda の環境にも入れない。ダウンロードはユーザーの許可を得てから)。
 - 自己相互作用の率の計算(E21、`research/calc/hyd.py`)と `research/calc/e21_level422.py` は mpmath と sympy を使う(MacBook の `python313` の環境にある)。
-- E18 の基準の表 `research/calc/out/reftab.npz`(700 MB、git に入れない)は Mac Studio にだけある。ない計算機では `chisr.build()` が `share/chi_sr/chi_sr_tables.npz`(12 MB、git にある)から同じ数の表を読むので、χ_SR と `export_chisr.py` の確かめはどちらの計算機でも動く(E19)。値の表を作り直す(`e18_reftab_build.py`、約 5 時間)のは Mac Studio で。
+- E18 の基準の表 `research/calc/out/reftab.npz`(700 MB、git に入れない)は Mac Studio にだけある。ない計算機では `chisr.build()` が `share/chi_sr/chi_sr_tables.npz`(12 MB、git にある)から同じ数の表を読むので、χ_SR と `export_chisr.py` の確かめはどちらの計算機でも動く(E19)。E18 の値の表を作り直す(`e18_reftab_build.py`、約 5 時間)のは Mac Studio で(D18 の新しい表は Hoffman2 で作る)。
 
 ## ルール
 - 数値はすべて `research/calc/` のスクリプトから出す。文献の式・数値を使うときは、原文(arXiv の本文)で照合した式番号を書く。
