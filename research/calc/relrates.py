@@ -3,8 +3,12 @@
 単位は G = c = hbar = M = 1(mu = alpha、a = chi)。r+- = 1 +- sqrt(1 - a^2)、Delta = (r - r+)(r - r-)、Omega_H = a/(2 r+)。
 場 Phi = sum_n sqrt(N_n) (u_n e^{-i omega_n t} + c.c.)、u_n = R_n(r) S_n(theta) e^{i m_n phi}。u_n は Klein-Gordon の電荷で
 1 に規格化する(N_n = eps_n G M^2):
-    1 = 2 int dr |R|^2 { [(r^2 + a^2)^2 omega - 2 a r m]/Delta - a^2 omega <sin^2 theta> }、  ∮|S|^2 dOmega = 1。
-(Boyer-Lindquist の切り方では地平線で対数に発散するが、束縛状態では R(r+) が小さく、切る位置 delta によらないことを確かめる。)
+    1 = int dr { 2 |R|^2 ([(r^2 + a^2)^2 omega - 2 a r m]/Delta - a^2 omega <sin^2 theta>) + (4 r/Delta) Im(R^* P) }、
+    ∮|S|^2 dOmega = 1。
+電荷は Kerr-Schild の時刻 t~ = t + int 2r/Delta dr の面で数える(地平線を通り抜ける切り方、_ks_density)。Boyer-Lindquist の
+t の面では、減衰する準位(地平線へ流れ込む)の電荷が地平線の近くに「流れ x 亀の座標の長さ」だけ積み上がり、切る位置で
+対数に発散する(alpha = 0.5・chi = 0 の 211 で、切り方 1e-8 と 1e-12 で率が 1.5 倍違った。2026-11-17 の独立な監査)。
+最後の項 (2r/Delta) N^r がそれを消し、遠くでは 2/r で効かない。超放射する準位と、減衰の遅い準位では二つの面はほぼ同じ。
 運動方程式 (box - mu^2) Phi = -(lambda/6) Phi^3 の、振動数 omega_X = omega_i + omega_j - omega_k、m_X = m_i + m_j - m_k の源は
     T_X = -(lambda/2) s_ij sqrt(N_i N_j N_k) u_i u_j u_k^*、 s_ij = 1(i = j)、2(i != j)
 で、rho^2 = r^2 + a^2 cos^2 theta を掛けて S_ell で射影すると動径の方程式
@@ -28,6 +32,11 @@ alpha = 0.52、chi = 0.995 で全部の部分波と 1.2e-9)。
 まとめて解く(point、relcorr.py の表): 8 準位の束縛状態を共通の格子で 1 回だけ作り、過程で使い回す(過程ごとの計算と 5e-11)。
 確かめ(2026-11-16): 9 個の過程で alpha -> 0 の切片が hyd.kappa_inf と 1.6e-5 以内(python3 calc/relrates.py inf)。
 格子の点の数を倍、地平線の切り方 1e-8 -> 1e-11、始める k r1 を 4 倍、部分波を 4 つ増やしても、alpha <= 0.4 で率は 3e-5 以内。
+独立な監査(2026-11-17、DESIGN.md D19 の追記): 式を導き直して誤りなし。コードを見ずに一から作った計算と、211x211->322 が
+8e-4、322x322->211 の無限遠への分が 5e-5 以内(表の補間込み)。直したこと: tau_X の累積の積分が複素数の虚部を捨てていた
+(_cumsimp)、減衰する準位の電荷を Kerr-Schild の面で数える(_ks_density。地平線の切り方 1e-8 と 1e-12 で率と tau_X が
+1e-5 以内で同じ。独立な計算と alpha = 0.45・chi = 0.6 で 6e-4)、地平線の振幅は複素の固有値の sigma で取り出す
+(decay_check の比は 1 + O(|Im M omega| x 10)。減衰の速い状態の数は時間の切り方でその程度決まらない)。
 """
 import math
 import os
@@ -199,14 +208,14 @@ class Bound:
         R = np.where(np.arange(len(xg)) < jm, cc * Rh, Rd)
         P = np.where(np.arange(len(xg)) < jm, cc * Ph, Pd)
         d = r - K.rp
-        dens = 2 * np.abs(R) ** 2 * (((r * r + K.a ** 2) ** 2 * w - 2 * K.a * r * m) / (r - K.rm)
-                                     - d * K.a ** 2 * w * (1 - cos2(l, m)))
-        Nn = simpson(dens, x=xg)
+        Nn = simpson(_ks_density(K, r, R, P, w, m, l), x=xg)
         self.norm_integral = Nn
         s = 1.0 / np.sqrt(Nn)
         self.R, self.P = R * s, P * s
-        # 地平線での内向きの振幅: R = A_in (r-r+)^{-i sig} + A_out (r-r+)^{+i sig}
-        sig = 2 * K.rp * (w - m * K.OmH) / (K.rp - K.rm)
+        # 地平線での内向きの振幅: R = A_in (r-r+)^{-i sig} + A_out (r-r+)^{+i sig}。sig は複素の固有値から(Im sig の分の
+        # (r-r+)^{Im sig} の伸びは、地平線を通り抜ける座標では u ~ A_in e^{-i omega v} の時間の減衰で、振幅ではない。
+        # Kerr-Schild の面の電荷と組にすると、地平線を通る流れ 2 (Re omega - m Omega_H)(r+^2 + a^2)|A_in|^2 = -2 Im omega)
+        sig = 2 * K.rp * (self.omega_c - m * K.OmH) / (K.rp - K.rm)
         dRdx = self.P[0] / (d[0] + K.rp - K.rm)
         self.A_in = (1j * sig * self.R[0] - dRdx) / (2j * sig) * np.exp(1j * sig * xg[0])
         self.A_out = (1j * sig * self.R[0] + dRdx) / (2j * sig) * np.exp(-1j * sig * xg[0])
@@ -263,17 +272,31 @@ def _ells(i, j, k, mX):
     return [ell for ell in range(abs(mX), lsum + 3) if (ell + lsum) % 2 == 0]
 
 
-def _forced_charge(K, wX, ell, mX, xg, Rin, Rup, T, Wm):
+def _ks_density(K, r, R, P, w, m, l):
+    """KG 電荷の x = ln(r - r+) あたりの密度(Kerr-Schild の時刻 t~ = t + int 2r/Delta dr の面、P = Delta R')。
+    Boyer-Lindquist の t の面の密度 sqrt(-g) N^t に (2r/Delta) sqrt(-g) N^r を足す(N^r の角度の積分は 2 Im(R^* P)/Delta)。
+    地平線では内向きの解 R ~ (r - r+)^{-i sigma} で二つの項が打ち消し、電荷が地平線の近くの切り方によらない。"""
+    d = r - K.rp
+    bl = 2 * np.abs(R) ** 2 * (((r * r + K.a ** 2) ** 2 * w - 2 * K.a * r * m) / (r - K.rm) - d * K.a ** 2 * w * (1 - cos2(l, m)))
+    return bl + 4 * r / (r - K.rm) * np.imag(np.conj(R) * P)
+
+
+def _cumsimp(y, x):
+    """複素数の累積の Simpson 積分(scipy 1.16 の cumulative_simpson は複素数の虚部を黙って捨てる)。"""
+    return cumulative_simpson(y.real, x=x, initial=0) + 1j * cumulative_simpson(y.imag, x=x, initial=0)
+
+
+def _forced_charge(K, wX, ell, mX, xg, Rin, Rup, Pin, Pup, T, Wm):
     """強制振動の解 R_X = [R_in int_r^inf R_up T dr' + R_up int_{r+}^r R_in T dr'] / W の KG 電荷(束縛の X、omega_X < mu)。
-    int_r^inf は外の端から内向きに足す(R_in は外で e^{kappa r} で増えるので、全体から引くと桁が落ちる)。"""
+    int_r^inf は外の端から内向きに足す(R_in は外で e^{kappa r} で増えるので、全体から引くと桁が落ちる)。
+    P_X = Delta R_X' は積分の端の項が打ち消すので [P_in int_r^inf + P_up int_{r+}^r] / W。"""
     r = r_of_x(K, xg)
     d = r - K.rp
-    I_in = cumulative_simpson(Rin * T * d, x=xg, initial=0)
-    I_up = cumulative_simpson((Rup * T * d)[::-1], x=-xg[::-1], initial=0)[::-1]       # u = -x で外から内へ
+    I_in = _cumsimp(Rin * T * d, xg)
+    I_up = _cumsimp((Rup * T * d)[::-1], -xg[::-1])[::-1]       # u = -x で外から内へ
     RX = (Rin * I_up + Rup * I_in) / Wm
-    dens = 2 * np.abs(RX) ** 2 * (((r * r + K.a ** 2) ** 2 * wX - 2 * K.a * r * mX) / (r - K.rm)
-                                  - d * K.a ** 2 * wX * (1 - cos2(ell, mX)))
-    return float(simpson(dens, x=xg))
+    PX = (Pin * I_up + Pup * I_in) / Wm
+    return float(simpson(_ks_density(K, r, RX, PX, wX, mX, ell), x=xg))
 
 
 def rate_bh(alpha, chi, i, j, k, ells=None, states=None, xg=None, omegas=None, details=False):
@@ -312,7 +335,7 @@ def rate_bh(alpha, chi, i, j, k, ells=None, states=None, xg=None, omegas=None, d
         Z = simpson(Rup * T * (r - K.rp), x=xg) / Wm
         flux = 2 * (wX - mX * K.OmH) * (K.rp ** 2 + K.a ** 2) * abs(Z) ** 2
         total += flux
-        q = _forced_charge(K, wX, ell, mX, xg, Rin, Rup, T, Wm) if details else np.nan
+        q = _forced_charge(K, wX, ell, mX, xg, Rin, Rup, Pin, Pup, T, Wm) if details else np.nan
         charge += q
         out[ell] = dict(A=A, B=Bc, flux=flux, charge=q, W_spread=_spread(W, Wm))
         if adaptive and len(out) >= 2 and abs(flux) < ELL_TOL * abs(total) and not abs(q) > 1e-4 * abs(charge):

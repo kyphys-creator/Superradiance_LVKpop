@@ -14,6 +14,18 @@ alpha で 0.03 以上(polescan、2026-11-16)なので、0.005 おきで解ける
 準位の根: chi ごとに alpha の小さい方から倍精度の Leaver で追う(一つ前の根を水素型の比で延ばした予測から始め、
 同じ l の隣の n との間隔の 0.3 倍より予測に近いことを確かめる。外れたら水素型からやり直す)。動径の節の数も確かめる。
 出力: out/relcorr.npz(途中も保存し、--resume で続ける)。記録: out/relcorr_build.log。
+運動論からは Corr(load()) で引く(clean で閾値の先・解けなかった点・とがりを整理してから、C をそのまま 3 次で補間)。
+確かめ(2026-11-16、python3 calc/relcorr.py check): 1474 点すべて解け、根は多倍長の表(rates_mp)と準位の間隔の 1.5% 以内
+(8 準位すべて)、つなぎ目 6e-8、Wronskian 9e-6、無限遠への流れ 6e-6。
+alpha <= 0.02 に 3 次を当てはめた切片が 1 と 1.2e-3。格子の外の 130 点(relcorr.py holdout、9530 個の値)で補間の誤差は
+中央値 2.6e-6、99% で 4.4e-3、幅の狭い l = 2 の共鳴のある 411x411->322(alpha >~ 0.39)と 511x511->422(alpha >~ 0.30)を
+除いて最大 0.9%(閾値の 0.03 以内の放出の側では 5%)。節の数は、強く減衰する準位(alpha >= 0.425 で超放射しない chi の
+211・411・511)で波動関数の位相が回って数え方が崩れる(59 点)が、根は多倍長の表と同じ枝。
+限界: 二つの過程の幅の狭い共鳴は解けず背景の値を使う(そこでは A14 も破れうる)。閾値を越えた 411x511->322(alpha 0.365-0.42)・
+411x533->322(0.455-0.485)・411x544->322(0.465-0.495)の束縛の側は、極で平均した率。
+2026-11-17: 独立な監査で relrates の誤り 2 件(tau_X、減衰する準位の規格化)を直し、表を作り直す(上の数値は 2026-11-16 の版、
+古い表は out/relcorr_v1_20261116.npz)。閾値の先の埋め方は、X の部分波が l >= 2 で極が孤立しているので前提が成り立たず、
+扱いは未決(DESIGN.md D19 の追記)。
 実行: cd research && ~/miniforge3/bin/python3 calc/relcorr.py build [--resume] [並列の数]
 """
 import os
@@ -220,54 +232,99 @@ def _roots_fine(args):
     return roots_column(*args)
 
 
+def m_of_X(name):
+    """'411x533->322' -> m_X = m_i + m_j - m_k。"""
+    return int(name[2]) + int(name[6]) - int(name[11])
+
+
+def clean(T, spike=1.5):
+    """補間に渡す前の表の整理。返り値: (C の全体 tot, 地平線の割合 fH, 埋めた点の印 filled, とがりの一覧)。
+    (1) 放出の過程で X が束縛になった点(omegaX <= alpha。note は使わない: 2026-11-16 の版の build は自分の格子で解いた点に
+        bound X をつけていなかった): Rydberg の極が密に並ぶので、極で平均した率(閾値の上の放出の率の続き)を使い、
+        束縛の区間を閾値の上の最後の点の値で埋める。X の行き先は、m_X = 0 なら n00 の準位を経て地平線(fH = 1)、
+        m_X != 0 なら長く生きる準位に残って BH に入らない(fH = 0、BH の勘定は無限遠へ出るのと同じ)。
+    (2) 解けなかった点(閾値のすぐ上、例外)は、同じ chi の列で alpha の両隣から C を線形に埋める。
+    (3) とがり: 7 点の中央値の spike 倍を越える山と、両隣の spike 倍を越える 1 点の山は、格子で解けない幅の狭い共鳴(l >= 2 の部分波)とみなし、両隣の
+        とがりでない点から線形に埋めて一覧に残す(411x411->322 の alpha >~ 0.39 と 511x511->422 の alpha >~ 0.30)。
+        n00 の幅の広い極(幅が 5 点以上)は 7 点の中央値の 1.2 倍以下なので触らない。率が 0 を通る谷も触らない。"""
+    A = T["alpha"]
+    tot = T["C_inf"] + T["C_H"]
+    with np.errstate(invalid="ignore", divide="ignore"):
+        fH = T["C_H"] / tot
+    names, kinds = T["names"], T["kinds"]
+    xbound = (T["omegaX"] <= A[:, None, None]) & (kinds == "inf")[None, None, :]
+    filled = np.zeros(tot.shape, bool)
+    spikes = []
+    u = np.log(A)
+    for q in range(tot.shape[2]):
+        for ic in range(tot.shape[1]):
+            t, f, b = tot[:, ic, q], fH[:, ic, q], xbound[:, ic, q]
+            # (1) 束縛の区間ごとに
+            ia = 0
+            while ia < len(A):
+                if b[ia]:
+                    ib = ia
+                    while ib < len(A) and b[ib]:
+                        ib += 1
+                    good = np.flatnonzero(np.isfinite(t[:ia]) & (t[:ia] > 0) & ~b[:ia])
+                    t[ia:ib], f[ia:ib] = t[good[-1]], (1.0 if m_of_X(names[q]) == 0 else 0.0)
+                    filled[ia:ib, ic, q] = True
+                    ia = ib
+                else:
+                    ia += 1
+            # (2) 解けなかった点
+            bad = ~np.isfinite(t)
+            if bad.any():
+                t[bad] = np.interp(u[bad], u[~bad], t[~bad])
+                f[bad] = np.interp(u[bad], u[~bad], f[~bad])
+                filled[bad, ic, q] = True
+            # (3) とがり
+            med = np.full(len(A), np.inf)            # 端の 3 点は窓が片側になる(上り坂を山と取り違える)ので調べない
+            med[3:-3] = [np.median(t[k - 3:k + 4]) for k in range(3, len(A) - 3)]
+            peak = np.zeros(len(A), bool)               # 両隣の spike 倍を越える 1 点の山(端の近くも)
+            peak[1:-1] = t[1:-1] > spike * np.maximum(t[:-2], t[2:])
+            sp = (((t > spike * med) & (med > 0)) | peak) & ~filled[:, ic, q]
+            if sp.any():
+                for k in np.flatnonzero(sp):
+                    spikes.append((str(names[q]), float(A[k]), float(T["chi"][ic]), float(t[k]), float(med[k])))
+                t[sp] = np.interp(u[sp], u[~sp], t[~sp])
+                f[sp] = np.interp(u[sp], u[~sp], f[~sp])
+                filled[sp, ic, q] = True
+    return tot, fH, filled, spikes
+
+
 class Corr:
     """表の補間: corr(alpha, chi) -> (C_inf, C_H)(過程の数の長さの配列)。
-    補間するのは log(C_inf + C_H)(全体)と f_H = C_H/(C_inf + C_H)(地平線の割合)を (log alpha, chi) の 3 次で。
-    表の外: alpha < ALPHA[0] では C - 1 を alpha に比例して 0 へ、alpha > ALPHA[-1] と chi の外は端の値。
-    解けなかった点(閾値のすぐ上、例外)は、同じ chi の列で alpha の両隣から log C を線形に埋める(filled に記録)。
-    放出の過程が閾値を越えて X が束縛になった点(note = bound X)は、X が雲から逃げられず地平線に吸われる。Rydberg の極が
-    密に並ぶので、極で平均した率(閾値の上の放出の率の続き)を使う: 全体は閾値の上の最後の点の値で一定、f_H = 1。"""
+    clean で整理した C(全体)と f_H(地平線の割合)を、(log alpha, chi) の 3 次で補間する。C は log でなくそのまま補間する
+    (率が 0 を通る谷(振幅の符号が変わる所)は C が alpha の 2 次なのでそのままの 3 次で正しく、log では谷の両側が崩れる)。
+    負になったら 0 にする。表の外: alpha < ALPHA[0] では C - 1 を alpha に比例して 0 へ、alpha > ALPHA[-1] と chi の外は
+    端の値。tau_X は別に log で補間する(tau(alpha, chi)、束縛の X の過程だけ)。"""
 
     def __init__(self, T):
         from scipy.interpolate import RegularGridInterpolator
         A, X = T["alpha"], T["chi"]
-        tot = T["C_inf"] + T["C_H"]
+        tot, fH, self.filled, self.spikes = clean(T)
+        self.A, self.X, self.P = A, X, tot.shape[2]
+        self.names = [str(s) for s in T["names"]]          # kinn.System はこれで過程を対応させる
+        self.ip = RegularGridInterpolator((np.log(A), X), np.concatenate([tot, fH], axis=2), method="cubic")
         with np.errstate(invalid="ignore", divide="ignore"):
-            fH = T["C_H"] / tot
-        # 放出の過程で X が束縛になった点(note でなく omegaX から判定する。2026-11-16 の版の build は、自分の格子で解いた
-        # 点に bound X の記録をつけていなかった)
-        xbound = (T["omegaX"] <= A[:, None, None]) & (T["kinds"] == "inf")[None, None, :]
-        self.filled = np.zeros(tot.shape, bool)
-        for q in range(tot.shape[2]):
-            for ic in range(len(X)):
-                t, f = tot[:, ic, q], fH[:, ic, q]
-                bound = xbound[:, ic, q]
-                if bound.any():
-                    ia0 = np.flatnonzero(bound)[0]
-                    last = np.flatnonzero(np.isfinite(t[:ia0]) & (t[:ia0] > 0))[-1]
-                    t[ia0:], f[ia0:] = t[last], 1.0
-                    self.filled[ia0:, ic, q] = True
-                bad = ~np.isfinite(t) | (t <= 0)
-                if bad.any():
-                    good = ~bad
-                    t[bad] = np.exp(np.interp(np.log(A[bad]), np.log(A[good]), np.log(t[good])))
-                    f[bad] = np.interp(np.log(A[bad]), np.log(A[good]), f[good])
-                    self.filled[bad, ic, q] = True
-        self.A, self.X = A, X
-        self.y = np.log(tot)
-        self.fH = fH
-        vals = np.concatenate([self.y, fH], axis=2)
-        self.ip = RegularGridInterpolator((np.log(A), X), vals, method="cubic")
-        self.P = tot.shape[2]
+            lt = np.log(np.abs(T["tau_X"]))
+        lt = np.where(np.isfinite(lt), lt, 0.0)
+        self.ip_tau = RegularGridInterpolator((np.log(A), X), lt, method="linear")
+        self.has_tau = np.isfinite(T["tau_X"]).any(axis=(0, 1))
+
+    def _clip(self, alpha, chi):
+        return [[np.log(min(max(alpha, self.A[0]), self.A[-1])), min(max(chi, self.X[0]), self.X[-1])]]
 
     def __call__(self, alpha, chi):
-        a = min(max(alpha, self.A[0]), self.A[-1])
-        c = min(max(chi, self.X[0]), self.X[-1])
-        v = self.ip([[np.log(a), c]])[0]
-        tot, fH = np.exp(v[:self.P]), v[self.P:]
+        v = self.ip(self._clip(alpha, chi))[0]
+        tot, fH = np.maximum(v[:self.P], 0.0), np.clip(v[self.P:], -1.0, 1.0)
         if alpha < self.A[0]:
             tot = 1 + (tot - 1) * alpha / self.A[0]
         return tot * (1 - fH), tot * fH
+
+    def tau(self, alpha, chi):
+        return np.where(self.has_tau, np.exp(self.ip_tau(self._clip(alpha, chi))[0]), np.nan)
 
 
 def load(path=OUT):
@@ -303,6 +360,27 @@ def check(path=OUT):
     d = done[..., None]
     print("roots ok:", bool(T["root_ok"].all()), "| nodes wrong:", int(((T["nodes"] != exp_nodes) & d).sum()),
           f"| max match_err {np.nanmax(np.where(d, T['match_err'], np.nan)):.1e}")
+    # 根を多倍長の表(rates_mp、あれば)と比べる: 水素型からのずれを rates_mp の alpha の節から log alpha で線形に補間
+    for v, lv in enumerate(LEVELS):
+        f = os.path.join(HERE, "out", "rates_mp_%d%d%d.npz" % lv)
+        if not os.path.exists(f):
+            continue
+        m = np.load(f)
+        worst, nchk = 0.0, 0
+        for ic, c in enumerate(X):
+            jc = int(np.argmin(np.abs(m["chi"] - c)))
+            if abs(m["chi"][jc] - c) > 1e-9 or not m["done"][jc]:
+                continue
+            ok = np.isfinite(m["re"][:, jc])
+            am = m["alpha"][ok]
+            res = m["re"][ok, jc] - np.array([hyd_re(a, lv, c) for a in am])
+            sel = (A >= am[0]) & (A <= am[-1])
+            pred = np.interp(np.log(A[sel]), np.log(am), res) + np.array([hyd_re(a, lv, c) for a in A[sel]])
+            gap = np.array([spacing(a, lv[0], lv[1]) for a in A[sel]])
+            if sel.any():
+                worst = max(worst, float(np.max(np.abs(T["om"][sel, ic, v].real - pred) / gap)))
+                nchk += int(sel.sum())
+        print(f"  roots of {kinn.name(lv)} vs multiprecision table: {nchk} compared, max |d Re omega| / spacing {worst:.1e}")
     for key in ("W_spread", "J_spread", "asym_err"):
         v = np.where(done[..., None], T[key], np.nan)
         print(f"max {key} {np.nanmax(v):.1e}" if np.isfinite(v).any() else f"{key}: none")
@@ -315,35 +393,67 @@ def check(path=OUT):
             per = {names[q]: int(m[..., q].sum()) for q in range(len(names)) if m[..., q].any()}
             print(f"note '{nm}': {int(m.sum())} points:", per)
     C = T["C_inf"] + T["C_H"]
-    # alpha -> 0
-    lo = slice(0, 4)
-    if done[lo].all():
-        dev = np.abs(C[0] - 1)
-        q_, c_ = np.unravel_index(np.nanargmax(dev.T), dev.T.shape)
-        print(f"alpha = {A[0]}: max |C - 1| = {np.nanmax(dev):.2e} ({names[q_]}, chi {X[c_]})")
-        ic = np.polynomial.polynomial.polyfit(A[lo], C[lo].reshape(4, -1), 2)[0]
-        print(f"intercept of quadratic fit over alpha <= {A[3]:.4f}: max |c0 - 1| = {np.nanmax(np.abs(ic - 1)):.2e}")
-    # 一つ抜きの補間(alpha は log alpha、chi はそのまま。log C で)
-    with np.errstate(invalid="ignore", divide="ignore"):
-        y = np.log(np.abs(C))
-    full_a = done.all(axis=1)
-    if full_a.sum() >= 5:
-        ya = np.where(done[..., None], y, np.nan)
-        la = _loo(ya, np.log(A))
-        print("leave-one-out in alpha (|d log C|, spacing doubled, so a bound ~16x the real error):")
-        for q in np.argsort(-np.nanmax(np.abs(la), axis=(0, 1)))[:12]:
-            v = np.abs(la[..., q])
-            ia, ic_ = np.unravel_index(np.nanargmax(v), v.shape)
-            print(f"  {names[q]:16s} {kinds[q]:5s} max {np.nanmax(v):.2e} at alpha {A[ia]:.4f}, chi {X[ic_]};"
-                  f" median {np.nanmedian(v):.1e}")
-    if done.all(axis=0).sum() >= 5 or done.all():
-        lc = _loo(np.moveaxis(np.where(done[..., None], y, np.nan), 1, 0), X)
-        print("leave-one-out in chi:")
-        for q in np.argsort(-np.nanmax(np.abs(lc), axis=(0, 1)))[:12]:
-            v = np.abs(lc[..., q])
-            ic_, ia = np.unravel_index(np.nanargmax(v), v.shape)
-            print(f"  {names[q]:16s} {kinds[q]:5s} max {np.nanmax(v):.2e} at alpha {A[ia]:.4f}, chi {X[ic_]};"
-                  f" median {np.nanmedian(v):.1e}")
+    if not done.all():
+        return T
+    # alpha -> 0: alpha <= 0.02 の点に alpha の 3 次を当てはめた切片が 1(共鳴する過程は 1 次の項がある)
+    lo = A <= 0.02
+    c0 = np.polynomial.polynomial.polyfit(A[lo], C[lo].reshape(lo.sum(), -1), 3)[0].reshape(C.shape[1:])
+    print(f"alpha = {A[0]}: max |C - 1| = {np.nanmax(np.abs(C[0] - 1)):.2e}; intercept of cubic fit over alpha <= 0.02:"
+          f" max |c0 - 1| = {np.nanmax(np.abs(c0 - 1)):.2e}")
+    # 補間の誤差: 整理した表(clean)で、一つ抜きの 3 次の予測との差を、近くの 5 点の |C| の最大で割る(間隔が倍なので、
+    # なめらかな所では本当の誤差の約 16 倍)。埋めた点とその両隣は数えない
+    tot, fH, filled, spikes = clean(T)
+    print(f"cleaned: filled {int(filled.sum())} values, spikes removed {len(spikes)} "
+          f"({sorted(set(sp[0] for sp in spikes))})")
+    near = filled.copy()
+    near[1:] |= filled[:-1]
+    near[:-1] |= filled[1:]
+
+    def local_max(y, axis):
+        y = np.moveaxis(np.abs(y), axis, 0)
+        out = np.full_like(y, np.nan)
+        for k in range(2, y.shape[0] - 2):
+            out[k] = y[k - 2:k + 3].max(axis=0)
+        return np.moveaxis(out, 0, axis)
+
+    for axis, label, x in ((0, "alpha", np.log(A)), (1, "chi", X)):
+        d = np.moveaxis(_loo(np.moveaxis(tot, axis, 0), x), 0, axis)
+        e = np.abs(d) / local_max(tot, axis)
+        e[near] = np.nan
+        v = e[np.isfinite(e)]
+        print(f"leave-one-out in {label} (error / local max of C): median {np.median(v):.1e}, 99% {np.percentile(v, 99):.1e},"
+              f" 99.9% {np.percentile(v, 99.9):.1e}, max {v.max():.2e}")
+        for q in np.argsort(-np.nanmax(e, axis=(0, 1)))[:6]:
+            ia, ic_ = np.unravel_index(np.nanargmax(e[..., q]), e[..., q].shape)
+            print(f"    {names[q]:16s} {kinds[q]:5s} max {np.nanmax(e[..., q]):.2e} at alpha {A[ia]:.4f}, chi {X[ic_]}")
+    # 格子の外の点(holdout)と補間
+    if os.path.exists(HOLD):
+        H = np.load(HOLD)
+        cr = Corr(T)
+        Ct = H["C_inf"] + H["C_H"]
+        err = np.full(Ct.shape, np.nan)
+        for ia, a in enumerate(H["alpha"]):
+            ja = np.clip(np.searchsorted(A, a), 1, len(A) - 1)
+            for ic, c in enumerate(H["chi"]):
+                jc = np.clip(np.searchsorted(X, c), 1, len(X) - 1)
+                ci, ch = cr(a, c)
+                scale = np.abs(tot[ja - 1:ja + 1, jc - 1:jc + 1]).max(axis=(0, 1))
+                err[ia, ic] = np.abs(ci + ch - Ct[ia, ic]) / np.maximum(np.abs(Ct[ia, ic]), scale)
+        xb = (H["om"][..., 0].real < 0)       # 使わない(形を合わせるだけ)
+        skip = np.zeros(Ct.shape, bool)
+        for q in range(Ct.shape[2]):           # 閾値の周りと、とがりのある過程の大きい alpha は別に見る
+            if names[q] in ("411x511->322", "411x533->322", "411x544->322"):
+                skip[:, :, q] = H["alpha"][:, None] > 0.33
+        ok = np.isfinite(err) & ~skip
+        v = err[ok]
+        print(f"holdout ({int(ok.sum())} values at {len(H['alpha'])} alpha x {len(H['chi'])} chi off the grid; error /"
+              f" max(|C|, nearby nodes)): median {np.median(v):.1e}, 99% {np.percentile(v, 99):.1e}, max {v.max():.2e}")
+        for q in np.argsort(-np.nanmax(np.where(ok, err, np.nan), axis=(0, 1)))[:8]:
+            e = np.where(ok[..., q], err[..., q], np.nan)
+            ia, ic_ = np.unravel_index(np.nanargmax(e), e.shape)
+            print(f"    {names[q]:16s} {kinds[q]:5s} max {np.nanmax(e):.2e} at alpha {H['alpha'][ia]:.4f}, chi {H['chi'][ic_]}"
+                  f" (true {Ct[ia, ic_, q]:.4g})")
+        del xb
     return T
 
 
