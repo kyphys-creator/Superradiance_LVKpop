@@ -3,6 +3,8 @@ task:
   corrgrid  kinn.corr_grid の 55 例(kinn._corr_job、補正のあり・なしを evolveN_checked で)。数秒で終わる例が多いので、
             本数を 11 ほどにして 1 本に 5 例ずつまとめる(1 分以下の本をたくさん流さない、Hoffman2 の作法)。
             Mac の kinn.py corrcheck の cases と同じ形の結果を出すので、Mac と照らせる。
+  cost8     新しい表(reftab8)の費用の見積もり: 全節から無作為に 2000 節を解く(reftab8.cost_task。本数 100 なら 1 本 20 節)。
+            結果は <out_dir>/cost8_<番号>.npz(準位・時間・呼び出しの回数・有効な年齢)。
   merge     python h2/run.py merge <task> <out_dir>: <task>_*.json を一つにまとめて <out_dir>/<task>_all.json に。
 出力: <out_dir>/<task>_<番号>.json(すでにあれば飛ばす。途中で切れても投げ直せば続きから)。"""
 import glob
@@ -31,6 +33,10 @@ def main():
         print(f"{len(rows)} rows -> {task}_all.json")
         return
     task, tid, ntask, out = sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), sys.argv[4]
+    if task == "cost8":                             # 新しい表の費用の見積もり(reftab8、結果は npz)
+        import reftab8
+        reftab8.cost_task(tid, ntask, out)
+        return
     path = os.path.join(out, f"{task}_{tid:05d}.json")
     if os.path.exists(path):
         print("already done:", path)
