@@ -211,6 +211,18 @@ def solve_node(args):
                 runs=b.runs, chi0=chi0, secs=time.time() - t0)
 
 
+def solve_node_safe(args):
+    """solve_node が例外を出したら、失敗した節(status 2、準位は NaN)として返す(本番の 1 本が一つの節で止まって、
+    投げ直しても先へ進めなくなるのを防ぐ。引き方は status 0・1 の節しか使わない)。"""
+    t0 = time.time()
+    try:
+        return solve_node(args)
+    except Exception as e:                       # noqa: BLE001(どの例外でも、その節だけ失敗にする)
+        return dict(key=tuple(args[:5]), LT=np.full(len(P8), np.nan, np.float32), RZ=np.full(len(G_LT), np.nan, np.float32),
+                    env=0.0, status=2, tau_valid=0.0, reason=("error: " + repr(e))[:200], runs=[], chi0=float("nan"),
+                    secs=time.time() - t0)
+
+
 # ---------- 引き方 ----------
 def _lt_corner(LT, a_, s_, f_, il, tl, k):
     v0, v1 = LT[a_, s_, f_, il, k], LT[a_, s_, f_, il + 1, k]
@@ -458,7 +470,8 @@ def _result_files(dirs):
 
 def plan_build(out, skip_dirs=()):
     """本番で解く節の一覧を作って out/build8_nodes.npy に保存する(投げる前に一度だけ。全部の本が同じ一覧を読む)。
-    skip_dirs の結果(費用の見積もりなど)で解いた節は除き、BUILD_SEED で並びを混ぜる(重い節を本ごとに散らす)。"""
+    skip_dirs の結果(費用の見積もりなど)で解いた節は除き、BUILD_SEED で並びを混ぜる(重い節を本ごとに散らす)。
+    skip_dirs のジョブが全部終わってから作る(途中で作ると、終わっていない本の節をもう一度解く。結果は壊れない)。"""
     done = set()
     for f in _result_files(skip_dirs):
         done.update(tuple(int(x) for x in k) for k in np.load(f)["key"])
@@ -471,7 +484,11 @@ def plan_build(out, skip_dirs=()):
 
 def build_task(tid, ntask, out, cap, nproc=1, every=50, every_s=900.0):
     """本番の 1 本: build8_nodes.npy のうち番号 tid(1 から)の受け持ちを nproc 並列で解き、out/build8_<tid>.npz に every 節か
-    every_s 秒ごとに保存し直す。保存したものがあれば、その続きから解く(時間の上限で切られても投げ直せば続く)。"""
+    every_s 秒ごとに保存し直す。保存したものがあれば、その続きから解く(時間の上限で切られても投げ直せば続く)。
+    終了の合図(SIGTERM。Slurm が時間の上限の前に送る)を受けたら、その場で保存してやめる。
+    投げ直すときは本数 ntask を変えない(受け持ちが本数で決まる。変えても束ねるときに重複は除かれ、壊れはしない)。
+    節が例外を出したら、その節だけ失敗(status 2)として記録して先へ進む(solve_node_safe)。"""
+    import signal
     from multiprocessing import Pool
     nodes = [tuple(int(x) for x in k) for k in np.load(os.path.join(out, "build8_nodes.npy"))[tid - 1::ntask]]
     path = os.path.join(out, f"build8_{tid:05d}.npz")
@@ -485,22 +502,39 @@ def build_task(tid, ntask, out, cap, nproc=1, every=50, every_s=900.0):
         np.savez(tmp, **_pack(list(have.values()), cap))
         os.replace(tmp, path)
 
+    # 終了の合図は印を立てるだけにし、結果を 5 秒ずつ区切って待って印を見る(結果を待つあいだ親は止まっていて、
+    # macOS ではその待ちが合図で中断されず、例外を投げる形では合図が効かなかった。2026-11-17 の試し)
+    term = []
+    signal.signal(signal.SIGTERM, lambda signum, frame: term.append(signum))
     if todo:
-        last, n0 = time.time(), len(have)
-        with Pool(nproc) as pool:
-            for r in pool.imap_unordered(solve_node, [k + (cap,) for k in todo], chunksize=1):
-                have[r["key"]] = r
-                if (len(have) - n0) % every == 0 or time.time() - last > every_s:
-                    save()
-                    last = time.time()
+        import multiprocessing as mp
+        last, n0, ndone = time.time(), len(have), 0
+        pool = Pool(nproc, initializer=signal.signal, initargs=(signal.SIGTERM, signal.SIG_DFL))
+        it = pool.imap_unordered(solve_node_safe, [k + (cap,) for k in todo], chunksize=1)
+        while ndone < len(todo) and not term:
+            try:
+                r = it.next(timeout=5.0)
+            except mp.TimeoutError:
+                continue
+            ndone += 1
+            have[r["key"]] = r
+            if (len(have) - n0) % every == 0 or time.time() - last > every_s:
+                save()
+                last = time.time()
         save()
+        pool.terminate()
+        pool.join()
+        if term:
+            print(f"task {tid}: SIGTERM, saved {len(have)}/{len(nodes)} nodes", flush=True)
+            return
     print(f"task {tid}: {len(have)}/{len(nodes)} nodes saved", flush=True)
 
 
 def merge_build(dirs, out_path):
     """結果(cost8_*.npz と build8_*.npz)を区分ごとの配列に束ね、曲がり KI と折れ KS(reftab の関数)を足して out_path に保存する。
     配列: LT_<区分>[alpha, sigma, f, M, 準位](float32、NaN は届かない)、RZ_<区分>、status_<区分>(-1 は解いていない節)、
-    tau_valid_<区分>、KI_<区分>、KS_<区分>。区分の名前は PIECE_TAG(p1、p0、m1、m2)。"""
+    tau_valid_<区分>、KI_<区分>、KS_<区分>。区分の名前は PIECE_TAG(p1、p0、m1、m2)。status は 0(全年齢)、1(途中まで)、
+    2(例外で失敗)、-1(解いていない)。全節の一覧にない結果は数えて飛ばす。出どころ(provenance)も保存する。"""
     res = {}
     caps = set()
     for f in _result_files(dirs):
@@ -510,11 +544,16 @@ def merge_build(dirs, out_path):
             res[tuple(int(x) for x in k)] = (z["LT"][i], z["RZ"][i], int(z["status"][i]), float(z["tau_valid"][i]),
                                              float(z["secs"][i]), int(z["nfev"][i].sum()))
     want = all_nodes()
+    wset = set(want)
+    extra = [k for k in res if k not in wset]          # 全節の一覧にない結果(数えて飛ばす)
+    for k in extra:
+        del res[k]
     missing = [k for k in want if k not in res]
+    nfail = sum(1 for v in res.values() if v[2] == 2)
     arrs = dict(A_NODES=A_NODES, LF_NODES=LF_NODES, M_NODES=M_NODES, P8=P8, G_LT=G_LT, TAU_MAX=TAU_MAX,
-                caps=np.array(sorted(caps)), n_nodes=len(want), n_missing=len(missing))
+                caps=np.array(sorted(caps)), n_nodes=len(want), n_missing=len(missing), n_failed=nfail, n_extra=len(extra))
     z = np.load(CRIT_PATH)
-    arrs.update(crit_alpha=z["alpha"], crit_c=z["c"])
+    arrs.update(crit_alpha=z["alpha"], crit_c=z["c"], provenance=json.dumps(provenance(), ensure_ascii=False))
     for p in PIECES:
         tg = PIECE_TAG[p]
         shp = (len(A_NODES), len(S_NODES[p]), len(LF_NODES), len(M_NODES))
@@ -536,8 +575,37 @@ def merge_build(dirs, out_path):
     tmp = out_path + ".tmp.npz"
     np.savez(tmp, **arrs)
     os.replace(tmp, out_path)
-    print(f"merged {len(res)} nodes ({len(missing)} of {len(want)} missing, caps {sorted(caps)}) -> {out_path}")
+    print(f"merged {len(res)} nodes ({len(missing)} of {len(want)} missing, {nfail} failed, {len(extra)} not in the node list "
+          f"skipped, caps {sorted(caps)}) -> {out_path}")
     return len(missing)
+
+
+def provenance():
+    """表の出どころ: コードのコミット(と手元の変更の有無)、入力のチェックサム、運動論の設定。"""
+    import hashlib
+    import inspect
+    import subprocess
+    import kinn
+    def sha(path):
+        h = hashlib.sha256()
+        with open(path, "rb") as fh:
+            for blk in iter(lambda: fh.read(1 << 20), b""):
+                h.update(blk)
+        return h.hexdigest()
+    try:
+        commit = subprocess.run(["git", "-C", HERE, "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+        dirty = bool(subprocess.run(["git", "-C", HERE, "status", "--porcelain", "--untracked-files=no", "--", "."],
+                                    capture_output=True, text=True).stdout.strip())
+    except Exception:                            # noqa: BLE001
+        commit, dirty = "unknown", None
+    inputs = [os.path.join(OUT, f) for f in ["relcorr.npz", "kinn_procs.json", "reftab8_crit.npz"]
+              + [f"rates_mp_{n}{l}{m}.npz" for (n, l, m) in kinn.LEVELS8]]
+    sig = {k: v.default for k, v in inspect.signature(kinn.evolveN_checked).parameters.items() if v.default is not inspect._empty}
+    siga = {k: v.default for k, v in inspect.signature(kinn.evolveN_avg).parameters.items() if v.default is not inspect._empty}
+    import scipy
+    return dict(commit=commit, dirty=dirty, inputs={os.path.basename(f): sha(f) for f in inputs if os.path.exists(f)},
+                evolveN_checked=sig, evolveN_avg={k: v for k, v in siga.items() if k != "trace"}, AVG_FINE=kinn.AVG_FINE,
+                numpy=np.__version__, scipy=scipy.__version__, levels=[list(l) for l in kinn.LEVELS8])
 
 
 def load_table(path):
