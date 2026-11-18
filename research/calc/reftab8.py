@@ -22,6 +22,9 @@ chisr.py)は作り直しが終わるまでそのまま使うので、別のモ�
 (時刻のずれ 2% を許した |Delta chi|)で比べて、節が有効な年齢で最大 0.0039(433 から育つ区分の降りる所でも 0.0035)。
 544 から育つ区分の変化する所と、印 5 の判定(曲がり KI・折れ KS、全体の表が要る)はまだ確かめていない(DESIGN.md D21)。
 実行: cd research && ~/miniforge3/bin/python3 calc/reftab8.py crit | trial | trial2 | trial_eval | trial2_eval [並列の数]
+本番(Hoffman2、h2/run.py の build8): reftab8.py plan <場所> <見積もりの場所> で解く節の一覧を作り、ジョブ配列の各本が
+build_task で受け持ちを解く(1 本に複数のコア、節ごとに保存し直す)。最後に reftab8.py merge <場所> ... <表のファイル> で
+区分ごとの配列と曲がり KI・折れ KS に束ねる(load_table で lookup8 の形に読む)。
 """
 import json
 import os
@@ -415,6 +418,136 @@ def cost_task(tid, ntask, out, n=2000, cap=20000000, seed=2026):
     print(f"{len(res)} nodes -> {path}, {sum(r['secs'] for r in res):.0f}s")
 
 
+# ---------- 本番の作り直し(Hoffman2 のジョブ配列。1 本に複数のコア、節ごとに保存し直す) ----------
+BUILD_SEED = 7
+PIECE_TAG = {1: "p1", 0: "p0", -1: "m1", -2: "m2"}       # 保存するときの区分の名前
+
+
+def _pack(res, cap):
+    """節の結果のリストを保存用の配列に。"""
+    import platform
+    return dict(key=np.array([r["key"] for r in res], int).reshape(-1, 5), LT=np.array([r["LT"] for r in res], np.float32),
+                RZ=np.array([r["RZ"] for r in res], np.float32), env=np.array([r["env"] for r in res]),
+                status=np.array([r["status"] for r in res], np.int8), tau_valid=np.array([r["tau_valid"] for r in res]),
+                secs=np.array([r["secs"] for r in res]),
+                nfev=np.array([[x["nfev"] for x in r["runs"]] + [0] * (2 - len(r["runs"])) for r in res], np.int64).reshape(-1, 2),
+                njump=np.array([[x["njump"] for x in r["runs"]] + [0] * (2 - len(r["runs"])) for r in res], np.int64).reshape(-1, 2),
+                reason=np.array([r["reason"] for r in res]), chi0=np.array([r["chi0"] for r in res]), cap=cap,
+                host=platform.node())
+
+
+def _unpack(path):
+    """保存した結果を {節: 結果の dict} に。"""
+    z = np.load(path)
+    out = {}
+    for i, k in enumerate(z["key"]):
+        out[tuple(int(x) for x in k)] = dict(key=tuple(int(x) for x in k), LT=z["LT"][i], RZ=z["RZ"][i], env=float(z["env"][i]),
+                                             status=int(z["status"][i]), tau_valid=float(z["tau_valid"][i]), secs=float(z["secs"][i]),
+                                             runs=[dict(nfev=int(n), njump=int(j)) for n, j in zip(z["nfev"][i], z["njump"][i]) if n > 0],
+                                             reason=str(z["reason"][i]), chi0=float(z["chi0"][i]), cap=int(z["cap"]))
+    return out
+
+
+def _result_files(dirs):
+    import glob
+    fs = []
+    for d in dirs:
+        fs += glob.glob(os.path.join(d, "cost8_*.npz")) + glob.glob(os.path.join(d, "build8_*.npz"))
+    return sorted(f for f in fs if not f.endswith(".tmp.npz"))
+
+
+def plan_build(out, skip_dirs=()):
+    """本番で解く節の一覧を作って out/build8_nodes.npy に保存する(投げる前に一度だけ。全部の本が同じ一覧を読む)。
+    skip_dirs の結果(費用の見積もりなど)で解いた節は除き、BUILD_SEED で並びを混ぜる(重い節を本ごとに散らす)。"""
+    done = set()
+    for f in _result_files(skip_dirs):
+        done.update(tuple(int(x) for x in k) for k in np.load(f)["key"])
+    todo = np.array([k for k in all_nodes() if k not in done], int)
+    np.random.default_rng(BUILD_SEED).shuffle(todo)
+    np.save(os.path.join(out, "build8_nodes.npy"), todo)
+    print(f"{len(todo)} nodes to solve ({len(done)} already solved) -> {os.path.join(out, 'build8_nodes.npy')}")
+    return todo
+
+
+def build_task(tid, ntask, out, cap, nproc=1, every=50, every_s=900.0):
+    """本番の 1 本: build8_nodes.npy のうち番号 tid(1 から)の受け持ちを nproc 並列で解き、out/build8_<tid>.npz に every 節か
+    every_s 秒ごとに保存し直す。保存したものがあれば、その続きから解く(時間の上限で切られても投げ直せば続く)。"""
+    from multiprocessing import Pool
+    nodes = [tuple(int(x) for x in k) for k in np.load(os.path.join(out, "build8_nodes.npy"))[tid - 1::ntask]]
+    path = os.path.join(out, f"build8_{tid:05d}.npz")
+    have = _unpack(path) if os.path.exists(path) else {}
+    todo = [k for k in nodes if k not in have]
+    print(f"task {tid}/{ntask}: {len(nodes)} nodes, {len(have)} already saved, {len(todo)} to solve, {nproc} workers, cap {cap}",
+          flush=True)
+
+    def save():
+        tmp = path + ".tmp.npz"
+        np.savez(tmp, **_pack(list(have.values()), cap))
+        os.replace(tmp, path)
+
+    if todo:
+        last, n0 = time.time(), len(have)
+        with Pool(nproc) as pool:
+            for r in pool.imap_unordered(solve_node, [k + (cap,) for k in todo], chunksize=1):
+                have[r["key"]] = r
+                if (len(have) - n0) % every == 0 or time.time() - last > every_s:
+                    save()
+                    last = time.time()
+        save()
+    print(f"task {tid}: {len(have)}/{len(nodes)} nodes saved", flush=True)
+
+
+def merge_build(dirs, out_path):
+    """結果(cost8_*.npz と build8_*.npz)を区分ごとの配列に束ね、曲がり KI と折れ KS(reftab の関数)を足して out_path に保存する。
+    配列: LT_<区分>[alpha, sigma, f, M, 準位](float32、NaN は届かない)、RZ_<区分>、status_<区分>(-1 は解いていない節)、
+    tau_valid_<区分>、KI_<区分>、KS_<区分>。区分の名前は PIECE_TAG(p1、p0、m1、m2)。"""
+    res = {}
+    caps = set()
+    for f in _result_files(dirs):
+        z = np.load(f)
+        caps.add(int(z["cap"]))
+        for i, k in enumerate(z["key"]):
+            res[tuple(int(x) for x in k)] = (z["LT"][i], z["RZ"][i], int(z["status"][i]), float(z["tau_valid"][i]),
+                                             float(z["secs"][i]), int(z["nfev"][i].sum()))
+    want = all_nodes()
+    missing = [k for k in want if k not in res]
+    arrs = dict(A_NODES=A_NODES, LF_NODES=LF_NODES, M_NODES=M_NODES, P8=P8, G_LT=G_LT, TAU_MAX=TAU_MAX,
+                caps=np.array(sorted(caps)), n_nodes=len(want), n_missing=len(missing))
+    z = np.load(CRIT_PATH)
+    arrs.update(crit_alpha=z["alpha"], crit_c=z["c"])
+    for p in PIECES:
+        tg = PIECE_TAG[p]
+        shp = (len(A_NODES), len(S_NODES[p]), len(LF_NODES), len(M_NODES))
+        LT = np.full(shp + (len(P8),), np.nan, np.float32)
+        RZ = np.full(shp + (len(G_LT),), np.nan, np.float32)
+        st = np.full(shp, -1, np.int8)
+        tv = np.zeros(shp, np.float32)
+        secs = np.zeros(shp, np.float32)
+        nfev = np.zeros(shp, np.int64)
+        for k, (lt, rz, s_, t_, sc, nf) in res.items():
+            if k[0] != p:
+                continue
+            idx = k[1:]
+            LT[idx], RZ[idx], st[idx], tv[idx], secs[idx], nfev[idx] = lt, rz, s_, t_, sc, nf
+        arrs.update({f"S_NODES_{tg}": S_NODES[p], f"LT_{tg}": LT, f"RZ_{tg}": RZ, f"status_{tg}": st, f"tau_valid_{tg}": tv,
+                     f"secs_{tg}": secs, f"nfev_{tg}": nfev,
+                     f"KI_{tg}": R.compute_ki(LT, (np.log(A_NODES), np.log(S_NODES[p]), LF_NODES)),
+                     f"KS_{tg}": R.compute_ks(LT, np.log(A_NODES))})
+    tmp = out_path + ".tmp.npz"
+    np.savez(tmp, **arrs)
+    os.replace(tmp, out_path)
+    print(f"merged {len(res)} nodes ({len(missing)} of {len(want)} missing, caps {sorted(caps)}) -> {out_path}")
+    return len(missing)
+
+
+def load_table(path):
+    """merge_build の表を lookup8 の形 {区分: dict(LT, RZ, status, tau_valid, a_nodes, s_nodes, lf_nodes, KI, KS)} に。"""
+    z = np.load(path)
+    return {p: dict(LT=z[f"LT_{PIECE_TAG[p]}"], RZ=z[f"RZ_{PIECE_TAG[p]}"], status=z[f"status_{PIECE_TAG[p]}"],
+                    tau_valid=z[f"tau_valid_{PIECE_TAG[p]}"], a_nodes=z["A_NODES"], s_nodes=z[f"S_NODES_{PIECE_TAG[p]}"],
+                    lf_nodes=z["LF_NODES"], KI=z[f"KI_{PIECE_TAG[p]}"], KS=z[f"KS_{PIECE_TAG[p]}"]) for p in PIECES}
+
+
 # ---------- 試し: 少数のセルで引き方を確かめる ----------
 # セル = 区分 p と、alpha・sigma・f の隣り合う 2 節(M は 2 節)。16 節を解き、セルの中の点を直接解いた値と比べる。
 TRIAL_CELLS = [(1, 0.05, 0.5, 12.0), (1, 0.20, 0.3, 15.0), (1, 0.10, 0.5, 20.0), (0, 0.10, 0.5, 14.0), (0, 0.35, 0.5, 16.0),
@@ -538,6 +671,10 @@ if __name__ == "__main__":
         for a in (0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5):
             print(a, [round(float(x), 4) for x in crit(a)])
         print(f"{len(CRIT_ALPHAS)} alpha, {time.time() - t0:.0f}s")
+    elif what == "plan":                 # reftab8.py plan <出力の場所> [解いた結果の場所 ...]
+        plan_build(sys.argv[2], sys.argv[3:])
+    elif what == "merge":                # reftab8.py merge <結果の場所> [...] <出力のファイル>
+        merge_build(sys.argv[2:-1], sys.argv[-1])
     elif what in ("trial", "trial_eval", "trial2", "trial2_eval"):
         which = 2 if what.startswith("trial2") else 1
         s = trial(nproc, which=which) if not what.endswith("eval") else trial_eval(which=which)

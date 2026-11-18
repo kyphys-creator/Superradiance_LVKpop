@@ -5,6 +5,9 @@ task:
             Mac の kinn.py corrcheck の cases と同じ形の結果を出すので、Mac と照らせる。
   cost8     新しい表(reftab8)の費用の見積もり: 全節から無作為に 2000 節を解く(reftab8.cost_task。本数 100 なら 1 本 20 節)。
             結果は <out_dir>/cost8_<番号>.npz(準位・時間・呼び出しの回数・有効な年齢)。
+  build8    新しい表の本番(reftab8.build_task): 先に reftab8.py plan で <out_dir>/build8_nodes.npy を作っておく。1 本が
+            SLURM_CPUS_PER_TASK 並列で受け持ちを解き、<out_dir>/build8_<番号>.npz に節ごとに保存し直す(投げ直せば続きから)。
+            上限は環境変数 SRLVK_CAP(呼び出しの回数、既定 2e7)。束ねるのは reftab8.py merge。
   merge     python h2/run.py merge <task> <out_dir>: <task>_*.json を一つにまとめて <out_dir>/<task>_all.json に。
 出力: <out_dir>/<task>_<番号>.json(すでにあれば飛ばす。途中で切れても投げ直せば続きから)。"""
 import glob
@@ -36,6 +39,11 @@ def main():
     if task == "cost8":                             # 新しい表の費用の見積もり(reftab8、結果は npz)
         import reftab8
         reftab8.cost_task(tid, ntask, out)
+        return
+    if task == "build8":                            # 新しい表の本番(reftab8.build_task。上限は環境変数 SRLVK_CAP)
+        import reftab8
+        reftab8.build_task(tid, ntask, out, cap=int(os.environ.get("SRLVK_CAP", "20000000")),
+                           nproc=int(os.environ.get("SLURM_CPUS_PER_TASK", "1")))
         return
     path = os.path.join(out, f"{task}_{tid:05d}.json")
     if os.path.exists(path):
