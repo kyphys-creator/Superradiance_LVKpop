@@ -448,9 +448,17 @@ def _pack(res, cap):
                 host=platform.node())
 
 
+def _read_npz(path):
+    """npz の配列を一度ずつ読んで dict に。np.load の戻り値(NpzFile)は z[名前] のたびに配列を全部読み直すので、節ごとに
+    z["LT"][i] と引くと遅いうえ、引いた行が読み直した配列全体を抱えたまま残ってメモリがあふれる(2026-11-19、6,800 節の
+    保存から続きを解こうとした本が 42 秒で 16 GB を超えて止まった)。"""
+    with np.load(path) as z:
+        return {k: z[k] for k in z.files}
+
+
 def _unpack(path):
     """保存した結果を {節: 結果の dict} に。"""
-    z = np.load(path)
+    z = _read_npz(path)
     out = {}
     for i, k in enumerate(z["key"]):
         out[tuple(int(x) for x in k)] = dict(key=tuple(int(x) for x in k), LT=z["LT"][i], RZ=z["RZ"][i], env=float(z["env"][i]),
@@ -538,7 +546,7 @@ def merge_build(dirs, out_path):
     res = {}
     caps = set()
     for f in _result_files(dirs):
-        z = np.load(f)
+        z = _read_npz(f)
         caps.add(int(z["cap"]))
         for i, k in enumerate(z["key"]):
             res[tuple(int(x) for x in k)] = (z["LT"][i], z["RZ"][i], int(z["status"][i]), float(z["tau_valid"][i]),
