@@ -444,6 +444,7 @@ def _pack(res, cap):
                 secs=np.array([r["secs"] for r in res]),
                 nfev=np.array([[x["nfev"] for x in r["runs"]] + [0] * (2 - len(r["runs"])) for r in res], np.int64).reshape(-1, 2),
                 njump=np.array([[x["njump"] for x in r["runs"]] + [0] * (2 - len(r["runs"])) for r in res], np.int64).reshape(-1, 2),
+                nbh=np.array([[x.get("nbh", 0) for x in r["runs"]] + [0] * (2 - len(r["runs"])) for r in res], np.int64).reshape(-1, 2),
                 reason=np.array([r["reason"] for r in res]), chi0=np.array([r["chi0"] for r in res]), cap=cap,
                 host=platform.node())
 
@@ -459,11 +460,13 @@ def _read_npz(path):
 def _unpack(path):
     """保存した結果を {節: 結果の dict} に。"""
     z = _read_npz(path)
+    nbh = z.get("nbh", np.zeros_like(z["nfev"]))       # BH の収支の確かめで退けた歩み(2026-11-21 から。前の結果は 0)
     out = {}
     for i, k in enumerate(z["key"]):
         out[tuple(int(x) for x in k)] = dict(key=tuple(int(x) for x in k), LT=z["LT"][i], RZ=z["RZ"][i], env=float(z["env"][i]),
                                              status=int(z["status"][i]), tau_valid=float(z["tau_valid"][i]), secs=float(z["secs"][i]),
-                                             runs=[dict(nfev=int(n), njump=int(j)) for n, j in zip(z["nfev"][i], z["njump"][i]) if n > 0],
+                                             runs=[dict(nfev=int(n), njump=int(j), nbh=int(b)) for n, j, b in
+                                                   zip(z["nfev"][i], z["njump"][i], nbh[i]) if n > 0],
                                              reason=str(z["reason"][i]), chi0=float(z["chi0"][i]), cap=int(z["cap"]))
     return out
 

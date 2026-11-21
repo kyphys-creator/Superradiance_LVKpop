@@ -297,7 +297,8 @@ def _hann_fit(t, Y):
 
 def evolveN_avg(sysN, M0, chi0, mu_eV, f_gev, T_yr, t_eval_yr, rtol=1e-8, atol=1e-12, gw=True,
                 stall_steps=3000, stall_dlnt=0.05, burst_calls=5000, burst_max=160000, relax=0.25,
-                dchi=1e-3, dlnM=5e-4, dln=0.25, dln_small=5.0, jump_frac=0.25, max_nfev=50000000, burst_rtol=1e-6, trace=None):
+                dchi=1e-3, dlnM=5e-4, dln=0.25, dln_small=5.0, jump_frac=0.25, max_nfev=50000000, burst_rtol=1e-6, trace=None,
+                bh_check=True, bh_floor=1e-9):
     """evolveN と同じ運動論を、雲が速く振動する(バースト)区間は平均して解く(DESIGN.md D20)。
     8 準位の雲は、自己相互作用の準平衡の近くで大きく振動する(少ない準位で数十 e 倍、周期 0.02 年から 5e4 年)ことがあり、
     1e10 年までそのまま解くと最大 1e15 歩かかる。BH にはほとんど効かない(J の振れ 1e-8 から 2e-2)ので、振動を平均する。
@@ -318,6 +319,12 @@ def evolveN_avg(sysN, M0, chi0, mu_eV, f_gev, T_yr, t_eval_yr, rtol=1e-8, atol=1
           戻るときに、係数だけが跳びを止めていれば、係数を 4 倍(少なくとも窓の 2 倍は跳べるように)に戻す。
       バーストが jump_frac t を楽に越えるか、D が窓より短ければ、ふつうの解き方に戻る。解法が失敗したら LSODA、
       小さい初めの歩の LSODA、Radau、BDF の順に替える(失敗しても時刻が進んでいれば続け、進まない失敗が 4 回続いたらやめる)。
+    BH の収支の確かめ(bh_check、2026-11-21、DESIGN.md D20 の追記): 一歩ごとに、BH の M と J の変化が右辺のその歩みでの台形の
+    積分と合うかを見て、合わない歩みは解法の失敗として扱う(上の規則でやり直す)。許すずれは、右辺の両端の差の半分 x 歩幅
+    (歩みの中で右辺が単調に変わる分)、台形の値の 1 割、床 bh_floor x (M0、M0^2)の和。強い自己相互作用で、ほとんど空の準位
+    (211)が誘導放出で 1 個あたり 1e4/s で育つ所で、LSODA の陰解法が育ちを無視したまま歩み、J が右辺と無関係に 1 歩
+    1e-4 M^2 ずつ動いた(雲の J の 1 万倍。433 が平衡の 500 倍まで行き過ぎて崩れ、スピンが 0.03 下がる・0.24 上がる)。
+    確かめに使う右辺の呼び出しは上限(max_nfev)に数えないので、確かめが一度も働かない解は前と同じ。
     出力の年齢: ふつうの区間は解そのもの。平均の区間は当てはめた直線(雲の振動を平均した値)。
     返り値: evolveN と同じ y、t、status に、avg(年齢ごとの印: 0 ふつう、1 平均、2 平均で M・J の傾きが前半と後半で
     合わないまま)、chi_amp(平均した区間の chi の振れの半分)、njump、nrej(やり直した跳び)、nfev を加える。"""
@@ -346,13 +353,28 @@ def evolveN_avg(sysN, M0, chi0, mu_eV, f_gev, T_yr, t_eval_yr, rtol=1e-8, atol=1
             return LSODA(fr, t0, y0, T_end, rtol=rt, atol=atol, first_step=max(1e-9 * t0, 1.0))
         return (Radau if m == 2 else BDF)(fr, t0, y0, T_end, rtol=rt, atol=atol)
 
+    floor = bh_floor * np.array([M0, M0 ** 2])
+    nbh = [0, 0]                                          # (確かめた歩み, 合わなかった歩み)
+
     def step(sol):
+        t0, y0 = sol.t, sol.y.copy()
         try:
             sol.step()
         except (ValueError, FloatingPointError, np.linalg.LinAlgError):
             sol.status = "failed"
         if sol.status != "failed" and not np.all(np.isfinite(sol.y)):
             sol.status = "failed"
+        if bh_check and sol.status != "failed" and sol.t > t0:
+            h = sol.t - t0
+            f0, f1 = fr(t0, y0)[N:], fr(sol.t, sol.y)[N:]
+            trap = 0.5 * h * (f0 + f1)
+            allow = 0.5 * h * np.abs(f1 - f0) + 0.1 * np.abs(trap) + floor
+            nbh[0] += 1
+            if np.any(np.abs(sol.y[N:] - y0[N:] - trap) > allow):
+                nbh[1] += 1
+                sol.status = "failed"
+                if trace is not None:
+                    trace.append(dict(event="bh check", t=float(t0), h=float(h), dy=(sol.y[N:] - y0[N:]).tolist(), trap=trap.tolist()))
         return sol.status != "failed"
 
     def collect(sol, buf):
@@ -556,7 +578,7 @@ def evolveN_avg(sysN, M0, chi0, mu_eV, f_gev, T_yr, t_eval_yr, rtol=1e-8, atol=1
     done = int(np.sum(np.all(np.isfinite(out), axis=0)))
     ok = done == len(te)
     return SimpleNamespace(status=0 if ok else -1, y=out[:, :done], t=te[:done], avg=flag[:done], chi_amp=camp[:done],
-                           njump=njump, nrej=nrej, nfev=total, t_stop=t, y_stop=y.copy(),
+                           njump=njump, nrej=nrej, nfev=total, t_stop=t, y_stop=y.copy(), nbh=nbh[1], nbh_steps=nbh[0],
                            message="ok" if ok else f"stopped at t = {t / sr.YR:.3e} yr")
 
 
@@ -588,7 +610,7 @@ def evolveN_checked(sysN, M0, chi0, mu_eV, f_gev, T_yr, t_eval_yr, tol=5e-3, dt_
     (有効な範囲を決めたもの: "" / "cap"(上限で止まった)/ "fail"(解法が止まった)/ "disagree")、runs(二つの解の status・njump・nrej・nfev)。"""
     a = evolveN_avg(sysN, M0, chi0, mu_eV, f_gev, T_yr, t_eval_yr, max_nfev=max_nfev, **kw)
     na = a.y.shape[1]
-    runs = [dict(status=a.status, njump=a.njump, nrej=a.nrej, nfev=a.nfev)]
+    runs = [dict(status=a.status, njump=a.njump, nrej=a.nrej, nfev=a.nfev, nbh=a.nbh)]
     if a.njump == 0:                                     # 跳ばなければ解そのもの(出力の年齢に平均の印がなくても、跳びが
                                                          # 年齢のあいだにだけ入った解は確かめる)
         return SimpleNamespace(status=a.status, y=a.y, t=a.t, n_valid=na, dchi=np.zeros(na), avg=a.avg, chi_amp=a.chi_amp,
@@ -596,7 +618,7 @@ def evolveN_checked(sysN, M0, chi0, mu_eV, f_gev, T_yr, t_eval_yr, tol=5e-3, dt_
                                message=a.message)
     b = evolveN_avg(sysN, M0, chi0, mu_eV, f_gev, T_yr, t_eval_yr, max_nfev=max_nfev, **{**kw, **(AVG_FINE if fine is None else fine)})
     nb = b.y.shape[1]
-    runs.append(dict(status=b.status, njump=b.njump, nrej=b.nrej, nfev=b.nfev))
+    runs.append(dict(status=b.status, njump=b.njump, nrej=b.nrej, nfev=b.nfev, nbh=b.nbh))
     n = min(na, nb)
     d = np.full(max(na, nb), np.nan)
     if n:

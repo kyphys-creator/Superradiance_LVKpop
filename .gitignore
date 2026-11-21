@@ -27,7 +27,14 @@ data/*/
 research/calc/out/work/
 # E18 の基準の運動論の表(700 MB、calc/e18_reftab_build.py で作り直せる)と照合の基準の曲線(calc/e18_validate2.py refs)
 research/calc/out/reftab.npz
+# 外付けの SSD に移した物の戻し方(2026-11-21 に reftab.npz を移した。手元の記録なので git に入れない)
+research/calc/out/MOVED.txt
+# E24 の解(250 節 x 3 組、合わせて 460 MB、calc/e24_outside.py runs・runs10・runs10f で作り直せる)と、E25 の年齢ごとの誤差(42 MB、e25_refs8.py eval で作り直せる)
+research/calc/out/e24_runs*/
+research/calc/out/e25_refs8_eval.npz
 research/calc/out/reftab_partial.npz
+# D18 の新しい表(Hoffman2 の本番 build8 を束ねたもの、reftab8.py merge で作り直せる。結果の元は out/work/h2_build8・h2_cost8)
+research/calc/out/reftab8.npz
 research/calc/out/e18_refs_*.npz
 research/calc/out/e19_refs_*.npz
 research/figs/png/

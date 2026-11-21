@@ -45,7 +45,7 @@ study/study_note.tex         勉強ノート(学部の物理から、この研�
 - MacBook(Apple M3、8 コア、16 GB)では、base の `~/miniforge3/bin/python3` が numpy を読めない(libgfortran の rpath の重複)。`~/miniforge3/envs/python313/bin/python`(numpy 2.3、scipy 1.16、mpmath)を使う。E19 の計算はこれで行い、E18 の保存した出力を完全に再現する。
 - x86-64 での確かめ(E20)は MacBook の Rosetta 2 で行う: Command Line Tools の Python 3.9 の x86-64 の部分(`arch -x86_64 /usr/bin/python3`)と、PyPI の x86-64 版の numpy・scipy の wheel を展開したフォルダを使う(手順は `research/calc/e20_x86.py` の冒頭。wheel は git にも conda の環境にも入れない。ダウンロードはユーザーの許可を得てから)。
 - 自己相互作用の率の計算(E21、`research/calc/hyd.py`)と `research/calc/e21_level422.py` は mpmath と sympy を使う(MacBook の `python313` の環境にある)。
-- E18 の基準の表 `research/calc/out/reftab.npz`(700 MB、git に入れない)は Mac Studio にだけある。ない計算機では `chisr.build()` が `share/chi_sr/chi_sr_tables.npz`(12 MB、git にある)から同じ数の表を読むので、χ_SR と `export_chisr.py` の確かめはどちらの計算機でも動く(E19)。E18 の値の表を作り直す(`e18_reftab_build.py`、約 5 時間)のは Mac Studio で(D18 の新しい表は Hoffman2 で作る)。
+- E18 の基準の表 `research/calc/out/reftab.npz`(700 MB、git に入れない)は Mac Studio の外付けの SSD に移した(2026-11-21。戻し方は `research/calc/out/MOVED.txt`、git に入れない)。ない計算機では `chisr.build()` が `share/chi_sr/chi_sr_tables.npz`(12 MB、git にある)から同じ数の表を読むので、χ_SR と `export_chisr.py` の確かめはどちらの計算機でも動く(E19)。E18 の値の表を作り直す(`e18_reftab_build.py`、約 5 時間)のは Mac Studio で(D18 の新しい表は Hoffman2 で作る)。
 
 ## ルール
 - 数値はすべて `research/calc/` のスクリプトから出す。文献の式・数値を使うときは、原文(arXiv の本文)で照合した式番号を書く。
